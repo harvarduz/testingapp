@@ -1,0 +1,36 @@
+import React, { useState } from 'react';
+import { ArrowRight, Check, LockKeyhole } from 'lucide-react';
+import { api } from './api.js';
+
+export default function Account({ onSession, initialMode = 'register' }) {
+  const [mode, setMode] = useState(initialMode);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async event => {
+    event.preventDefault(); setError(''); setBusy(true);
+    try {
+      const session = await api(`/auth/${mode}`, { method: 'POST', body: { name, email, password } });
+      onSession(session);
+    } catch (error) { setError(error.message); }
+    finally { setBusy(false); }
+  };
+  return <section className="account-panel" aria-labelledby="account-title">
+    <span className="account-icon"><LockKeyhole size={25} /></span>
+    <span className="eyebrow">YOUR OWN CORNER OF CURIO</span>
+    <h2 id="account-title">{mode === 'register' ? 'Make room for your next idea.' : 'Good to have you back.'}</h2>
+    <p>{mode === 'register' ? 'Save your learning across devices and publish lessons of your own. One account for both.' : 'Sign in to your learning and creator workspace.'}</p>
+    <form onSubmit={submit}>
+      {mode === 'register' && <label>Your name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={32} required /></label>}
+      <label>Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={254} required /></label>
+      <label>Password<input type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} minLength={10} maxLength={128} required aria-describedby="password-hint" /></label>
+      <small id="password-hint">At least 10 characters. Use a password unique to Curio.</small>
+      {error && <p className="form-message error" role="alert">{error}</p>}
+      <button className="button primary full-width" disabled={busy}>{busy ? 'Just a moment…' : mode === 'register' ? 'Create free account' : 'Sign in'}<ArrowRight size={17} /></button>
+    </form>
+    <button className="account-switch" disabled={busy} onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}>{mode === 'register' ? 'Already have an account? Sign in' : 'New here? Create an account'}</button>
+    <span className="account-note"><Check size={14} />Learning is free. Publishing is free for a limited time.</span>
+  </section>;
+}
