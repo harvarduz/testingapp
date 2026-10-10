@@ -78,7 +78,7 @@ docker build -t curio-marketplace:test .
 python tests/docker_smoke.py
 ```
 
-This suite only removes its own containers and volume. In managed networks with an injected public CA, the Dockerfile supports an optional BuildKit `build_ca` secret mount. Use supported proxy settings and preserve TLS verification; the certificate is not retained in the image.
+This suite only removes its own containers and volume. The deployment Dockerfile uses standard build instructions compatible with Railway's Metal builder. Managed development networks may require a separate local build configuration for their public CA and proxy; preserve TLS verification.
 
 Screenshots and current accessibility results are written to ignored `test-results/`.
 

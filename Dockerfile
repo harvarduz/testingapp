@@ -1,9 +1,7 @@
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package*.json ./
-RUN --mount=type=secret,id=build_ca \
-    if [ -f /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
-    npm ci --no-audit --no-fund --fetch-timeout=30000 --fetch-retries=1
+RUN npm ci --no-audit --no-fund --fetch-timeout=30000 --fetch-retries=1
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
