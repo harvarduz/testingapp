@@ -5,12 +5,13 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../server/app.js';
+import { publicUrlFromEnvironment } from '../server/config.js';
 import { courses } from '../src/data.js';
 import { emptyCourse } from '../shared/course.js';
 import { emptyProgress, completeLesson } from '../src/progress.js';
 
-async function fixture(t, databasePath = ':memory:') {
-  const app = createApp({ databasePath });
+async function fixture(t, databasePath = ':memory:', options = {}) {
+  const app = createApp({ databasePath, ...options });
   const server = createServer(async (req, res) => {
     if (!await app.handle(req, res)) { res.writeHead(404); res.end(); }
   });
@@ -127,8 +128,27 @@ test('accounts, sessions, drafts, and learning survive a server restart', async 
   assert.equal((await second.request('/creator/courses', { cookie })).data.courses[0].id, created.data.course.id);
 });
 
-test('production requires HTTPS configuration and uses secure session cookies', async t => {
-  assert.throws(() => createApp({ databasePath: ':memory:', production: true }), /PUBLIC_URL/);
-  const app = createApp({ databasePath: ':memory:', production: true, publicUrl: 'https://curio.example' });
-  app.close();
+test('production uses the Railway HTTPS domain, respects custom domains, and secures account writes', async t => {
+  assert.equal(publicUrlFromEnvironment({ RAILWAY_PUBLIC_DOMAIN: 'curio.up.railway.app' }), 'https://curio.up.railway.app');
+  assert.equal(publicUrlFromEnvironment({ PUBLIC_URL: 'https://custom.example', RAILWAY_PUBLIC_DOMAIN: 'curio.up.railway.app' }), 'https://custom.example');
+  assert.throws(() => publicUrlFromEnvironment({ RAILWAY_PUBLIC_DOMAIN: 'https://curio.example/path' }), /hostname/);
+  for (const publicUrl of ['http://curio.example', 'invalid', 'https://user:password@curio.example', 'https://curio.example/path']) {
+    assert.throws(() => createApp({ databasePath: ':memory:', production: true, publicUrl }), /PUBLIC_URL/);
+  }
+  const { request } = await fixture(t, ':memory:', { production: true, publicUrl: publicUrlFromEnvironment({ RAILWAY_PUBLIC_DOMAIN: 'curio.up.railway.app' }) });
+  const data = { name: 'Railway Student', email: 'railway@example.test', password: 'A unique railway test password!' };
+  assert.equal((await request('/auth/register', { method: 'POST', origin: 'https://unrelated.example', data })).status, 403);
+  const account = await request('/auth/register', { method: 'POST', origin: 'https://curio.up.railway.app', data });
+  assert.equal(account.status, 201);
+  assert.match(account.headers.get('set-cookie'), /; Secure/);
+});
+
+test('production starts before a public domain is generated and disables writes until configured', async t => {
+  assert.equal(publicUrlFromEnvironment({}), undefined);
+  const { request, register } = await fixture(t, ':memory:', { production: true });
+  assert.equal((await request('/health')).data.status, 'ok');
+  assert.equal((await request('/courses')).status, 200);
+  assert.equal((await register()).status, 503);
+  assert.equal((await request('/auth/logout', { method: 'POST', origin: 'https://unrelated.example', data: {} })).status, 503);
+  assert.equal((await request('/session')).data.user, null);
 });

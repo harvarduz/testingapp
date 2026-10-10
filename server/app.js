@@ -13,7 +13,16 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 const problem = (status, message) => Object.assign(new Error(message), { status });
 
 export function createApp({ databasePath = './.data/curio.sqlite', publicUrl, production = false } = {}) {
-  if (production && (!publicUrl || new URL(publicUrl).protocol !== 'https:')) throw new Error('Production requires PUBLIC_URL with your HTTPS deployment address.');
+  let publicOrigin;
+  if (publicUrl) {
+    let address;
+    try { address = new URL(publicUrl); }
+    catch { throw new Error('PUBLIC_URL must be a valid website address.'); }
+    if (production && (address.protocol !== 'https:' || address.username || address.password || address.pathname !== '/' || address.search || address.hash)) {
+      throw new Error('Production PUBLIC_URL must be the HTTPS origin of your website.');
+    }
+    publicOrigin = address.origin;
+  }
   if (databasePath !== ':memory:') mkdirSync(dirname(databasePath), { recursive: true });
   const db = new DatabaseSync(databasePath);
   db.exec(`PRAGMA journal_mode = WAL;
@@ -100,7 +109,8 @@ export function createApp({ databasePath = './.data/curio.sqlite', publicUrl, pr
     res.setHeader('X-Frame-Options', 'DENY');
     try {
       if (!['GET', 'HEAD'].includes(req.method)) {
-        const expectedOrigin = publicUrl ? new URL(publicUrl).origin : `http://${req.headers.host}`;
+        if (production && !publicOrigin) throw problem(503, 'Accounts and publishing are not available yet. Please try again shortly.');
+        const expectedOrigin = publicOrigin || `http://${req.headers.host}`;
         if (req.headers.origin && req.headers.origin !== expectedOrigin) throw problem(403, 'This request came from a different website. Refresh Curio and try again.');
         if (req.headers['sec-fetch-site'] === 'cross-site') throw problem(403, 'Cross-site requests are not allowed.');
       }

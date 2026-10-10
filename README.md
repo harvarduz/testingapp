@@ -40,18 +40,18 @@ The project includes a tested multi-stage `Dockerfile` and `railway.json`. The b
 
 1. Put these project files in your GitHub repository and create a Railway service from it. Railway detects the Dockerfile.
 2. Add one persistent volume mounted at `/data`. Use **one replica** for this SQLite deployment.
-3. Generate a public HTTPS domain and set `PUBLIC_URL` to its exact origin, such as `https://your-service.up.railway.app`.
+3. Under **Settings → Networking → Public Networking**, generate a public domain and deploy the latest commit. The app automatically uses Railway's `RAILWAY_PUBLIC_DOMAIN`; no manual `PUBLIC_URL` is needed for that domain. For a custom domain, set `PUBLIC_URL` to its exact HTTPS origin, such as `https://learn.example.com`.
 4. Keep `NODE_ENV=production` and `CURIO_DATA_DIR=/data`, supplied by the Docker image. Railway supplies `PORT`.
 5. Deploy, verify `/api/health`, then exercise registration, uploading, publishing, and learning in separate browsers.
 6. Configure volume backups and verify restoration before relying on important user data.
 
 Hosting and persistent storage may cost money under Railway's current plan. This task prepared and tested the deployment files; it did not publish a Railway service or change billing. The cloud onboarding snapshot is separate from public deployment.
 
-Production startup requires an HTTPS `PUBLIC_URL`. Local development needs no `.env`; use `.env.example` for optional settings.
+The server can start and pass its health check before a domain is generated. In that state it serves the website and catalog but disables API writes. Registration, progress syncing, and publishing become available after an HTTPS origin is configured and the service is redeployed. Invalid explicit production origins still fail startup. Local development needs no `.env`; use `.env.example` for optional settings.
 
 ## Validation
 
-`npm test` runs 14 backend/content/progress checks, including ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 15 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 

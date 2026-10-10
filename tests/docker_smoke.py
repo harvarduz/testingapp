@@ -29,8 +29,9 @@ def passed(description):
     print(f'PASS {checks}: {description}', flush=True)
 
 
-def start():
-    command('run', '-d', '--name', name, '-p', '127.0.0.1::3000', '--mount', f'type=volume,source={volume},target=/data', '-e', 'PUBLIC_URL=https://curio.example', image)
+def start(with_domain=True):
+    environment = ['-e', 'RAILWAY_PUBLIC_DOMAIN=curio.example'] if with_domain else []
+    command('run', '-d', '--name', name, '-p', '127.0.0.1::3000', '--mount', f'type=volume,source={volume},target=/data', *environment, image)
     port = command('inspect', '--format', '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}', name)
     base = f'http://127.0.0.1:{port}'
     for _ in range(100):
@@ -61,8 +62,13 @@ def request(base, path, method='GET', data=None, cookie=None, origin=None):
 
 
 try:
+    base = start(with_domain=False)
+    assert request(base, '/')[0] == 200
+    assert request(base, '/api/auth/register', 'POST', {'name': 'Unconfigured Student'}, origin='https://unrelated.example')[0] == 503
+    passed('An unexposed production service starts without PUBLIC_URL; account writes remain disabled')
+    command('rm', '-f', name)
     base = start()
-    passed('The production image starts against a fresh Railway-style root-owned volume')
+    passed('Production starts with the automatic Railway public domain and a root-owned volume')
     status, html, headers = request(base, '/')
     assert status == 200 and 'Curio' in html
     assert "frame-ancestors 'none'" in headers['Content-Security-Policy']

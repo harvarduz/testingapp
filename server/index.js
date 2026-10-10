@@ -2,12 +2,15 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 import { createApp } from './app.js';
+import { publicUrlFromEnvironment } from './config.js';
 
 const development = process.argv.includes('--dev');
 const production = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || (development ? 5173 : process.argv.includes('--preview') ? 4173 : 3000));
 const databasePath = process.env.CURIO_DATA_DIR ? resolve(process.env.CURIO_DATA_DIR, 'curio.sqlite') : resolve('.data/curio.sqlite');
-const app = createApp({ databasePath, publicUrl: process.env.PUBLIC_URL, production });
+const publicUrl = publicUrlFromEnvironment(process.env);
+const app = createApp({ databasePath, publicUrl, production });
+if (production && !publicUrl) console.warn('No public domain configured. Serving the website and health checks with API writes disabled. Generate a Railway public domain or set PUBLIC_URL, then redeploy.');
 const vite = development ? await (await import('vite')).createServer({ server: { middlewareMode: true }, appType: 'spa' }) : null;
 const dist = resolve('dist');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json' };
