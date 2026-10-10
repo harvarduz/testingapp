@@ -4,6 +4,7 @@ complete WCAG compliance. Requires Python Playwright and npm-installed axe-core.
 """
 import json
 import os
+import re
 from pathlib import Path
 import uuid
 from playwright.sync_api import sync_playwright, expect
@@ -36,15 +37,29 @@ with sync_playwright() as p:
         for route in ['', '#overview', '#explore', '#learning', '#practice', '#achievements', '#creators']:
             page.goto(URL + route, wait_until='networkidle')
             audit(page, f'{route or "home"} at {width}px')
+            if route == '#explore':
+                page.get_by_role('combobox', name='Filter by level').select_option('Advanced')
+                page.get_by_role('combobox', name='Filter by duration').select_option('Over 40 minutes')
+                audit(page, f'Filtered catalog at {width}px')
+            if route == '#learning':
+                page.get_by_role('button', name='Saved', exact=True).click()
+                audit(page, f'Saved courses at {width}px')
         page.goto(URL + '#overview', wait_until='networkidle')
+        if width == 390:
+            page.get_by_role('button', name='Open navigation', exact=True).click()
+            audit(page, 'Mobile navigation dialog')
+            page.keyboard.press('Escape')
         page.get_by_role('button', name='Sign in / Create account', exact=True).click()
         audit(page, f'Account dialog at {width}px')
         page.get_by_role('button', name='Close dialog').click()
         page.get_by_role('button', name='Thinking in numbers', exact=True).click()
         audit(page, f'Course details at {width}px')
         dialog = page.get_by_role('dialog')
-        dialog.get_by_role('button', name='Let’s start learning').click()
+        dialog.get_by_role('button', name=re.compile('Let’s start learning|Continue learning')).click()
         audit(page, f'Interactive lesson at {width}px')
+        dialog.locator('.lesson-notes summary').click()
+        dialog.get_by_role('textbox', name='What do you want to remember?').fill('A pattern can have a constant difference.')
+        audit(page, f'Private lesson notes at {width}px')
         dialog.get_by_role('button', name='Got it. Let me try!').click()
         audit(page, f'Quiz at {width}px')
         page.get_by_role('button', name='Close dialog').click()
@@ -53,15 +68,21 @@ with sync_playwright() as p:
         'name': 'Accessibility Tester', 'email': f'accessibility-{uuid.uuid4().hex}@example.test', 'password': 'A unique audit password 42!'
     })
     assert registration.status == 201
+    assert context.request.put(URL + 'api/progress', data={
+        'name': 'Accessibility Tester', 'completed': {'numbers': [0]}, 'enrolled': ['numbers']
+    }).status == 200
     page.reload(wait_until='networkidle')
     for width in [1366, 390]:
         page.set_viewport_size({'width': width, 'height': 1000})
         page.goto(URL + '#creators', wait_until='networkidle')
         page.reload(wait_until='networkidle')
-        expect(page.get_by_role('heading', name='Your ideas, taking shape.')).to_be_visible()
+        expect(page.get_by_role('heading', name='Your courses.')).to_be_visible()
         audit(page, f'Authenticated creator workspace at {width}px')
         page.get_by_role('button', name='Create a course', exact=True).click()
         audit(page, f'Lesson editor at {width}px')
+        page.goto(URL + '#practice', wait_until='networkidle')
+        expect(page.get_by_role('heading', name='Review what you’ve learned')).to_be_visible()
+        audit(page, f'Completed lesson review at {width}px')
     browser.close()
 
 assert not any(item['violations'] for item in results), 'Automated WCAG violations found; see test-results/accessibility.json'

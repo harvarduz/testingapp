@@ -323,14 +323,14 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           <div className="landing-why">
             <div className="landing-why-copy">
               <span className="landing-kicker">LEARNING, ON YOUR TERMS</span>
-              <h2 id="why-title">Find your rhythm.<br />Keep your curiosity.</h2>
+              <h2 id="why-title">Make learning<br />part of your day.</h2>
               <p>A good learning habit has room for real life. Choose a small daily goal, save your place, and come back when you’re ready.</p>
               <button className="landing-text-button" onClick={onEnter}>See your learning space<ArrowUpRight size={18} /></button>
               <span className="landing-why-flower" aria-hidden="true">✳</span>
             </div>
             <div className="landing-benefits">
               <div><span>01</span><section><h3>A pace that fits your day.</h3><p>Choose one, two, or three activities for your daily goal. A lesson or a daily challenge counts.</p></section></div>
-              <div><span>02</span><section><h3>Your place, saved.</h3><p>Continue where you left off. Learn as a guest on this browser, or sign in to keep your progress across devices.</p></section></div>
+              <div><span>02</span><section><h3>Your notes, saved.</h3><p>Write private notes as you learn. Save courses for later, and sign in to keep your notes and progress across devices.</p></section></div>
               <div><span>03</span><section><h3>Small wins you can see.</h3><p>Build a streak and earn achievements as you finish lessons. Every milestone comes from your own work.</p></section></div>
             </div>
           </div>
@@ -351,8 +351,8 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         <section className="landing-container landing-final-section" aria-labelledby="final-title">
           <div className="landing-final">
             <span className="landing-final-spark" aria-hidden="true">✦</span>
-            <span className="landing-kicker">LET’S SEE WHERE THIS TAKES YOU</span>
-            <h2 id="final-title">Your first discovery<br />is a click away.</h2>
+            <span className="landing-kicker">START LEARNING</span>
+            <h2 id="final-title">Choose your<br />first course.</h2>
             <button className="landing-button landing-button-dark" onClick={() => onExplore()}>Find something to learn<ArrowRight size={18} /></button>
             <p>Start anywhere. Go at your own pace.</p>
             <svg className="landing-final-orbit" viewBox="0 0 340 260" fill="none" aria-hidden="true"><circle cx="180" cy="140" r="99" stroke="#cad5b8" /><ellipse cx="180" cy="140" rx="150" ry="46" transform="rotate(-35 180 140)" stroke="#b7c9a1" /><circle cx="282" cy="65" r="9" fill="#b7c9a1" /></svg>

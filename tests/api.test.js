@@ -8,7 +8,7 @@ import { createApp } from '../server/app.js';
 import { publicUrlFromEnvironment } from '../server/config.js';
 import { courses } from '../src/data.js';
 import { emptyCourse } from '../shared/course.js';
-import { emptyProgress, completeLesson } from '../src/progress.js';
+import { emptyProgress, completeLesson, toggleSavedCourse, writeLessonNote } from '../src/progress.js';
 
 async function fixture(t, databasePath = ':memory:', options = {}) {
   const app = createApp({ databasePath, ...options });
@@ -151,4 +151,23 @@ test('production starts before a public domain is generated and disables writes 
   assert.equal((await register()).status, 503);
   assert.equal((await request('/auth/logout', { method: 'POST', origin: 'https://unrelated.example', data: {} })).status, 503);
   assert.equal((await request('/session')).data.user, null);
+});
+
+test('private notes and saved courses sync across devices without leaking to another account', async t => {
+  const { request, register } = await fixture(t);
+  const owner = await register();
+  let initial = toggleSavedCourse(emptyProgress(), 'numbers', 100);
+  initial = writeLessonNote(initial, 'numbers', 0, 'Private student notes.', 100);
+  await request('/progress', { method: 'PUT', cookie: owner.cookie, data: initial });
+  const newer = writeLessonNote(toggleSavedCourse(initial, 'numbers', 200), 'numbers', 0, '', 200);
+  await request('/progress', { method: 'PUT', cookie: owner.cookie, data: newer });
+  await request('/progress', { method: 'PUT', cookie: owner.cookie, data: initial });
+  const restored = (await request('/session', { cookie: owner.cookie })).data.progress;
+  assert.equal(restored.savedCourses.numbers.saved, false);
+  assert.equal(restored.notes['numbers:0'].text, '');
+  const other = await register('other-student@example.test');
+  const separate = (await request('/session', { cookie: other.cookie })).data.progress;
+  assert.deepEqual(separate.notes, {});
+  assert.deepEqual(separate.savedCourses, {});
+  assert.equal((await request('/progress', { method: 'PUT', data: initial })).status, 401);
 });

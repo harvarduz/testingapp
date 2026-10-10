@@ -1,5 +1,41 @@
 export const STORAGE_KEY = 'curio.student.v1';
-export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2 });
+export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2, savedCourses: {}, notes: {} });
+
+const recordKey = /^[a-z0-9-]{1,100}$/;
+const noteKey = /^[a-z0-9-]{1,100}:\d{1,2}$/;
+function readRecords(value, notes = false) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter(([key, record]) =>
+    (notes ? noteKey.test(key) && Number(key.split(':')[1]) < 50 : recordKey.test(key)) && record && typeof record === 'object' &&
+    Number.isSafeInteger(record.updatedAt) && record.updatedAt >= 0 &&
+    (notes ? typeof record.text === 'string' : typeof record.saved === 'boolean')
+  ).sort((a, b) => b[1].updatedAt - a[1].updatedAt).slice(0, 500).map(([key, record]) => [key, {
+    ...(notes ? { text: record.text.slice(0, 2000) } : { saved: record.saved }),
+    updatedAt: Math.min(record.updatedAt, Date.now() + 300000),
+  }]));
+}
+
+export function toggleSavedCourse(progress, id, now = Date.now()) {
+  if (!recordKey.test(id)) return progress;
+  const previous = progress.savedCourses?.[id];
+  return { ...progress, savedCourses: { ...progress.savedCourses, [id]: { saved: !previous?.saved, updatedAt: Math.max(now, (previous?.updatedAt || 0) + 1) } } };
+}
+
+export function writeLessonNote(progress, id, index, text, now = Date.now()) {
+  const key = `${id}:${index}`;
+  if (!noteKey.test(key) || index < 0 || index >= 50 || typeof text !== 'string') return progress;
+  const previous = progress.notes?.[key];
+  if (previous?.text === text.slice(0, 2000)) return progress;
+  return { ...progress, notes: { ...progress.notes, [key]: { text: text.slice(0, 2000), updatedAt: Math.max(now, (previous?.updatedAt || 0) + 1) } } };
+}
+
+function mergeRecords(previous = {}, incoming = {}) {
+  const result = { ...previous };
+  for (const [key, record] of Object.entries(incoming)) {
+    if (!result[key] || record.updatedAt >= result[key].updatedAt) result[key] = record;
+  }
+  return result;
+}
 
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -18,6 +54,8 @@ export function readProgress(storage) {
       enrolled: Array.isArray(saved.enrolled) ? saved.enrolled.filter(v => typeof v === 'string') : [],
       activity: saved.activity && typeof saved.activity === 'object' ? Object.fromEntries(Object.entries(saved.activity).filter(([date, count]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isInteger(count) && count >= 0)) : {},
       dailyChallenges: Array.isArray(saved.dailyChallenges) ? [...new Set(saved.dailyChallenges.filter(v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)))] : [],
+      savedCourses: readRecords(saved.savedCourses),
+      notes: readRecords(saved.notes, true),
     };
   } catch { return emptyProgress(); }
 }
@@ -69,5 +107,7 @@ export function mergeProgress(previous, incoming) {
   return { ...incoming, completed, completionDates, activity,
     enrolled: [...new Set([...previous.enrolled, ...incoming.enrolled])],
     dailyChallenges,
+    savedCourses: mergeRecords(previous.savedCourses, incoming.savedCourses),
+    notes: mergeRecords(previous.notes, incoming.notes),
   };
 }

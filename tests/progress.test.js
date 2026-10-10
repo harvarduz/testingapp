@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { courses } from '../src/data.js';
-import { emptyProgress, completeLesson, completeChallenge, localDate, readProgress, streakCount, courseCompleted } from '../src/progress.js';
+import { emptyProgress, completeLesson, completeChallenge, localDate, readProgress, streakCount, courseCompleted, toggleSavedCourse, writeLessonNote, mergeProgress } from '../src/progress.js';
 
 test('reviewing the same lesson cannot inflate activity or earn a second completion', () => {
   const first = completeLesson(emptyProgress(), 'numbers', 0, '2026-10-10');
@@ -68,4 +68,39 @@ test('every course has real lessons and each quiz has one valid answer and an ex
       assert.ok(lesson.explanation.length > 20);
     }
   }
+});
+
+test('saving a course does not enroll it and an unsave survives a stale-device merge', () => {
+  const saved = toggleSavedCourse(emptyProgress(), 'numbers', 100);
+  assert.equal(saved.savedCourses.numbers.saved, true);
+  assert.deepEqual(saved.enrolled, []);
+  const removed = toggleSavedCourse(saved, 'numbers', 200);
+  assert.equal(mergeProgress(removed, saved).savedCourses.numbers.saved, false);
+  assert.equal(mergeProgress(saved, removed).savedCourses.numbers.saved, false);
+  assert.deepEqual(readProgress({ getItem: () => JSON.stringify(removed) }), removed);
+});
+
+test('notes merge by last edit, retain independent lessons, and do not resurrect deleted text', () => {
+  const original = writeLessonNote(emptyProgress(), 'numbers', 0, 'Add the same amount each time.', 100);
+  const revised = writeLessonNote(original, 'numbers', 0, 'A difference of three.', 200);
+  const otherDevice = writeLessonNote(original, 'computing', 1, 'A loop repeats an instruction.', 150);
+  const merged = mergeProgress(revised, otherDevice);
+  assert.equal(merged.notes['numbers:0'].text, 'A difference of three.');
+  assert.equal(merged.notes['computing:1'].text, 'A loop repeats an instruction.');
+  const deleted = writeLessonNote(merged, 'numbers', 0, '', 300);
+  assert.equal(mergeProgress(deleted, original).notes['numbers:0'].text, '');
+  assert.deepEqual(merged.completed, {});
+  assert.deepEqual(merged.activity, {});
+});
+
+test('legacy progress and malformed notes remain safe and note content is bounded', () => {
+  const restored = readProgress({ getItem: () => JSON.stringify({ enrolled: ['numbers'], notes: { 'numbers:0': { text: 'x'.repeat(2500), updatedAt: 1 }, 'numbers:99': { text: 'bad', updatedAt: 1 }, 'numbers:1': { text: false, updatedAt: 1 } }, savedCourses: { numbers: { saved: true, updatedAt: 1 }, bad: { saved: 'yes', updatedAt: -1 } } }) });
+  assert.equal(restored.notes['numbers:0'].text.length, 2000);
+  assert.equal(Object.keys(restored.notes).length, 1);
+  assert.equal(Object.keys(restored.savedCourses).length, 1);
+  assert.deepEqual(restored.enrolled, ['numbers']);
+  const old = readProgress({ getItem: () => JSON.stringify({ completed: { numbers: [0] } }) });
+  assert.deepEqual(old.notes, {});
+  assert.deepEqual(old.savedCourses, {});
+  assert.deepEqual(old.completed.numbers, [0]);
 });

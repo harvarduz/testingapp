@@ -4,31 +4,32 @@ Context: https://azizbeksafarov.github.io/ustoz/, reviewed 10 October 2026. The 
 
 ## Problem and result
 
-Students need a clear starting point, ideas they can apply, and useful feedback. Curio offers 20 original courses across 18 subjects, 61 lessons, an interactive pattern activity, quizzes with retries, and saved learning progress. Creators write or import courses, keep drafts private, and publish to a shared catalog. Publishing is free for a limited time, as requested.
+Students need a clear starting point, ideas they can apply, and useful feedback. Curio offers 20 original courses across 18 subjects, 61 lessons, an interactive pattern activity, quizzes with retries, saved learning progress, course bookmarks, and private lesson notes. Creators write or import courses, keep drafts private, and publish to a shared catalog. Publishing is free for a limited time, as requested.
 
 ## Demonstration
 
 1. Show the public page on desktop and mobile. Try a wrong preview answer and recover. The preview awards no progress.
 2. Open Thinking in numbers. Adjust the sequence, read the example, answer 14, finish, refresh My learning, and continue.
-3. Search for an absent course, clear filters, and browse a non-STEM subject such as Languages or Design.
-4. Register in the creator workspace, download/upload a template, edit, preview, save a private draft, then publish free.
-5. Use a separate browser to find the published course and author. Finish a lesson, create a student account, and resume its progress on another device.
-6. Show passing tests, explain Node/SQLite and the persistent deployment volume, and make a small source edit.
+3. Save a course for later, open My learning → Saved, write a private lesson note, and copy its course link. Reopen a completed lesson from Practice & review and show that totals do not increase.
+4. Combine subject, level, and duration filters; search for an absent course, clear filters, and browse a non-STEM subject such as Languages or Design.
+5. Register in the creator workspace, download/upload a template, edit, preview, save a private draft, then publish free.
+6. Use a separate browser to find the published course and author. Finish a lesson, create a student account, and resume its progress on another device.
+7. Show passing tests, explain Node/SQLite and the persistent deployment volume, and make a small source edit.
 
 ## Criteria and evidence
 
 | Area | Implementation | Acceptance evidence |
 |---|---|---|
-| Functionality, 30 | Search/filter/recovery, lessons/quizzes, actual progress, accounts, imports, drafts, publishing | Student and marketplace browser suites; API ownership/persistence tests |
+| Functionality, 30 | Combined filters, bookmarks, private notes, direct course links, lessons/review, actual progress, accounts, imports, drafts, publishing | Student, study-tools, and marketplace suites; API ownership/persistence tests |
 | Content, 20 | 20 courses, 61 explanations/examples/quizzes, 18 subjects, accurate counts and author attribution | Content integrity test; published course in another browser |
-| UX/UI, 10 | Large readable editorial type, consistent controls, clear navigation, keyboard focus, responsive creator/student pages | 320/390/768/1366 px tests, axe-core checks, screenshot review |
+| UX/UI, 10 | Large readable editorial type, consistent controls, clear navigation, keyboard focus, responsive creator/student pages and mobile bottom navigation | 320/390/768/1366 px tests, axe-core checks, screenshot review |
 | Presentation, 10 | Clear problem, complete student and creator stories, editable source, honest technical explanation | Demonstration above and README editing map |
 | Technology, 20 | React/Vite, Node 24, SQLite, salted scrypt, expiring HttpOnly sessions, same-origin writes, Docker deployment | Backend tests and production container replacement/volume test |
 | Creativity, 10 | Original subject art, adjustable pattern activity, live homepage lesson, creator lessons connected to actual student learning | Interactive preview and creator-to-student demonstration |
 
 ## Validation and boundaries
 
-Run the README commands before presenting and report actual results. Browser suites save current screenshots; axe-core writes `test-results/accessibility.json`. Container tests replace the container and verify volume-backed account/session/course persistence.
+Run the README commands before presenting and report actual results. Browser suites save current screenshots; axe-core writes `test-results/accessibility.json`. Container tests replace the container and verify volume-backed account/session/course/note/bookmark persistence. See `docs/validation.md` for the current 109 passing checks and the limits of public verification.
 
 The upload format is JSON text lessons and quizzes; video uploads are not implemented. Publishing is currently free, so there is no checkout. Accounts lack email verification and forgotten-password recovery. Unpublishing retains course data and completion records. SQLite uses one replica; a larger launch needs moderation, edge rate limiting, backups, and possibly a managed database. Automated accessibility checks supplement manual assessment.
 

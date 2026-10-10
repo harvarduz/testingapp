@@ -1,6 +1,6 @@
 # Curio
 
-An English learning platform with 20 original introductory courses, 61 lessons, and 18 subject areas. Students can learn as guests or use an account; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
+An English learning platform with 20 original introductory courses, 61 lessons, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
 
 ## Try the complete platform
 
@@ -15,6 +15,8 @@ The frontend and backend start together on port 5173. No API keys or separate da
 
 To test publishing: choose **Create your first course**, register, download a template, and upload it. Edit the lesson, preview, save a draft, and publish for free. Use another browser or private window to find the published course and complete a lesson. Sign in with a student account on a different browser to check saved progress.
 
+To try the study tools: save a course using its bookmark button, then open **My learning → Saved**. Start a lesson and expand **Your notes**; notes save automatically. **Copy course link** opens that course directly in another browser. In **Practice & review**, reopen completed lessons without adding duplicate progress. Catalog filters combine subject, level, duration, search, and sort.
+
 ```sh
 npm test
 npm run build
@@ -26,6 +28,7 @@ npm start
 ## Data and account behavior
 
 - Guest progress is stored in the browser. Signing in merges it into the account without awarding duplicate completion credit. Signing out clears local account progress.
+- Bookmarks and private notes use timestamped records so removing a bookmark or clearing a note survives a stale-device sync. Notes are limited to 2,000 characters per lesson. Existing progress remains compatible.
 - SQLite stores accounts, salted scrypt password hashes, expiring sessions, drafts, published courses, and account progress. The default file is `.data/curio.sqlite`; set `CURIO_DATA_DIR` to a persistent deployment directory.
 - Session tokens are hashed in storage and sent in HttpOnly cookies. Production uses Secure cookies and rejects cross-origin writes.
 - Drafts belong to their author. Publishing requires explanations, examples, four distinct answers, and correct-answer feedback. The upload format is course JSON, with a 1 MB file limit, 50 lessons per course, and 50 courses per creator.
@@ -45,13 +48,13 @@ The project includes a tested multi-stage `Dockerfile` and `railway.json`. The b
 5. Deploy, verify `/api/health`, then exercise registration, uploading, publishing, and learning in separate browsers.
 6. Configure volume backups and verify restoration before relying on important user data.
 
-Hosting and persistent storage may cost money under Railway's current plan. This task prepared and tested the deployment files; it did not publish a Railway service or change billing. The cloud onboarding snapshot is separate from public deployment.
+The user-managed deployment is at https://bup.up.railway.app/. Pushes to `main` deploy automatically when Railway auto-deploy is enabled; otherwise deploy the latest commit from the service dashboard. Keep the existing `/data` volume attached when updating. Hosting and persistent storage follow Railway's current plan.
 
 The server can start and pass its health check before a domain is generated. In that state it serves the website and catalog but disables API writes. Registration, progress syncing, and publishing become available after an HTTPS origin is configured and the service is redeployed. Invalid explicit production origins still fail startup. Local development needs no `.env`; use `.env.example` for optional settings.
 
 ## Validation
 
-`npm test` runs 15 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 19 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -63,13 +66,14 @@ python tests/accessibility_smoke.py
 
 Set `CURIO_TEST_URL` to use another application server. Accessibility checks use the npm-installed axe-core on desktop/mobile pages, dialogs, and the editor. Automated checks supplement manual keyboard and visual review; they do not certify complete WCAG compliance.
 
-After building, the marketplace suite starts an isolated server and removes its temporary database after testing:
+After building, these suites each start an isolated server and remove their temporary database after testing:
 
 ```sh
 python tests/marketplace_smoke.py
+python tests/study_tools_smoke.py
 ```
 
-It tests course imports, drafts, previews without progress credit, publishing, separate student browsers, cross-device progress, sign-out, and 320/390/768/1366 px creator layouts.
+The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. Layout checks cover 320/390/768/1366 px widths.
 
 Production container and persistent-volume checks:
 
@@ -91,6 +95,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Learning and marketing layout foundations | `src/styles.css`, `src/landing.css` |
 | Courses and original subject lessons | `src/data.js`, `src/catalog.js` |
 | Student navigation, lessons, progress | `src/App.jsx`, `src/progress.js` |
+| Private notes, course sharing, completed-lesson review | `src/StudyTools.jsx` |
 | Creator editor and JSON import | `src/Creator.jsx`, `src/marketplace.css` |
 | Account forms and API client | `src/Account.jsx`, `src/api.js` |
 | Course validation and publication rules | `shared/course.js` |

@@ -64,8 +64,8 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             page.get_by_role('textbox', name='Email address', exact=True).fill('teacher@example.test')
             page.get_by_role('textbox', name='Password', exact=True).fill('A unique teacher password 42!')
             page.get_by_role('button', name='Create free account', exact=True).click()
-            expect(page.get_by_role('heading', name='Your ideas, taking shape.')).to_be_visible()
-            expect(page.get_by_role('heading', name='A good course starts with one idea.')).to_be_visible()
+            expect(page.get_by_role('heading', name='Your courses.')).to_be_visible()
+            expect(page.get_by_role('heading', name='Your workspace is ready.')).to_be_visible()
             passed('The free creator offer leads to a working registration and private creator workspace')
 
             page.get_by_role('button', name='Create a course', exact=True).click()

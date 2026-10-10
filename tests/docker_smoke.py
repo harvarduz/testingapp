@@ -89,6 +89,11 @@ try:
     status, result, _ = request(base, f'/api/creator/courses/{course_id}/publish', 'POST', {}, cookie, 'https://curio.example')
     assert status == 200 and result['fee'] == 0
     passed('The container saves a draft to SQLite and publishes it for a zero fee')
+    status, _, _ = request(base, '/api/progress', 'PUT', {
+        'savedCourses': {course_id: {'saved': True, 'updatedAt': 100}},
+        'notes': {f'{course_id}:0': {'text': 'A private note in the production volume.', 'updatedAt': 100}},
+    }, cookie, 'https://curio.example')
+    assert status == 200
     command('rm', '-f', name)
     base = start()
     _, restored, _ = request(base, '/api/session', cookie=cookie)
@@ -96,6 +101,9 @@ try:
     _, catalog, _ = request(base, '/api/courses')
     assert any(course['id'] == course_id for course in catalog['courses'])
     passed('A replacement container restores accounts, sessions, and courses from the same volume')
+    assert restored['progress']['savedCourses'][course_id]['saved'] is True
+    assert restored['progress']['notes'][f'{course_id}:0']['text'] == 'A private note in the production volume.'
+    passed('Private lesson notes and saved courses survive production container replacement')
     assert request(base, '/api/auth/logout', 'POST', {}, cookie, 'https://unrelated.example')[0] == 403
     passed('Production rejects writes from an unrelated origin')
 finally:

@@ -31,7 +31,7 @@ with sync_playwright() as p:
     # React StrictMode cancels its first session/catalog request during effect cleanup.
     page.on('requestfailed', lambda request: failed_resources.append(request.url) if not (request.failure == 'net::ERR_ABORTED' and request.url.endswith(('/api/session', '/api/courses'))) else None)
     page.goto(f'{URL.rstrip("/")}/#overview', wait_until='networkidle')
-    expect(page.get_by_role('heading', name='Your next “aha!” starts here.')).to_be_visible()
+    expect(page.get_by_role('heading', name='Your learning, at a glance.')).to_be_visible()
     expect(page.locator('.course-card')).to_have_count(3)
     page.screenshot(path=str(OUTPUT / '01-dashboard-desktop.png'), full_page=True)
     passed('Dashboard loads three real featured courses with local fonts and artwork')
@@ -153,7 +153,7 @@ with sync_playwright() as p:
         if width <= 780:
             page.get_by_role('button', name='Open navigation').click()
             navigation.get_by_role('button', name='Explore courses').click()
-            expect(page.get_by_role('heading', name='Follow your curiosity.')).to_be_visible()
+            expect(page.get_by_role('heading', name='Find your next course.')).to_be_visible()
         if width == 390:
             page.screenshot(path=str(OUTPUT / '04-mobile-courses.png'), full_page=True)
         if width == 768:
