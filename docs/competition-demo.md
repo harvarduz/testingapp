@@ -17,6 +17,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 7. Collapse the desktop sidebar, follow a study path, inspect a worked example, and complete targeted practice. Show the mistake recommendations and Curio coin balance; repeat the session to demonstrate that coins are not duplicated.
 8. Use Learning Lab to build an equivalent fraction, protect a savings goal, and lock an algorithm prediction before stepping through its trace. Show mistake feedback and one-time lab coins.
 9. Show passing tests, explain Node/SQLite and the persistent deployment volume, and make a small source edit.
+10. Show the supplied Material reference beside Curio. Change a palette and display mode, refresh to demonstrate persistence, and open Appearance from the mobile menu.
 
 ## Criteria and evidence
 
@@ -24,7 +25,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 |---|---|---|
 | Functionality, 30 | Interactive labs, study paths, worked lessons, targeted practice, Curio coins, combined filters, bookmarks, private notes, direct course links, lessons/review, actual progress, accounts, imports, drafts, publishing | Student, study-tools, and marketplace suites; API ownership/persistence tests |
 | Content, 20 | 20 courses, 61 explanations/examples/quizzes, 18 subjects, accurate counts and author attribution | Content integrity test; published course in another browser |
-| UX/UI, 10 | Large readable editorial type, consistent controls, clear navigation, keyboard focus, responsive creator/student pages collapsible desktop navigation, mobile bottom navigation, and reduced-motion support | 320/390/768/1366 px tests, axe-core checks, screenshot review |
+| UX/UI, 10 | Material Expressive typography and tonal roles, four palettes, light/dark mode, consistent controls, keyboard focus, responsive creator/student pages, collapsible desktop navigation, mobile bottom navigation, and reduced-motion support | 320/390/768/1366 px tests, light/dark axe-core checks, palette persistence tests, screenshot review |
 | Presentation, 10 | Clear problem, complete student and creator stories, editable source, honest technical explanation | Demonstration above and README editing map |
 | Technology, 20 | React/Vite, Node 24, SQLite, salted scrypt, expiring HttpOnly sessions, same-origin writes, Docker deployment | Backend tests and production container replacement/volume test |
 | Creativity, 10 | Original subject art, interactive fraction/budget/algorithm labs, live homepage lesson, creator lessons connected to actual student learning | Interactive preview and creator-to-student demonstration |
@@ -37,4 +38,4 @@ The upload format is JSON text lessons and quizzes; video uploads are not implem
 
 ## Manual-edit practice
 
-Change a headline in `src/Landing.jsx`, the accent in `src/editorial.css`, a lesson in `src/catalog.js`, or a validation rule in `shared/course.js`. Run affected checks and rebuild. Disclose AI assistance according to the final competition rules and explain your own choices and modifications. Demonstrate only behavior you can reproduce.
+Change a headline in `src/Landing.jsx`, a palette seed in `src/Appearance.jsx`, presentation in `src/material.css`, a lesson in `src/catalog.js`, or a validation rule in `shared/course.js`. Run affected checks and rebuild. Disclose AI assistance according to the final competition rules and explain your own choices and modifications. Demonstrate only behavior you can reproduce.

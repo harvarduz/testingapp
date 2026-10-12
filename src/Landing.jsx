@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { BrandMark, CourseArt } from './Art.jsx';
 import { categories } from './data.js';
+import { AppearanceControls } from './Appearance.jsx';
 import './landing.css';
 
 const navigation = [
@@ -60,7 +61,7 @@ const questions = [
   },
 ];
 
-function LandingHeader({ onEnter, hasProgress, onAccount, user }) {
+function LandingHeader({ onEnter, hasProgress, onAccount, user, onAppearance }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -75,7 +76,7 @@ function LandingHeader({ onEnter, hasProgress, onAccount, user }) {
           {navigation.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}
         </nav>
 
-        <div className="landing-header-actions">
+        <div className="landing-header-actions"><AppearanceControls onOpen={onAppearance} />
           {!user && <button className="landing-signin" onClick={onAccount}>Sign in</button>}
           <button className="landing-enter" onClick={onEnter}>
             {hasProgress ? 'My learning' : 'Learning space'}
@@ -100,7 +101,7 @@ function LandingHeader({ onEnter, hasProgress, onAccount, user }) {
               {link.label}<ArrowUpRight size={16} />
             </a>
           ))}
-          <button onClick={onEnter}>Go to your learning space<ArrowRight size={16} /></button>
+          <button onClick={() => { setMenuOpen(false); onAppearance(); }}>Appearance<ArrowRight size={16} /></button><button onClick={onEnter}>Go to your learning space<ArrowRight size={16} /></button>
           {!user && <button onClick={() => { setMenuOpen(false); onAccount(); }}>Sign in / Create account<ArrowRight size={16} /></button>}
         </nav>
       )}
@@ -244,13 +245,13 @@ function LandingCourse({ course, onOpen }) {
   );
 }
 
-export default function Landing({ courses, onExplore, onEnter, onOpenCourse, hasProgress, onCreate, onAccount, user, serviceError, onRetry }) {
+export default function Landing({ courses, onExplore, onEnter, onOpenCourse, hasProgress, onCreate, onAccount, user, serviceError, onRetry, onAppearance }) {
   const lessonCount = courses.reduce((count, course) => count + course.lessons.length, 0);
 
   return (
     <div className="landing" id="home">
       <a className="skip-link" href="#landing-main">Skip to content</a>
-      <LandingHeader onEnter={onEnter} hasProgress={hasProgress} onAccount={onAccount} user={user} />
+      <LandingHeader onAppearance={onAppearance} onEnter={onEnter} hasProgress={hasProgress} onAccount={onAccount} user={user} />
 
       <main className="landing-main" id="landing-main">
         {serviceError && <div className="landing-container landing-service-message" role="alert">{serviceError}<button onClick={onRetry}>Try again</button></div>}

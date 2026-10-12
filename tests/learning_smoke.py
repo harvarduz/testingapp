@@ -55,15 +55,16 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             page.goto(url+'#overview',wait_until='networkidle')
             page.set_viewport_size({'width':1366,'height':600})
             sidebar=page.locator('.sidebar')
+            page.get_by_role('button',name='Expand navigation',exact=True).click()
             assert sidebar.evaluate('(node)=>getComputedStyle(node).overflowY') == 'auto'
             sidebar.hover();page.mouse.wheel(0,800)
             page.wait_for_timeout(200)
             assert sidebar.evaluate('(node)=>node.scrollTop') > 0
             page.get_by_role('button',name='Collapse navigation',exact=True).click()
             expect(page.get_by_role('button',name='Expand navigation',exact=True)).to_be_visible()
-            assert sidebar.bounding_box()['width'] == 84
+            assert sidebar.bounding_box()['width'] == 96
             page.reload(wait_until='networkidle')
-            assert sidebar.bounding_box()['width'] == 84
+            assert sidebar.bounding_box()['width'] == 96
             page.get_by_role('button',name='Study paths',exact=True).click()
             expect(page.get_by_role('heading',name='Choose a direction')).to_be_visible()
             passed('The sidebar scrolls at short desktop heights, collapses to a working icon rail, and remembers the preference')

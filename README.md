@@ -39,6 +39,12 @@ Sixteen lessons in mathematics, computer science, data, physics, and English inc
 
 The desktop sidebar can collapse to an icon rail and remembers that browser preference. It scrolls independently on short screens. Mobile uses a full drawer and bottom navigation. Colour, feedback, coin celebrations, and hover effects respect reduced-motion settings.
 
+## Material Expressive appearance
+
+The platform adapts the supplied [Bloom Material Expressive reference](https://azizbeksafarov.github.io/design/material-expressive/dist/index.html). Google Sans Flex headings, Roboto body text, a 96 px navigation rail, tonal surfaces, rounded containers, outlined course cards, and pill buttons carry through the homepage, student workspace, lessons, labs, account forms, and creator editor.
+
+Use the palette icon on desktop or **Appearance** in either mobile menu to choose Purple, Blue, Green, or Terracotta and light/dark mode. Material Color Utilities generates the reference's Tonal Spot colour roles. Appearance is remembered on the current browser; blocked storage keeps the controls usable and displays the persistence limitation. Existing expanded-navigation preferences are retained. The appearance dialog traps keyboard focus and returns it to a visible opener.
+
 ## Data and account behavior
 
 - Guest progress is stored in the browser. Signing in merges it into the account without awarding duplicate completion credit. Signing out clears local account progress.
@@ -87,9 +93,12 @@ python tests/marketplace_smoke.py
 python tests/study_tools_smoke.py
 python tests/learning_smoke.py
 python tests/labs_smoke.py
+python tests/material_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
+
+The Material suite checks reference colours/fonts, all four palettes in both display modes, persistence, mobile appearance dialogs, reduced motion, blocked/corrupt storage, layout, and 80 additional axe states. Run the full accessibility suite again with `CURIO_TEST_THEME=dark` to audit dark lessons, feedback, private notes, and authenticated course editors. Only run these writing browser suites against a development/test database.
 
 Production container and persistent-volume checks:
 
@@ -107,7 +116,9 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Change | File |
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
-| Editorial palette and readable typography | `src/editorial.css` |
+| Material tokens, typography, responsive presentation | `src/material.css` |
+| Palette generation, display modes, appearance controls | `src/Appearance.jsx` |
+| Earlier layout and learning-control foundations | `src/editorial.css` |
 | Learning and marketing layout foundations | `src/styles.css`, `src/landing.css` |
 | Courses and original subject lessons | `src/data.js`, `src/catalog.js` |
 | Student navigation, lessons, progress | `src/App.jsx`, `src/progress.js` |
@@ -125,4 +136,4 @@ Screenshots and current accessibility results are written to ignored `test-resul
 
 Quiz answers use zero-based indices in `options`. Add course content with each new category so the subject has a useful destination. See `docs/competition-demo.md` for presentation and Ustoz evidence.
 
-Conceptual inspiration: Brilliant and Khan Academy. All course content and SVG illustrations are original. Icons: Lucide (ISC). Bundled fonts: DM Sans and Manrope (SIL Open Font License). No third-party course materials or brand artwork were copied.
+Conceptual inspiration: Brilliant and Khan Academy. Visual reference: Bloom Material Expressive, linked above. All course content and subject SVG illustrations are original. Icons: Lucide (ISC). Material Color Utilities: Apache 2.0. Bundled fonts: Google Sans Flex, Roboto, DM Sans, and Manrope (SIL Open Font License, files in `public/fonts/`). No third-party course materials or brand artwork were copied.

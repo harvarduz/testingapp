@@ -14,6 +14,7 @@ URL = os.environ.get('CURIO_TEST_URL', 'http://127.0.0.1:5173/').rstrip('/') + '
 AXE = ROOT / 'node_modules/axe-core/axe.min.js'
 OUTPUT = ROOT / 'test-results'
 OUTPUT.mkdir(exist_ok=True)
+REPORT = OUTPUT / ('accessibility-dark.json' if os.environ.get('CURIO_TEST_THEME') == 'dark' else 'accessibility.json')
 results = []
 
 
@@ -21,7 +22,7 @@ def audit(page, name):
     page.add_script_tag(path=str(AXE))
     violations = page.evaluate("async () => (await axe.run(document, {runOnly: {type: 'tag', values: ['wcag2a','wcag2aa','wcag21aa']}})).violations")
     results.append({'screen': name, 'violations': violations})
-    Path(OUTPUT / 'accessibility.json').write_text(json.dumps(results, indent=2))
+    REPORT.write_text(json.dumps(results, indent=2))
     if violations:
         page.screenshot(path=str(OUTPUT / 'accessibility-failure.png'), full_page=True)
         print(name, [(v['id'], [n['target'] for n in v['nodes']]) for v in violations], flush=True)
@@ -31,6 +32,8 @@ def audit(page, name):
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox'])
     context = browser.new_context(viewport={'width': 1366, 'height': 1000}, reduced_motion='reduce')
+    if os.environ.get('CURIO_TEST_THEME') == 'dark':
+        context.add_init_script("localStorage.setItem('curio.appearance.v1', JSON.stringify({mode:'dark',seed:'#6750a4'}))")
     page = context.new_page()
     for width in [1366, 390]:
         page.set_viewport_size({'width': width, 'height': 1000})
@@ -52,6 +55,8 @@ with sync_playwright() as p:
         audit(page, f'Curio coin dialog at {width}px')
         page.get_by_role('button', name='Close dialog').click()
         if width == 1366:
+            if page.get_by_role('button', name='Expand navigation', exact=True).count():
+                page.get_by_role('button', name='Expand navigation', exact=True).click()
             page.get_by_role('button', name='Collapse navigation', exact=True).click()
             audit(page, 'Collapsed desktop navigation')
             page.get_by_role('button', name='Expand navigation', exact=True).click()
@@ -125,5 +130,5 @@ with sync_playwright() as p:
         audit(page, f'Completed algorithm trace at {width}px')
     browser.close()
 
-assert not any(item['violations'] for item in results), 'Automated WCAG violations found; see test-results/accessibility.json'
-print(f'\n{len(results)} accessibility checks passed with zero automated WCAG A/AA violations. Results: {OUTPUT / "accessibility.json"}')
+assert not any(item['violations'] for item in results), f'Automated WCAG violations found; see {REPORT}'
+print(f'\n{len(results)} accessibility checks passed with zero automated WCAG A/AA violations. Results: {REPORT}')

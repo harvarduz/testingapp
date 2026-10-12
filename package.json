@@ -14,6 +14,7 @@
     "node": ">=24 <25"
   },
   "dependencies": {
+    "@material/material-color-utilities": "0.4.0",
     "lucide-react": "1.55.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
