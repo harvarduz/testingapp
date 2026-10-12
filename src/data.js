@@ -1,4 +1,5 @@
 import { extendedCourses } from './catalog.js';
+import { lessonEnrichment } from './lessonEnrichment.js';
 export const categories = ['All courses', 'Mathematics', 'Computer science', 'Science', 'Thinking skills', ...extendedCourses.map(c => c.category)];
 
 const lesson = (title, idea, example, question, options, answer, explanation) => ({ title, idea, example, question, options, answer, explanation });
@@ -62,6 +63,9 @@ export const courses = [
 ];
 
 courses.push(...extendedCourses);
+for (const course of courses) {
+  course.lessons = course.lessons.map((lesson, index) => ({ ...lesson, ...lessonEnrichment[course.id]?.[index] }));
+}
 
 export const dailyChallenge = {
   title: 'A little food for thought',

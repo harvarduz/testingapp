@@ -34,17 +34,27 @@ with sync_playwright() as p:
     page = context.new_page()
     for width in [1366, 390]:
         page.set_viewport_size({'width': width, 'height': 1000})
-        for route in ['', '#overview', '#explore', '#learning', '#practice', '#achievements', '#creators']:
+        for route in ['', '#overview', '#explore', '#learning', '#practice', '#achievements', '#creators', '#paths']:
             page.goto(URL + route, wait_until='networkidle')
             audit(page, f'{route or "home"} at {width}px')
             if route == '#explore':
                 page.get_by_role('combobox', name='Filter by level').select_option('Advanced')
                 page.get_by_role('combobox', name='Filter by duration').select_option('Over 40 minutes')
                 audit(page, f'Filtered catalog at {width}px')
+            if route == '#paths':
+                page.get_by_role('button', name='Choose Mathematics foundations', exact=True).click() if page.get_by_role('button', name='Choose Mathematics foundations', exact=True).count() else None
+                audit(page, f'Active study path at {width}px')
             if route == '#learning':
                 page.get_by_role('button', name='Saved', exact=True).click()
                 audit(page, f'Saved courses at {width}px')
         page.goto(URL + '#overview', wait_until='networkidle')
+        page.get_by_role('button', name=re.compile(r'^\d+ Curio coins$')).click()
+        audit(page, f'Curio coin dialog at {width}px')
+        page.get_by_role('button', name='Close dialog').click()
+        if width == 1366:
+            page.get_by_role('button', name='Collapse navigation', exact=True).click()
+            audit(page, 'Collapsed desktop navigation')
+            page.get_by_role('button', name='Expand navigation', exact=True).click()
         if width == 390:
             page.get_by_role('button', name='Open navigation', exact=True).click()
             audit(page, 'Mobile navigation dialog')
@@ -80,9 +90,29 @@ with sync_playwright() as p:
         audit(page, f'Authenticated creator workspace at {width}px')
         page.get_by_role('button', name='Create a course', exact=True).click()
         audit(page, f'Lesson editor at {width}px')
+        page.locator('.lesson-extension-editor summary').click()
+        audit(page, f'Extended lesson editor at {width}px')
         page.goto(URL + '#practice', wait_until='networkidle')
         expect(page.get_by_role('heading', name='Review what you’ve learned')).to_be_visible()
         audit(page, f'Completed lesson review at {width}px')
+        page.get_by_role('button', name='Start targeted practice').click()
+        dialog = page.get_by_role('dialog', name='Targeted practice')
+        audit(page, f'Targeted practice question at {width}px')
+        dialog.locator('.practice-options button').first.click()
+        dialog.get_by_role('button', name='Check answer', exact=True).click()
+        audit(page, f'Practice mistake feedback at {width}px')
+        dialog.get_by_role('button', name='Next question').click()
+        catalog = context.request.get(URL + 'api/courses').json()['courses']
+        questions = [question for course in catalog for lesson in course['lessons'] for question in lesson.get('practice', [])]
+        while dialog.get_by_role('button', name='Check answer', exact=True).count():
+            prompt = dialog.locator('h2').inner_text()
+            question = next(question for question in questions if question['question'] == prompt)
+            dialog.locator('.practice-options button').nth(question['answer']).click()
+            dialog.get_by_role('button', name='Check answer', exact=True).click()
+            audit(page, f'Practice correct feedback {dialog.locator(".practice-session-top").inner_text()} at {width}px')
+            dialog.get_by_role('button', name='See my results' if dialog.get_by_role('button', name='See my results').count() else 'Next question', exact=True).click()
+        audit(page, f'Practice result at {width}px')
+        page.get_by_role('button', name='Close dialog').click()
     browser.close()
 
 assert not any(item['violations'] for item in results), 'Automated WCAG violations found; see test-results/accessibility.json'

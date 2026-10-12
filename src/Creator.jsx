@@ -6,6 +6,7 @@ import { categories, courses } from './data.js';
 import { colors, artTypes, emptyCourse, emptyLesson, normalizeCourse, publicationIssues } from '../shared/course.js';
 import { CourseArt } from './Art.jsx';
 import './marketplace.css';
+import LessonExtensionEditor from './LessonExtensionEditor.jsx';
 
 function Offer() {
   return <div className="creator-offer"><span className="creator-offer-icon"><Globe size={22} /></span><div><strong>Publish your own courses.</strong><p>Course publishing is free for a limited time. No card needed.</p></div><span className="offer-price">$0<span>publishing fee</span></span></div>;
@@ -84,6 +85,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
           <fieldset className="editor-answers"><legend>Four answer options</legend>{lesson.options.map((option, optionIndex) => <label key={optionIndex}>Option {optionIndex + 1}<input aria-label={`Lesson ${index + 1} option ${optionIndex + 1}`} value={option} onChange={e => updateLesson(index, { options: lesson.options.map((v, i) => i === optionIndex ? e.target.value : v) })} maxLength={300} /></label>)}</fieldset>
           <label>Correct answer<select aria-label={`Lesson ${index + 1} correct answer`} value={lesson.answer} onChange={e => updateLesson(index, { answer: Number(e.target.value) })}>{lesson.options.map((option, i) => <option key={i} value={i}>Option {i + 1}{option && ` — ${option}`}</option>)}</select></label>
           <label>Why that answer is right<textarea aria-label={`Lesson ${index + 1} answer explanation`} value={lesson.explanation} onChange={e => updateLesson(index, { explanation: e.target.value })} rows={3} maxLength={3000} placeholder="Help students understand, whether their answer was right or wrong." /></label>
+          <LessonExtensionEditor lesson={lesson} index={index} onChange={values => updateLesson(index, values)} />
           {course.lessons.length > 1 && (!course.everPublished || index >= initial.lessons.length) && <button type="button" className="text-button danger" onClick={() => update({ lessons: course.lessons.filter((_, i) => i !== index) })}><Trash2 size={15} />Remove lesson {index + 1}</button>}
         </fieldset>
       </details>)}

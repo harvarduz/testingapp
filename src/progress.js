@@ -1,5 +1,5 @@
 export const STORAGE_KEY = 'curio.student.v1';
-export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2, savedCourses: {}, notes: {} });
+export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2, savedCourses: {}, notes: {}, activePath: null, practiceAttempts: {}, practiceDays: [] });
 
 const recordKey = /^[a-z0-9-]{1,100}$/;
 const noteKey = /^[a-z0-9-]{1,100}:\d{1,2}$/;
@@ -37,6 +37,25 @@ function mergeRecords(previous = {}, incoming = {}) {
   return result;
 }
 
+function readPractice(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter(([id, item]) => recordKey.test(id) && item && recordKey.test(item.courseId) && Number.isInteger(item.lessonIndex) && item.lessonIndex >= 0 && item.lessonIndex < 50 && Number.isInteger(item.questionIndex) && item.questionIndex >= -1 && item.questionIndex < 5 && typeof item.correct === 'boolean' && Number.isSafeInteger(item.answeredAt) && item.answeredAt >= 0).sort((a, b) => b[1].answeredAt - a[1].answeredAt || a[0].localeCompare(b[0])).slice(0, 500).map(([id, item]) => [id, { courseId: item.courseId, lessonIndex: item.lessonIndex, questionIndex: item.questionIndex, correct: item.correct, answeredAt: Math.min(item.answeredAt, Date.now() + 300000) }]));
+}
+
+export function recordPracticeAttempt(progress, question, correct, id = crypto.randomUUID(), now = Date.now()) {
+  if (progress.practiceAttempts?.[id]) return progress;
+  const attempt = { courseId: question.course.id, lessonIndex: question.lessonIndex, questionIndex: question.questionIndex, correct, answeredAt: now };
+  return { ...progress, practiceAttempts: readPractice({ ...progress.practiceAttempts, [id]: attempt }) };
+}
+
+export function completePractice(progress, date = localDate()) {
+  return progress.practiceDays?.includes(date) ? progress : { ...progress, practiceDays: [...(progress.practiceDays || []), date] };
+}
+
+export function chooseStudyPath(progress, id, now = Date.now()) {
+  return { ...progress, activePath: { id, updatedAt: Math.max(now, (progress.activePath?.updatedAt || 0) + 1) } };
+}
+
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -56,6 +75,9 @@ export function readProgress(storage) {
       dailyChallenges: Array.isArray(saved.dailyChallenges) ? [...new Set(saved.dailyChallenges.filter(v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)))] : [],
       savedCourses: readRecords(saved.savedCourses),
       notes: readRecords(saved.notes, true),
+      activePath: saved.activePath && recordKey.test(saved.activePath.id) && Number.isSafeInteger(saved.activePath.updatedAt) && saved.activePath.updatedAt >= 0 ? { id: saved.activePath.id, updatedAt: Math.min(saved.activePath.updatedAt, Date.now() + 300000) } : null,
+      practiceAttempts: readPractice(saved.practiceAttempts),
+      practiceDays: Array.isArray(saved.practiceDays) ? [...new Set(saved.practiceDays.filter(value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)))] : [],
     };
   } catch { return emptyProgress(); }
 }
@@ -109,5 +131,8 @@ export function mergeProgress(previous, incoming) {
     dailyChallenges,
     savedCourses: mergeRecords(previous.savedCourses, incoming.savedCourses),
     notes: mergeRecords(previous.notes, incoming.notes),
+    activePath: previous.activePath && (!incoming.activePath || previous.activePath.updatedAt > incoming.activePath.updatedAt) ? previous.activePath : incoming.activePath || null,
+    practiceAttempts: readPractice({ ...incoming.practiceAttempts, ...previous.practiceAttempts }),
+    practiceDays: [...new Set([...(previous.practiceDays || []), ...(incoming.practiceDays || [])])],
   };
 }

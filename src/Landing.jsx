@@ -21,18 +21,18 @@ const subjectIcons = [Sigma, Binary, Atom, Brain, Dna, FlaskConical, Rocket, Ear
 
 const learningSteps = [
   {
-    title: 'Meet the idea.',
-    description: 'A clear explanation of one idea. Just enough to get your mind moving.',
+    title: 'Understand the idea.',
+    description: 'Start with a clear explanation and a concrete learning goal. Know what you are working toward.',
     illustration: 'read',
   },
   {
     title: 'See it in action.',
-    description: 'Connect it to a useful example. Play with a pattern. Notice what changes.',
+    description: 'Follow a worked example one step at a time. See the reasoning behind the answer.',
     illustration: 'explore',
   },
   {
     title: 'Work it out.',
-    description: 'Try a problem yourself. Get an explanation, take another shot, and keep going.',
+    description: 'Apply the idea to a new question. Get feedback, review a mistake, and try another example.',
     illustration: 'solve',
   },
 ];
@@ -48,7 +48,7 @@ const questions = [
   },
   {
     question: 'Where should I start?',
-    answer: 'Thinking in numbers is a good first stop if you want to build confidence with math. Computer science foundations starts from the basics, too. Each course lists its level, lesson count, and estimated time so you can choose what fits.',
+    answer: 'Open Study paths in the learning space to follow a guided sequence in mathematics, programming, science, communication, money, design, or health. You can also choose an individual course by subject, level, and available time.',
   },
   {
     question: 'Can I stop and come back later?',
@@ -264,7 +264,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
               <button className="landing-button landing-button-dark" onClick={() => onExplore()}>Find your first course<ArrowRight size={18} /></button>
               <a className="landing-try-link" href="#try-a-lesson">Try a little lesson<ArrowUpRight size={17} /></a>
             </div>
-            <span className="landing-hero-note"><Check size={13} />Free to explore. No account required.</span>
+            <span className="landing-hero-note"><Check size={13} />Free to explore. No account required.</span><span className="landing-coin-note">Complete a lesson. Earn 25 Curio coins.</span>
           </div>
           <LessonPreview onContinue={() => onOpenCourse(courses[0])} />
         </section>
@@ -280,7 +280,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
 
         <section className="landing-section landing-container landing-method" id="how-it-works" aria-labelledby="method-title">
           <div className="landing-section-heading">
-            <div><span className="landing-kicker">HOW IT WORKS</span><h2 id="method-title">A little reading.<br />A lot of working it out.</h2></div>
+            <div><span className="landing-kicker">HOW IT WORKS</span><h2 id="method-title">Understand the idea.<br />Put it to work.</h2></div>
             <p>Start with one idea, see it in action, then test your understanding. A complete lesson in a few focused minutes.</p>
           </div>
           <div className="landing-steps">
@@ -331,7 +331,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
             <div className="landing-benefits">
               <div><span>01</span><section><h3>A pace that fits your day.</h3><p>Choose one, two, or three activities for your daily goal. A lesson or a daily challenge counts.</p></section></div>
               <div><span>02</span><section><h3>Your notes, saved.</h3><p>Write private notes as you learn. Save courses for later, and sign in to keep your notes and progress across devices.</p></section></div>
-              <div><span>03</span><section><h3>Small wins you can see.</h3><p>Build a streak and earn achievements as you finish lessons. Every milestone comes from your own work.</p></section></div>
+              <div><span>03</span><section><h3>Small wins you can see.</h3><p>Earn Curio coins for lessons, daily challenges, and practice. Each reward comes from your own learning.</p></section></div>
             </div>
           </div>
         </section>

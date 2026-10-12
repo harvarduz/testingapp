@@ -92,6 +92,9 @@ try:
     status, _, _ = request(base, '/api/progress', 'PUT', {
         'savedCourses': {course_id: {'saved': True, 'updatedAt': 100}},
         'notes': {f'{course_id}:0': {'text': 'A private note in the production volume.', 'updatedAt': 100}},
+        'activePath': {'id': 'math-foundations', 'updatedAt': 100},
+        'practiceAttempts': {'container-attempt': {'courseId': course_id, 'lessonIndex': 0, 'questionIndex': 0, 'correct': True, 'answeredAt': 100}},
+        'practiceDays': ['2026-10-10'],
     }, cookie, 'https://curio.example')
     assert status == 200
     command('rm', '-f', name)
@@ -104,6 +107,10 @@ try:
     assert restored['progress']['savedCourses'][course_id]['saved'] is True
     assert restored['progress']['notes'][f'{course_id}:0']['text'] == 'A private note in the production volume.'
     passed('Private lesson notes and saved courses survive production container replacement')
+    assert restored['progress']['activePath']['id'] == 'math-foundations'
+    assert restored['progress']['practiceAttempts']['container-attempt']['correct'] is True
+    assert restored['progress']['practiceDays'] == ['2026-10-10']
+    passed('Study paths, practice answers, and coin-earning days survive production container replacement')
     assert request(base, '/api/auth/logout', 'POST', {}, cookie, 'https://unrelated.example')[0] == 403
     passed('Production rejects writes from an unrelated origin')
 finally:
