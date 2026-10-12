@@ -1,6 +1,6 @@
 # Curio
 
-An English learning platform with 20 original introductory courses, 61 lessons, 48 additional practice questions, seven study paths, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
+An English learning platform with 20 original introductory courses, 61 lessons, 48 additional practice questions, seven study paths, three interactive Learning Lab activities, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
 
 ## Try the complete platform
 
@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-The frontend and backend start together on port 5173. No API keys or separate database service are required. Open that port in your local browser. The homepage is the default route; `#overview`, `#explore`, `#learning`, `#practice`, `#paths`, `#achievements`, and `#creators` open the app screens.
+The frontend and backend start together on port 5173. No API keys or separate database service are required. Open that port in your local browser. The homepage is the default route; `#overview`, `#explore`, `#learning`, `#practice`, `#paths`, `#lab`, `#achievements`, and `#creators` open the app screens.
 
 To test publishing: choose **Create your first course**, register, download a template, and upload it. Edit the lesson, preview, save a draft, and publish for free. Use another browser or private window to find the published course and complete a lesson. Sign in with a student account on a different browser to check saved progress.
 
@@ -33,7 +33,9 @@ Sixteen lessons in mathematics, computer science, data, physics, and English inc
 
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
-**Curio coins** reward learning: 25 for each newly completed lesson, 15 for each daily challenge, and 20 for the first successful practice session each day. A session must include a correct answer. Repeating a lesson or same-day session adds no extra coins. The balance is derived from saved learning records. Coins are motivational points with no cash value, purchases, or withdrawal facility.
+**Learning Lab** makes ideas observable: shade equivalent fractions, adjust a student budget while protecting essential needs and savings, or lock an algorithm prediction before tracing each update. Labs link to their related lessons. Completing each lab earns 30 coins once and contributes one activity to the daily learning goal.
+
+**Curio coins** reward learning: 25 for each newly completed lesson, 15 for each daily challenge, and 20 for the first successful practice session each day. A session must include a correct answer. Repeating a lesson or same-day session adds no extra coins. Each completed lab also earns 30 coins once. The balance is derived from saved learning records. Coins are motivational points with no cash value, purchases, or withdrawal facility.
 
 The desktop sidebar can collapse to an icon rail and remembers that browser preference. It scrolls independently on short screens. Mobile uses a full drawer and bottom navigation. Colour, feedback, coin celebrations, and hover effects respect reduced-motion settings.
 
@@ -66,7 +68,7 @@ The server can start and pass its health check before a domain is generated. In 
 
 ## Validation
 
-`npm test` runs 24 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 28 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -84,9 +86,10 @@ After building, these suites each start an isolated server and remove their temp
 python tests/marketplace_smoke.py
 python tests/study_tools_smoke.py
 python tests/learning_smoke.py
+python tests/labs_smoke.py
 ```
 
-The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
+The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
 
 Production container and persistent-volume checks:
 
@@ -110,6 +113,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Student navigation, lessons, progress | `src/App.jsx`, `src/progress.js` |
 | Private notes, course sharing, completed-lesson review | `src/StudyTools.jsx` |
 | Study paths, targeted practice, and Curio coins | `src/LearningExperience.jsx`, `src/learning.js` |
+| Interactive fraction, budget, and algorithm labs | `src/LearningLab.jsx`, `src/labs.js` |
 | Worked lesson content and additional questions | `src/lessonEnrichment.js` |
 | Creator learning goals and practice editor | `src/LessonExtensionEditor.jsx` |
 | Creator editor and JSON import | `src/Creator.jsx`, `src/marketplace.css` |

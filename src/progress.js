@@ -1,5 +1,5 @@
 export const STORAGE_KEY = 'curio.student.v1';
-export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2, savedCourses: {}, notes: {}, activePath: null, practiceAttempts: {}, practiceDays: [] });
+export const emptyProgress = () => ({ name: 'Learner', completed: {}, completionDates: {}, enrolled: [], activity: {}, dailyChallenges: [], goal: 2, savedCourses: {}, notes: {}, activePath: null, practiceAttempts: {}, practiceDays: [], completedLabs: {} });
 
 const recordKey = /^[a-z0-9-]{1,100}$/;
 const noteKey = /^[a-z0-9-]{1,100}:\d{1,2}$/;
@@ -52,6 +52,11 @@ export function completePractice(progress, date = localDate()) {
   return progress.practiceDays?.includes(date) ? progress : { ...progress, practiceDays: [...(progress.practiceDays || []), date] };
 }
 
+export function completeLab(progress, id, date = localDate()) {
+  if (!['fractions', 'budget', 'algorithms'].includes(id) || progress.completedLabs?.[id]) return progress;
+  return { ...progress, completedLabs: { ...progress.completedLabs, [id]: date }, activity: { ...progress.activity, [date]: (progress.activity[date] || 0) + 1 } };
+}
+
 export function chooseStudyPath(progress, id, now = Date.now()) {
   return { ...progress, activePath: { id, updatedAt: Math.max(now, (progress.activePath?.updatedAt || 0) + 1) } };
 }
@@ -78,6 +83,7 @@ export function readProgress(storage) {
       activePath: saved.activePath && recordKey.test(saved.activePath.id) && Number.isSafeInteger(saved.activePath.updatedAt) && saved.activePath.updatedAt >= 0 ? { id: saved.activePath.id, updatedAt: Math.min(saved.activePath.updatedAt, Date.now() + 300000) } : null,
       practiceAttempts: readPractice(saved.practiceAttempts),
       practiceDays: Array.isArray(saved.practiceDays) ? [...new Set(saved.practiceDays.filter(value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)))] : [],
+      completedLabs: saved.completedLabs && typeof saved.completedLabs === 'object' ? Object.fromEntries(Object.entries(saved.completedLabs).filter(([id, date]) => ['fractions', 'budget', 'algorithms'].includes(id) && typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date))) : {},
     };
   } catch { return emptyProgress(); }
 }
@@ -123,8 +129,9 @@ export function mergeProgress(previous, incoming) {
   for (const [date, count] of Object.entries(incoming.activity)) activity[date] = Math.max(activity[date] || 0, count);
   const completionDates = { ...incoming.completionDates, ...previous.completionDates };
   const dailyChallenges = [...new Set([...previous.dailyChallenges, ...incoming.dailyChallenges])];
+  const completedLabs = { ...incoming.completedLabs, ...previous.completedLabs };
   const recorded = {};
-  for (const date of [...Object.values(completionDates), ...dailyChallenges]) recorded[date] = (recorded[date] || 0) + 1;
+  for (const date of [...Object.values(completionDates), ...dailyChallenges, ...Object.values(completedLabs)]) recorded[date] = (recorded[date] || 0) + 1;
   for (const [date, count] of Object.entries(recorded)) activity[date] = Math.max(activity[date] || 0, count);
   return { ...incoming, completed, completionDates, activity,
     enrolled: [...new Set([...previous.enrolled, ...incoming.enrolled])],
@@ -134,5 +141,6 @@ export function mergeProgress(previous, incoming) {
     activePath: previous.activePath && (!incoming.activePath || previous.activePath.updatedAt > incoming.activePath.updatedAt) ? previous.activePath : incoming.activePath || null,
     practiceAttempts: readPractice({ ...incoming.practiceAttempts, ...previous.practiceAttempts }),
     practiceDays: [...new Set([...(previous.practiceDays || []), ...(incoming.practiceDays || [])])],
+    completedLabs,
   };
 }

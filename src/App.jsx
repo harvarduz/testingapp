@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Bookmark, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock3, Compass, Flame, GraduationCap, LayoutDashboard, Lightbulb, Menu, Search, Settings2, Sparkles, Sprout, Target, Trophy, X, Zap, Bell, RotateCcw, Plus, Minus, Route, Coins, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Bookmark, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock3, Compass, Flame, GraduationCap, LayoutDashboard, Lightbulb, Menu, Search, Settings2, Sparkles, Sprout, Target, Trophy, X, Zap, Bell, RotateCcw, Plus, Minus, Route, Coins, PanelLeftClose, PanelLeftOpen, FlaskConical } from 'lucide-react';
 import { BrandMark, CourseArt, HeroArt } from './Art.jsx';
 import { categories, courses as starterCourses, dailyChallenge } from './data.js';
-import { STORAGE_KEY, readProgress, localDate, completeLesson, completeChallenge, streakCount, courseCompleted, emptyProgress, mergeProgress, toggleSavedCourse, writeLessonNote, chooseStudyPath, recordPracticeAttempt, completePractice } from './progress.js';
+import { STORAGE_KEY, readProgress, localDate, completeLesson, completeChallenge, streakCount, courseCompleted, emptyProgress, mergeProgress, toggleSavedCourse, writeLessonNote, chooseStudyPath, recordPracticeAttempt, completePractice, completeLab } from './progress.js';
 import Landing from './Landing.jsx';
 import Creator from './Creator.jsx';
 import Account from './Account.jsx';
@@ -10,6 +10,7 @@ import { api } from './api.js';
 import { CourseShare, LessonNotes, ReviewQueue } from './StudyTools.jsx';
 import { WorkedLesson, StudyPaths, LearningMomentum, PracticeOverview, PracticeSession, RewardToast } from './LearningExperience.jsx';
 import { learningRewards } from './learning.js';
+import LearningLab from './LearningLab.jsx';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navItems = [
   { id: 'explore', label: 'Explore courses', icon: Compass },
   { id: 'practice', label: 'Daily practice', icon: Zap },
   { id: 'paths', label: 'Study paths', icon: Route },
+  { id: 'lab', label: 'Learning lab', icon: FlaskConical },
   { id: 'creators', label: 'Creator workspace', icon: GraduationCap },
 ];
 const views = [...navItems.map(n => n.id), 'achievements', 'home'];
@@ -106,7 +108,7 @@ function ProfileModal({ progress, update, close }) {
   const [name, setName] = useState(progress.name);
   const [goal, setGoal] = useState(progress.goal);
   const [error, setError] = useState('');
-  return <Modal title="Make yourself at home" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LITTLE CORNER</span><h2>Make yourself at home.</h2><p>A few small details for a learning journey that feels like you.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<label htmlFor="daily-goal">Your daily learning goal</label><select id="daily-goal" value={goal} onChange={e => setGoal(Number(e.target.value))}><option value={1}>A little curious · 1 activity a day</option><option value={2}>Keep growing · 2 activities a day</option><option value={3}>All in · 3 activities a day</option></select><span className="form-note">A lesson or daily challenge counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">Your preferences are saved in this browser. When signed in, your learning progress is also saved to your account.</p></div></Modal>;
+  return <Modal title="Make yourself at home" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LITTLE CORNER</span><h2>Make yourself at home.</h2><p>A few small details for a learning journey that feels like you.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<label htmlFor="daily-goal">Your daily learning goal</label><select id="daily-goal" value={goal} onChange={e => setGoal(Number(e.target.value))}><option value={1}>A little curious · 1 activity a day</option><option value={2}>Keep growing · 2 activities a day</option><option value={3}>All in · 3 activities a day</option></select><span className="form-note">A lesson, daily challenge, or completed lab counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">Your preferences are saved in this browser. When signed in, your learning progress is also saved to your account.</p></div></Modal>;
 }
 
 export default function App() {
@@ -239,6 +241,7 @@ export default function App() {
   const openPractice = (courseId, lessonIndex) => setModal({ type: 'practice-session', courseId, lessonIndex });
   const choosePath = id => { setProgress(current => chooseStudyPath(current, id)); scrollToStart(); };
   const recordAnswer = (question, correct, id) => setProgress(current => recordPracticeAttempt(current, question, correct, id));
+  const finishLab = id => { if (!progress.completedLabs?.[id]) celebrate('Lab challenge completed!', 30); setProgress(current => completeLab(current, id, today)); };
   const finishPractice = () => { if (!progress.practiceDays?.includes(today)) celebrate('Practice complete!', 20); setProgress(current => completePractice(current, today)); };
   const clearFilters = () => { setQuery(''); setCategory('All courses'); setLevel('All levels'); setDuration('Any duration'); };
   const saveCourse = id => { if (user) setSyncStatus('Saving to your account…'); setProgress(current => toggleSavedCourse(current, id)); };
@@ -273,8 +276,8 @@ export default function App() {
   const learningCourses = learningFilter === 'Saved' ? courses.filter(c => progress.savedCourses?.[c.id]?.saved) : enrolledCourses.filter(c => learningFilter === 'All courses' || (learningFilter === 'Completed' ? courseCompleted(progress, c) === c.lessons.length : courseCompleted(progress, c) < c.lessons.length));
   const dashboardCourses = enrolledCourses.filter(c => courseCompleted(progress, c) < c.lessons.length).slice(0, 3);
   const featured = dashboardCourses.length ? dashboardCourses : courses.slice(0, 3);
-  const pageTitle = { overview: 'Your learning, at a glance.', explore: 'Find your next course.', learning: 'My learning.', practice: 'Practice & review.', achievements: 'Your achievements.', creators: 'Creator workspace.', paths: 'Your next step, mapped out.' }[view];
-  const pageSubtitle = { overview: 'Your courses, daily goal, and next lesson in one place.', explore: 'Choose a subject, a level, and the time you have.', learning: 'Continue a course, revisit a finished one, or open your saved list.', practice: 'A new question each day, plus lessons you can revisit.', achievements: 'A record of the work you’ve put in.', creators: 'Write lessons, keep private drafts, and publish your courses.', paths: 'Follow connected courses with a practical goal.' }[view];
+  const pageTitle = { overview: 'Your learning, at a glance.', explore: 'Find your next course.', learning: 'My learning.', practice: 'Practice & review.', achievements: 'Your achievements.', creators: 'Creator workspace.', paths: 'Your next step, mapped out.', lab: 'A playground for real ideas.' }[view];
+  const pageSubtitle = { overview: 'Your courses, daily goal, and next lesson in one place.', explore: 'Choose a subject, a level, and the time you have.', learning: 'Continue a course, revisit a finished one, or open your saved list.', practice: 'A new question each day, plus lessons you can revisit.', achievements: 'A record of the work you’ve put in.', creators: 'Write lessons, keep private drafts, and publish your courses.', paths: 'Follow connected courses with a practical goal.', lab: 'Change a model, test a decision, and understand the result.' }[view];
   return <>
     {view === 'home' ? (
       <div inert={modal ? true : undefined}>
@@ -306,6 +309,7 @@ export default function App() {
           <div className="account-access">{sessionLoading ? <span>Opening your account…</span> : user ? <><span>Signed in as {user.name}</span><button onClick={signOut} disabled={signingOut}>{signingOut ? 'Signing out…' : 'Sign out'}</button></> : <><span>Save your learning across devices.</span><button onClick={() => setModal({ type: 'account' })}>Sign in / Create account</button></>}</div>
           {user && syncStatus && <p className={`sync-message ${syncStatus.startsWith('Saved') || syncStatus.startsWith('Saving') ? '' : 'sync-error'}`} role="status">{syncStatus}</p>}
           {view === 'creators' && <Creator user={user} onSession={acceptSession} onCatalogChange={refreshCatalog} onPreview={openCourse} onDirtyChange={onCreatorDirty} />}
+          {view === 'lab' && <LearningLab courses={courses} progress={progress} onComplete={finishLab} onOpen={openCourse} />}
           {view === 'paths' && <StudyPaths courses={courses} progress={progress} onChoose={choosePath} onOpen={openCourse} />}
           {view === 'overview' && <>
             <LearningMomentum progress={progress} date={today} />
@@ -327,7 +331,7 @@ export default function App() {
     </>}
     {modal?.type === 'course' && <CourseModal key={`${modal.course.id}:${modal.initialLesson ?? 'details'}`} initialLesson={modal.initialLesson ?? null} onSave={saveCourse} onNote={saveNote} onPractice={openPractice} signedIn={Boolean(user)} syncStatus={syncStatus} storageError={storageError} course={modal.course} progress={modal.course.preview ? emptyProgress() : progress} enroll={modal.course.preview ? () => {} : enroll} finish={modal.course.preview ? () => {} : finish} close={close}/>}
     {modal?.type === 'practice-session' && <Modal wide title="Targeted practice" onClose={close}><PracticeSession courses={courses} progress={progress} courseId={modal.courseId} lessonIndex={modal.lessonIndex} onRecord={recordAnswer} onComplete={finishPractice} onOpen={openCourse} /></Modal>}
-    {modal?.type === 'coins' && <Modal title="Your Curio coins" onClose={close}><div className="coin-dialog"><span className="curio-coin"><Coins size={35} /></span><h2>{coins} Curio coins</h2><p>Earn coins by learning something new and putting it into practice.</p><ul><li>Complete a new lesson <strong>25 coins</strong></li><li>Solve the daily challenge <strong>15 coins</strong></li><li>Finish your first successful practice session each day <strong>20 coins</strong></li></ul><p>Curio coins celebrate your progress. They have no cash value.</p></div></Modal>}
+    {modal?.type === 'coins' && <Modal title="Your Curio coins" onClose={close}><div className="coin-dialog"><span className="curio-coin"><Coins size={35} /></span><h2>{coins} Curio coins</h2><p>Earn coins by learning something new and putting it into practice.</p><ul><li>Complete a new lesson <strong>25 coins</strong></li><li>Solve the daily challenge <strong>15 coins</strong></li><li>Complete a learning lab for the first time <strong>30 coins</strong></li><li>Finish your first successful practice session each day <strong>20 coins</strong></li></ul><p>Curio coins celebrate your progress. They have no cash value.</p></div></Modal>}
     <RewardToast reward={reward} onDismiss={() => setReward(null)} />
     {modal?.type === 'account' && <Modal title="Your Curio account" onClose={close}><Account onSession={acceptSession} /></Modal>}
     {modal?.type === 'profile' && <ProfileModal progress={progress} update={setProgress} close={close}/>}

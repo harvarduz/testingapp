@@ -37,7 +37,7 @@ export function practiceQuestions(courses, progress, courseId, lessonIndex) {
 
 export function learningRewards(progress) {
   const lessons = Object.values(progress.completed).reduce((total, indexes) => total + indexes.length, 0);
-  const coins = lessons * 25 + progress.dailyChallenges.length * 15 + (progress.practiceDays || []).length * 20;
+  const coins = lessons * 25 + progress.dailyChallenges.length * 15 + (progress.practiceDays || []).length * 20 + Object.keys(progress.completedLabs || {}).length * 30;
   return { coins };
 }
 

@@ -15,18 +15,19 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 5. Register in the creator workspace, download/upload a template, edit, preview, save a private draft, then publish free.
 6. Use a separate browser to find the published course and author. Finish a lesson, create a student account, and resume its progress on another device.
 7. Collapse the desktop sidebar, follow a study path, inspect a worked example, and complete targeted practice. Show the mistake recommendations and Curio coin balance; repeat the session to demonstrate that coins are not duplicated.
-8. Show passing tests, explain Node/SQLite and the persistent deployment volume, and make a small source edit.
+8. Use Learning Lab to build an equivalent fraction, protect a savings goal, and lock an algorithm prediction before stepping through its trace. Show mistake feedback and one-time lab coins.
+9. Show passing tests, explain Node/SQLite and the persistent deployment volume, and make a small source edit.
 
 ## Criteria and evidence
 
 | Area | Implementation | Acceptance evidence |
 |---|---|---|
-| Functionality, 30 | Study paths, worked lessons, targeted practice, Curio coins, combined filters, bookmarks, private notes, direct course links, lessons/review, actual progress, accounts, imports, drafts, publishing | Student, study-tools, and marketplace suites; API ownership/persistence tests |
+| Functionality, 30 | Interactive labs, study paths, worked lessons, targeted practice, Curio coins, combined filters, bookmarks, private notes, direct course links, lessons/review, actual progress, accounts, imports, drafts, publishing | Student, study-tools, and marketplace suites; API ownership/persistence tests |
 | Content, 20 | 20 courses, 61 explanations/examples/quizzes, 18 subjects, accurate counts and author attribution | Content integrity test; published course in another browser |
 | UX/UI, 10 | Large readable editorial type, consistent controls, clear navigation, keyboard focus, responsive creator/student pages collapsible desktop navigation, mobile bottom navigation, and reduced-motion support | 320/390/768/1366 px tests, axe-core checks, screenshot review |
 | Presentation, 10 | Clear problem, complete student and creator stories, editable source, honest technical explanation | Demonstration above and README editing map |
 | Technology, 20 | React/Vite, Node 24, SQLite, salted scrypt, expiring HttpOnly sessions, same-origin writes, Docker deployment | Backend tests and production container replacement/volume test |
-| Creativity, 10 | Original subject art, adjustable pattern activity, live homepage lesson, creator lessons connected to actual student learning | Interactive preview and creator-to-student demonstration |
+| Creativity, 10 | Original subject art, interactive fraction/budget/algorithm labs, live homepage lesson, creator lessons connected to actual student learning | Interactive preview and creator-to-student demonstration |
 
 ## Validation and boundaries
 

@@ -95,6 +95,7 @@ try:
         'activePath': {'id': 'math-foundations', 'updatedAt': 100},
         'practiceAttempts': {'container-attempt': {'courseId': course_id, 'lessonIndex': 0, 'questionIndex': 0, 'correct': True, 'answeredAt': 100}},
         'practiceDays': ['2026-10-10'],
+        'completedLabs': {'fractions': '2026-10-12'},
     }, cookie, 'https://curio.example')
     assert status == 200
     command('rm', '-f', name)
@@ -111,6 +112,8 @@ try:
     assert restored['progress']['practiceAttempts']['container-attempt']['correct'] is True
     assert restored['progress']['practiceDays'] == ['2026-10-10']
     passed('Study paths, practice answers, and coin-earning days survive production container replacement')
+    assert restored['progress']['completedLabs'] == {'fractions': '2026-10-12'}
+    passed('Learning Lab completion survives replacement without requiring a database migration')
     assert request(base, '/api/auth/logout', 'POST', {}, cookie, 'https://unrelated.example')[0] == 403
     passed('Production rejects writes from an unrelated origin')
 finally:

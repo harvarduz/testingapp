@@ -34,7 +34,7 @@ with sync_playwright() as p:
     page = context.new_page()
     for width in [1366, 390]:
         page.set_viewport_size({'width': width, 'height': 1000})
-        for route in ['', '#overview', '#explore', '#learning', '#practice', '#achievements', '#creators', '#paths']:
+        for route in ['', '#overview', '#explore', '#learning', '#practice', '#achievements', '#creators', '#paths', '#lab']:
             page.goto(URL + route, wait_until='networkidle')
             audit(page, f'{route or "home"} at {width}px')
             if route == '#explore':
@@ -113,6 +113,16 @@ with sync_playwright() as p:
             dialog.get_by_role('button', name='See my results' if dialog.get_by_role('button', name='See my results').count() else 'Next question', exact=True).click()
         audit(page, f'Practice result at {width}px')
         page.get_by_role('button', name='Close dialog').click()
+        page.goto(URL + '#lab', wait_until='networkidle')
+        for label in ['Fraction studio', 'Budget challenge', 'Algorithm tracer']:
+            page.get_by_role('button', name=label, exact=True).click()
+            audit(page, f'{label} at {width}px')
+        page.get_by_role('textbox', name='Algorithm number list').fill('2, 4, 6')
+        page.get_by_role('spinbutton', name='Your predicted result').fill('12')
+        page.get_by_role('button', name='Lock prediction & start').click()
+        for _ in range(3): page.get_by_role('button', name='Run next step').click()
+        page.get_by_role('button', name='Compare my prediction').click()
+        audit(page, f'Completed algorithm trace at {width}px')
     browser.close()
 
 assert not any(item['violations'] for item in results), 'Automated WCAG violations found; see test-results/accessibility.json'
