@@ -43,7 +43,9 @@ The desktop sidebar can collapse to an icon rail and remembers that browser pref
 
 The platform adapts the supplied [Bloom Material Expressive reference](https://azizbeksafarov.github.io/design/material-expressive/dist/index.html). Google Sans Flex headings, Roboto body text, a 96 px navigation rail, tonal surfaces, rounded containers, outlined course cards, and pill buttons carry through the homepage, student workspace, lessons, labs, account forms, and creator editor.
 
-Blue is the default, with Google's `#0b57d0` filled-button accent and a readable dark-mode counterpart. Use the palette icon on desktop or **Appearance** in either mobile menu to choose Blue, Purple, Green, or Terracotta and light/dark mode. Material Color Utilities generates the reference's Tonal Spot foundation; the blue primary roles use Google brand colours. The initial release's saved purple default migrates once to blue. New explicit palette choices keep their colour across reloads. Appearance is remembered on the current browser; blocked storage keeps the controls usable and displays the persistence limitation. Existing expanded-navigation preferences are retained. The appearance dialog traps keyboard focus and returns it to a visible opener.
+Blue is the default, with Google's `#0b57d0` filled-button accent and a readable dark-mode counterpart. Use the palette icon on desktop or **Appearance** in either mobile menu to choose Blue, Purple, Green, or Terracotta and light/dark mode. Material Color Utilities generates the reference's Tonal Spot foundation, including primary containers; Google's brand colours apply to the blue primary/on-primary pair. Each palette option previews its own tones, with an outline and check identifying the selection. Appearance is remembered on the current browser; blocked storage keeps the controls usable and displays the persistence limitation. The initial release's saved purple default migrates once to blue; new explicit choices keep their colour across reloads. Existing expanded-navigation preferences are retained. The appearance dialog traps keyboard focus and returns it to a visible opener.
+
+Bloom's surface hierarchy separates an accented feature panel from neutral information panels and bordered course cards. Filled actions identify the next learning step; secondary actions are outlined or text buttons. Course covers and SVG artwork use paired Material colour roles in every palette and display mode. Cover hover/focus labels and mobile labels identify the action; the homepage's cards also show an explicit Explore course link. Fraction pieces use outlined unselected controls and filled selected controls, while the result stays on a neutral panel.
 
 Native buttons share Material state layers, bounded ripples, 48 px primary actions, a visible keyboard focus ring, and a brief pressed-shape transition. Pointer, keyboard, and touch retain their normal activation behaviour. Dragging away or beginning a scroll cancels feedback; disabled actions produce no ripples. Reduced motion keeps immediate state feedback without ripple animation. The ripple replaces the hover layer while active so the two layers do not reduce filled-button text contrast.
 
@@ -131,7 +133,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
 | Material tokens, typography, responsive presentation | `src/material.css` |
-| Palette generation, display modes, appearance controls | `src/Appearance.jsx` |
+| Palette generation, display modes, appearance controls | `src/Appearance.jsx`, `src/appearance-settings.css` |
 | Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |
 | Shared selection menus and responsive popup presentation | `src/SelectField.jsx`, `src/select.css` |
 | Consistent hover states, slider styling, and selected controls | `src/material-interactions.css` |
@@ -150,7 +152,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Course validation and publication rules | `shared/course.js` |
 | Accounts, sessions, SQLite, ownership | `server/app.js` |
 | Server and persistent-volume startup | `server/index.js`, `server/bootstrap.js` |
-| Original brand and subject artwork | `src/Art.jsx` |
+| Original brand and subject artwork, Material artwork tones | `src/Art.jsx`, `src/course-art.css` |
 
 Quiz answers use zero-based indices in `options`. Add course content with each new category so the subject has a useful destination. See `docs/competition-demo.md` for presentation and Ustoz evidence.
 

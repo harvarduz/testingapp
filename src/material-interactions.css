@@ -42,6 +42,10 @@ button {
   box-shadow: none;
   transform: none;
 }
+.hero-actions .button.outline:hover:not(:disabled) {
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
 .landing-enter:hover {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
@@ -118,7 +122,7 @@ button {
 .step-control button { width: 44px; height: 44px; }
 .step-control strong { color: var(--md-sys-color-on-primary-container); }
 .example-box > span { color: var(--md-sys-color-on-secondary-container); }
-.explore-intro > div > svg { color: var(--md-sys-color-on-primary-container); }
+.explore-intro > div > svg { color: var(--md-sys-color-primary); }
 .review-list > button:hover { border-color: var(--md-sys-color-outline-variant); }
 .lesson-list button:hover { background: transparent; }
 
@@ -171,6 +175,7 @@ button {
 .landing-course > button, .landing-course > button:hover { border: 0; border-radius: inherit; }
 .course-cover::before, .landing-course > button::before { z-index: 1; }
 .course-cover > .material-ripple, .landing-course > button > .material-ripple { z-index: 1; }
+@media (hover: none) { .course-cover .cover-arrow { opacity: 1; } }
 
 /* The practice illustration follows the active palette, including dark mode. */
 .practice-copy h2 { font-family: var(--heading); font-weight: 400; }

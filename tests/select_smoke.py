@@ -101,6 +101,7 @@ with tempfile.TemporaryDirectory(prefix='curio-select-') as directory:
             expect(subject).to_be_focused();expect(page.get_by_role('listbox')).to_have_count(0)
             subject.click()
             expect(page.get_by_role('option',name='Personal finance',exact=True)).to_be_focused()
+            page.mouse.move(110,110)
             page.mouse.click(110,110)
             expect(page.get_by_role('listbox')).to_have_count(0)
             expect(subject).to_be_focused()

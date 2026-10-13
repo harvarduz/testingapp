@@ -238,7 +238,7 @@ function LandingCourse({ course, onOpen }) {
           <span className={`landing-course-category ${course.color}-text`}>{course.label}</span>
           <span className="landing-course-title">{course.title}</span>
           <span className="landing-course-description">{course.description}</span>
-          <span className="landing-course-bottom"><span>{course.lessons.length} lessons · {course.minutes} min</span><ArrowUpRight size={18} /></span>
+          <span className="landing-course-bottom"><span>{course.lessons.length} lessons · {course.minutes} min</span><span className="landing-course-open">Explore course<ArrowUpRight size={16} /></span></span>
         </span>
       </button>
     </article>

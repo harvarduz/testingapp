@@ -4,6 +4,10 @@ The Material Expressive adaptation was validated on 12 October 2026; its Google 
 
 The 13 October interaction update replaces native dropdown menus throughout the catalog, learner preferences, creator forms, and algorithm lab. Hover preserves selected colours and geometry; practice artwork and sliders use the current palette. Unsaved creator navigation uses a themed confirmation, and learning updates dismiss on Escape, outside clicks, or route changes. Final opened-menu checks passed against the compiled production frontend.
 
+The later Bloom hierarchy update separates feature panels, information surfaces, and actions. Google blue applies to the primary/on-primary pair; containers now follow the reference's Tonal Spot generation. Each palette choice shows its own tones, and the appearance preview demonstrates a neutral course card with filled and outlined actions. Course SVG geometry is retained while its fills and strokes use paired Material roles. Landing illustrations, secondary course actions, static learning summaries, and fraction controls follow the same hierarchy. Reference heading/body/label sizes are explicit so readable body text does not change control heights.
+
+For this appearance update, the production build and 341 checks were rerun: backend, student, landing, learning, labs, buttons, hover, selects, and all 236 main/palette/opened-menu accessibility states. The table also retains the successful marketplace, study-tools, navigation, and container checks from the earlier 13 October interaction release. Visual review used 22 screenshots with each actual display mode and computed surface recorded; appearance was separately checked at 320 and 390 px, including keyboard selection and stored preferences.
+
 | Suite | Passed | What it verifies |
 |---|---:|---|
 | `npm test` | 28 | Content, course imports, progress merges, study paths, practice priority, Curio coin limits, accounts, private drafts, publication, origin protection, and persistence |

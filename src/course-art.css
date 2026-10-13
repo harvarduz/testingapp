@@ -1,0 +1,8 @@
+.course-art {
+  --art-ink: currentColor;
+  --art-paper: var(--md-sys-color-surface-container-lowest);
+  --art-strong: color-mix(in srgb, var(--art-ink) 82%, var(--art-paper));
+  --art-medium: color-mix(in srgb, var(--art-ink) 58%, var(--art-paper));
+  --art-soft: color-mix(in srgb, var(--art-ink) 32%, var(--art-paper));
+  --art-wash: color-mix(in srgb, var(--art-ink) 12%, var(--art-paper));
+}

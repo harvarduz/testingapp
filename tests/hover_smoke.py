@@ -107,7 +107,7 @@ with tempfile.TemporaryDirectory(prefix='curio-hover-') as directory:
                     assert course.locator('.course-art').evaluate('(node)=>getComputedStyle(node).transform') == 'none'
 
                     page.goto(url+'#explore',wait_until='networkidle')
-                    assert page.locator('.explore-intro > div > svg').evaluate('(node)=>getComputedStyle(node).color') == resolved_role(page,'on-primary-container')
+                    assert page.locator('.explore-intro > div > svg').evaluate('(node)=>getComputedStyle(node).color') == resolved_role(page,'primary')
                     active = page.locator('.category-tabs > button.active')
                     stable_hover(page, active)
                     inactive = page.locator('.category-tabs > button:not(.active)').first
