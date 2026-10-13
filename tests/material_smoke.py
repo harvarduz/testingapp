@@ -64,9 +64,9 @@ with tempfile.TemporaryDirectory(prefix='curio-material-') as directory:
             page.evaluate('document.fonts.ready')
             assert page.evaluate('document.fonts.check(\'400 16px "Google Sans Flex"\') && document.fonts.check(\'400 16px "Roboto"\')')
             assert page.locator('.sidebar').bounding_box()['width'] == 96
-            assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim()") == '#65558f'
-            assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface').trim()") == '#fdf7ff'
-            passed('Self-hosted reference fonts load; the default 96px rail and actual Bloom purple tonal roles match the reference')
+            assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim()") == '#0b57d0'
+            assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface').trim()") == '#f9f9ff'
+            passed('Self-hosted reference fonts load; the reference rail uses the requested Google blue brand accent')
 
             for palette in PALETTES:
                 for mode in ['Light', 'Dark']:
@@ -93,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix='curio-material-') as directory:
                 passed(f'{palette} switches correctly, persists across routes/reload and has audited light/dark pages and settings')
 
             page.get_by_role('button', name='Customize appearance', exact=True).click()
-            dialog.get_by_role('button', name='Purple', exact=True).click()
+            dialog.get_by_role('button', name='Blue', exact=True).click()
             dialog.get_by_role('button', name='Light', exact=True).click()
             page.keyboard.press('Escape')
             for mode in ['light','dark']:

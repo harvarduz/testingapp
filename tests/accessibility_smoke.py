@@ -33,7 +33,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox'])
     context = browser.new_context(viewport={'width': 1366, 'height': 1000}, reduced_motion='reduce')
     if os.environ.get('CURIO_TEST_THEME') == 'dark':
-        context.add_init_script("localStorage.setItem('curio.appearance.v1', JSON.stringify({mode:'dark',seed:'#6750a4'}))")
+        context.add_init_script("localStorage.setItem('curio.appearance.v1', JSON.stringify({mode:'dark',seed:'#1a73e8',version:2}))")
     page = context.new_page()
     for width in [1366, 390]:
         page.set_viewport_size({'width': width, 'height': 1000})

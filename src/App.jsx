@@ -260,7 +260,11 @@ export default function App() {
   const close = React.useCallback(() => {
     setModalState(null);
     if (location.hash.startsWith('#course=')) { history.replaceState(null, '', '#explore'); setLinkedCourseId(null); }
-    requestAnimationFrame(() => modalOpener.current?.focus());
+    requestAnimationFrame(() => {
+      // Restore focus after inert is removed, without stealing a newer focus
+      // request such as the search shortcut immediately after Escape.
+      if (document.activeElement === document.body) modalOpener.current?.focus();
+    });
   }, []);
   const acceptSession = session => {
     const owner = savedOwner();

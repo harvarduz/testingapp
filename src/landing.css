@@ -59,7 +59,7 @@
 .landing-button-dark:active:not(:disabled) { transform: translateY(0); }
 .landing-button-dark:disabled { background: #c4cebb; color: #fdfdf7; opacity: 1; }
 .landing-try-link { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #677754 !important; padding-block: 10px; }
-.landing-try-link:hover { color: #294f3b !important; }
+.landing-try-link:hover { color: var(--md-sys-color-primary) !important; }
 .landing-hero-note { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #6d7362; margin-top: 19px; }
 .landing-hero-note svg { color: #93a477; }
 .landing-preview-scene { position: relative; min-width: 0; padding: 39px 40px 14px 29px; }

@@ -1,21 +1,30 @@
 import React, { createContext, useContext, useLayoutEffect, useState } from 'react';
 import { Check, Moon, Palette, Sun } from 'lucide-react';
 import { Hct, MaterialDynamicColors, SchemeTonalSpot, argbFromHex, hexFromArgb } from '@material/material-color-utilities';
+import { useMaterialButtons } from './MaterialButtons.jsx';
 
 const storageKey = 'curio.appearance.v1';
 export const appearancePalettes = [
-  { name: 'Purple', seed: '#6750a4' },
   { name: 'Blue', seed: '#1a73e8' },
+  { name: 'Purple', seed: '#6750a4' },
   { name: 'Green', seed: '#00856a' },
   { name: 'Terracotta', seed: '#ad4d25' },
 ];
 const defaults = { mode: 'light', seed: appearancePalettes[0].seed };
 const AppearanceContext = createContext(null);
+const googleBlueRoles = {
+  light: { primary: '#0b57d0', 'on-primary': '#ffffff', 'primary-container': '#d3e3fd', 'on-primary-container': '#041e49' },
+  dark: { primary: '#a8c7fa', 'on-primary': '#062e6f', 'primary-container': '#0842a0', 'on-primary-container': '#d3e3fd' },
+};
 
 function readAppearance() {
   try {
     const value = JSON.parse(localStorage.getItem(storageKey));
-    return { mode: value?.mode === 'dark' ? 'dark' : 'light', seed: appearancePalettes.some(palette => palette.seed === value?.seed) ? value.seed : defaults.seed };
+    const savedSeed = appearancePalettes.some(palette => palette.seed === value?.seed) ? value.seed : defaults.seed;
+    // The first release persisted its purple default without recording a choice.
+    // Migrate that legacy setting once; new explicit choices keep their colour.
+    const seed = value?.version !== 2 && savedSeed === '#6750a4' ? defaults.seed : savedSeed;
+    return { mode: value?.mode === 'dark' ? 'dark' : 'light', seed };
   } catch { return defaults; }
 }
 
@@ -24,6 +33,11 @@ function applyAppearance({ mode, seed }) {
   const colors = new MaterialDynamicColors();
   for (const color of colors.allColors) {
     document.documentElement.style.setProperty(`--md-sys-color-${color.name.replaceAll('_', '-')}`, hexFromArgb(color.getArgb(scheme)));
+  }
+  if (seed === defaults.seed) {
+    for (const [role, color] of Object.entries(googleBlueRoles[mode])) {
+      document.documentElement.style.setProperty(`--md-sys-color-${role}`, color);
+    }
   }
   document.documentElement.dataset.theme = mode;
   document.documentElement.style.colorScheme = mode;
@@ -35,11 +49,12 @@ export function initializeAppearance() { applyAppearance(readAppearance()); }
 export function useAppearance() { return useContext(AppearanceContext); }
 
 export function AppearanceProvider({ children }) {
+  useMaterialButtons();
   const [appearance, setAppearance] = useState(readAppearance);
   const [storageError, setStorageError] = useState(false);
   useLayoutEffect(() => {
     applyAppearance(appearance);
-    try { localStorage.setItem(storageKey, JSON.stringify(appearance)); setStorageError(false); }
+    try { localStorage.setItem(storageKey, JSON.stringify({ ...appearance, version: 2 })); setStorageError(false); }
     catch { setStorageError(true); }
   }, [appearance]);
   const toggleMode = () => setAppearance(value => ({ ...value, mode: value.mode === 'light' ? 'dark' : 'light' }));

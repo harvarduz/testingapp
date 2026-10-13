@@ -43,7 +43,9 @@ The desktop sidebar can collapse to an icon rail and remembers that browser pref
 
 The platform adapts the supplied [Bloom Material Expressive reference](https://azizbeksafarov.github.io/design/material-expressive/dist/index.html). Google Sans Flex headings, Roboto body text, a 96 px navigation rail, tonal surfaces, rounded containers, outlined course cards, and pill buttons carry through the homepage, student workspace, lessons, labs, account forms, and creator editor.
 
-Use the palette icon on desktop or **Appearance** in either mobile menu to choose Purple, Blue, Green, or Terracotta and light/dark mode. Material Color Utilities generates the reference's Tonal Spot colour roles. Appearance is remembered on the current browser; blocked storage keeps the controls usable and displays the persistence limitation. Existing expanded-navigation preferences are retained. The appearance dialog traps keyboard focus and returns it to a visible opener.
+Blue is the default, with Google's `#0b57d0` filled-button accent and a readable dark-mode counterpart. Use the palette icon on desktop or **Appearance** in either mobile menu to choose Blue, Purple, Green, or Terracotta and light/dark mode. Material Color Utilities generates the reference's Tonal Spot foundation; the blue primary roles use Google brand colours. The initial release's saved purple default migrates once to blue. New explicit palette choices keep their colour across reloads. Appearance is remembered on the current browser; blocked storage keeps the controls usable and displays the persistence limitation. Existing expanded-navigation preferences are retained. The appearance dialog traps keyboard focus and returns it to a visible opener.
+
+Native buttons share Material state layers, bounded ripples, 48 px primary actions, a visible keyboard focus ring, and a brief pressed-shape transition. Pointer, keyboard, and touch retain their normal activation behaviour. Dragging away or beginning a scroll cancels feedback; disabled actions produce no ripples. Reduced motion keeps immediate state feedback without ripple animation. The ripple replaces the hover layer while active so the two layers do not reduce filled-button text contrast.
 
 ## Data and account behavior
 
@@ -82,6 +84,7 @@ Browser suites require Python Playwright and Chromium. Start the application for
 python tests/browser_smoke.py
 python tests/landing_smoke.py
 python tests/accessibility_smoke.py
+python tests/button_smoke.py
 ```
 
 Set `CURIO_TEST_URL` to use another application server. Accessibility checks use the npm-installed axe-core on desktop/mobile pages, dialogs, and the editor. Automated checks supplement manual keyboard and visual review; they do not certify complete WCAG compliance.
@@ -99,6 +102,8 @@ python tests/material_smoke.py
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
 
 The Material suite checks reference colours/fonts, all four palettes in both display modes, persistence, mobile appearance dialogs, reduced motion, blocked/corrupt storage, layout, and 80 additional axe states. Run the full accessibility suite again with `CURIO_TEST_THEME=dark` to audit dark lessons, feedback, private notes, and authenticated course editors. Only run these writing browser suites against a development/test database.
+
+The button suite checks one-time legacy appearance migration, pointer/ripple geometry and cleanup, native Enter/Space activation, disabled controls, cancelled touch gestures, real mobile touchscreen activation, reduced motion, and Escape followed immediately by the search shortcut.
 
 Production container and persistent-volume checks:
 
@@ -118,6 +123,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
 | Material tokens, typography, responsive presentation | `src/material.css` |
 | Palette generation, display modes, appearance controls | `src/Appearance.jsx` |
+| Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |
 | Earlier layout and learning-control foundations | `src/editorial.css` |
 | Learning and marketing layout foundations | `src/styles.css`, `src/landing.css` |
 | Courses and original subject lessons | `src/data.js`, `src/catalog.js` |
