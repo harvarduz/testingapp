@@ -160,6 +160,7 @@ with tempfile.TemporaryDirectory(prefix='curio-platform-ux-') as directory:
                 for lesson_index in [0, len(course['lessons']) - 2, len(course['lessons']) - 1]:
                     lesson = course['lessons'][lesson_index]
                     dialog.locator('.lesson-list button').nth(lesson_index).click()
+                    assert dialog.evaluate('(node)=>node.scrollTop') == 0
                     expect(dialog.locator('.worked-example-heading')).to_contain_text('Step 1 of')
                     for _ in range(len(lesson['steps']) - 1): dialog.get_by_role('button', name='Next step', exact=True).click()
                     expect(dialog.locator('.worked-example-heading')).to_contain_text(f"Step {len(lesson['steps'])} of {len(lesson['steps'])}")
@@ -190,6 +191,19 @@ with tempfile.TemporaryDirectory(prefix='curio-platform-ux-') as directory:
             expect(learner.get_by_role('button', name='0 Curio coins', exact=True)).to_be_visible()
             passed('60 original/application lessons across every course have working example steps and explained exercises without premature completion or coins')
             passed('Wrong inline answers explain the mistake, retry requires a new choice, and duplicate activation records one attempt')
+            learner.get_by_role('button', name='Thinking in numbers', exact=True).click()
+            dialog = learner.get_by_role('dialog')
+            dialog.get_by_role('button', name='Continue learning', exact=True).click()
+            assert dialog.evaluate('(node)=>node.scrollTop') == 0
+            expect(dialog).to_be_focused()
+            dialog.get_by_role('button', name='Got it. Let me try!', exact=True).click()
+            assert dialog.evaluate('(node)=>node.scrollTop') == 0
+            expect(dialog).to_be_focused()
+            dialog.get_by_role('button', name='Revisit the idea', exact=True).click()
+            assert dialog.evaluate('(node)=>node.scrollTop') == 0
+            expect(dialog).to_be_focused()
+            dialog.get_by_role('button', name='Close dialog', exact=True).click()
+            passed('Long mobile lessons start at the top; lesson/check/revisit transitions reset scroll and focus without losing progress')
             held_login = []
             def delay_login(route):
                 held_login.append((route, route.fetch()))
