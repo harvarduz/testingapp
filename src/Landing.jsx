@@ -11,7 +11,7 @@ import { categories } from './data.js';
 import { AppearanceControls } from './Appearance.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import './landing.css';
-import { ScrollLearningStory, ScrollNumber, useLandingMotion } from './LandingMotion.jsx';
+import { ScrollCatalog, ScrollSkills, useLandingMotion } from './LandingMotion.jsx';
 
 const navigation = [
   { href: '#how-it-works', label: 'How it works' },
@@ -277,14 +277,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           <LessonPreview onContinue={() => onOpenCourse(courses[0])} />
         </section>
 
-        <div className="landing-facts-wrap">
-          <div className="landing-container landing-facts">
-            <p>Big subjects.<br /><strong>A manageable place to start.</strong></p>
-            <div><ScrollNumber value={courses.length} /><span>courses to explore</span></div>
-            <div><ScrollNumber value={lessonCount} /><span>hands-on lessons</span></div>
-            <div><ScrollNumber value={subjectCount} /><span>subjects to discover</span></div>
-          </div>
-        </div>
+        <ScrollCatalog courseCount={courses.length} lessonCount={lessonCount} subjectCount={subjectCount} />
 
         <section className="landing-section landing-container landing-method" id="how-it-works" aria-labelledby="method-title">
           <div className="landing-section-heading" data-reveal>
@@ -301,7 +294,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           </div>
         </section>
 
-        <ScrollLearningStory onContinue={() => onOpenCourse(courses.find(course => course.id === 'numbers') || courses[0], 4)} />
+        <ScrollSkills onOpenLesson={index => { const course = courses.find(item => item.id === 'numbers'); if (course) onOpenCourse(course, index); }} />
 
         <section className="landing-course-section" id="courses" aria-labelledby="landing-courses-title">
           <div className="landing-container">

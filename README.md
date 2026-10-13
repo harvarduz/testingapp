@@ -55,11 +55,13 @@ Hover uses a consistent state layer; selected chips, quiz choices, course titles
 
 ## Landing motion
 
-The homepage uses small native animations, with no animation library or remote motion assets. Catalog counts animate once when visible and keep stable numbers for screen readers. Section and course entrances use opacity/transform, preserve layout space, and reveal immediately on keyboard focus. The decorative hero animation runs once.
+Curio keeps the Bloom appearance and uses [SAT Stars](https://satstars.uz/) as a reference for **scroll reactions**. The reference was inspected from TLS-verified assets in Chromium: at a fixed scroll position its score/gauge stop, and returning to an earlier position restores the same frame.
 
-A scroll-driven apple-price example changes its explanation, prices and bar proportions through Notice → Compare → Apply. It shows why a $6 pack of three apples and an $8 pack of five should be compared per apple, then explains the 20% difference and the budget/quantity trade-off. The step buttons work with keyboard and touch; the lesson link opens the actual unit-price lesson.
+The existing catalog statistics now use that behavior. Native scrolling directly sets the course, lesson and subject numbers, circular fills and pointer positions. Scrolling back reverses them; stopping freezes them. Final totals come from the actual catalog. Screen readers always receive those complete totals, and the number widths stay reserved. The section pins briefly while scrolling and has a normal link to continue to How it works.
 
-Scrolling stays native. Animation frames are requested only for scroll updates or the short visible counter sequence; no JavaScript loop runs while idle. Reduced motion, short viewports and browsers without IntersectionObserver use a compact diagram with manual step selection. Reduced motion shows real totals immediately and disables entrances/decorative movement. Preferences can change while the page is open.
+The new knowledge block connects fractions, percentages and unit prices through accurate examples. Scroll draws each connection, updates the illustrated idea count and highlights the related explanation. Keyboard/touch buttons can also select a skill. Each action opens the corresponding real lesson in Thinking in numbers. The map is an example learning path; scrolling does not complete lessons or award coins.
+
+Both scenes use native scroll, small SVGs and event-scheduled animation frames without an animation library or remote motion assets. Only visible scenes animate; a scene leaving view settles to its endpoint. There is no idle JavaScript animation loop. Reduced motion, very short screens and missing IntersectionObserver show finished statistics and connections without a pinned spacer. Compact knowledge maps retain manual skill selection and real lesson entry. Preferences can change while the page is open. Existing entrances preserve layout and reveal immediately on keyboard focus; the hero decoration runs once.
 
 ## Data and account behavior
 
@@ -145,7 +147,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Change | File |
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
-| Scroll counters, entrances and the animated learning diagram | `src/LandingMotion.jsx`, `src/landing-motion.css` |
+| Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
 | Material tokens, typography, responsive presentation | `src/material.css` |
 | Palette generation, display modes, appearance controls | `src/Appearance.jsx`, `src/appearance-settings.css` |
 | Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |

@@ -8,7 +8,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 
 ## Demonstration
 
-1. Show the public page on desktop and mobile. Scroll into the live catalog counters, then through Notice → Compare → Apply in the apple-price diagram; reverse the scroll and use its step buttons. Open its actual unit-price lesson. Try a wrong hero preview answer and recover; the preview awards no progress.
+1. Show the public page on desktop and mobile. Scroll through the catalog gauges, stop to show that the numbers freeze, and reverse to restore an earlier frame. Continue to the knowledge map: connect fractions, percentages and unit prices, select a skill with the keyboard, and open its real lesson. Try a wrong hero preview answer and recover; the preview awards no progress.
 2. Open Thinking in numbers. Adjust the sequence, step through the worked example, answer an inline exercise incorrectly and retry with its explanation. Complete the separate lesson check, refresh My learning, and continue. Show one of the appended application lessons, such as unit prices.
 3. Save a course for later, open My learning → Saved, write a private lesson note, and copy its course link. Reopen a completed lesson from Practice & review and show that totals do not increase.
 4. Combine subject, level, and duration filters; search for an absent course, clear filters, and browse a non-STEM subject such as Languages or Design.
