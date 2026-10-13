@@ -33,6 +33,8 @@ All 121 starter lessons include learning goals, a stepped worked example, a comm
 
 The homepage’s **Make the idea work** section offers three practice models: shade a target fraction, find a discount and compare editable pack prices. Calculations update as you interact; checking gives a specific explanation, and each model opens its related lesson. Blank or invalid prices/quantities get field-level recovery instructions. Unit prices are compared exactly before the displayed amounts are rounded. These local previews award no completion or coins. Catalog gauges show their actual inventory totals throughout scrolling, with **Show all totals** for immediate access.
 
+The **Small ideas. A bigger picture.** particle scene follows the requested SI.gov motion reference: dots reshape into Curio lettering, an orbit and an open book. Scroll chooses the scene until a view is selected manually. Pointer movement displaces the dots; Pause/Play controls the orbit. Canvas draws at approximately 30 times per second with 900 desktop or 480 narrow-screen points and pixel density capped at 2. Settled lettering/books, offscreen scenes and hidden tabs stop animation frames. Reduced motion and missing observer support use static shapes; without Canvas, the brand remains visible. No animation library or remote animation asset is required.
+
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
 **Learning Lab** makes ideas observable: shade equivalent fractions, adjust a student budget while protecting essential needs and savings, or lock an algorithm prediction before tracing each update. Labs link to their related lessons. Completing each lab earns 30 coins once and contributes one activity to the daily learning goal.
@@ -105,6 +107,7 @@ python tests/landing_smoke.py
 python tests/accessibility_smoke.py
 python tests/button_smoke.py
 python tests/skill_playground_smoke.py
+python tests/particle_story_smoke.py
 ```
 
 Set `CURIO_TEST_URL` to use another application server. Accessibility checks use the npm-installed axe-core on desktop/mobile pages, dialogs, and the editor. Automated checks supplement manual keyboard and visual review; they do not certify complete WCAG compliance.
@@ -150,6 +153,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Change | File |
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
+| Decorative particle lettering, orbit, book and motion controls | `src/ParticleStory.jsx`, `src/particle-story.css` |
 | Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
 | Homepage practice models and exact pack comparisons | `src/SkillPlayground.jsx`, `src/skill-playground.css`, `src/skillModels.js` |
 | Material tokens, typography, responsive presentation | `src/material.css` |

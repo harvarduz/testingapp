@@ -1,0 +1,19 @@
+.landing-particle-story { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); margin-block: 12px 32px; }
+.particle-story-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: center; padding-block: 60px; }
+.particle-story-copy { min-width: 0; }.particle-story-copy > .landing-kicker { color: inherit; }
+.particle-story-copy > h2 { font: 400 clamp(38px, 4.5vw, 62px)/1.08 var(--heading); letter-spacing: -1.5px; margin-block: 24px; }
+.particle-story-copy > p { font: 400 18px/29px 'Roboto', sans-serif; max-width: 380px; margin-bottom: 28px; }
+.particle-story-figure { min-width: 0; margin: 0; }.particle-story-stage { width: 100%; aspect-ratio: 1.6; position: relative; }
+.particle-story-stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.particle-story-fallback { position: absolute; inset: 0; display: grid; place-items: center; font: 600 clamp(60px, 11vw, 160px)/1 var(--heading); }
+.particle-story-stage[data-canvas-ready='true'] .particle-story-fallback { display: none; }
+.particle-story-figure > figcaption { font: 400 13px/21px 'Roboto', sans-serif; text-align: center; margin-top: 12px; }
+.particle-story-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; margin-top: 24px; }
+.particle-story-controls > [role='group'] { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.landing .particle-story-controls button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 11px 16px; border-radius: 28px; border: 1px solid var(--md-sys-color-on-primary-container); background: transparent; color: var(--md-sys-color-on-primary-container); font: 500 14px/22px var(--heading); }
+.landing .particle-story-controls button[aria-pressed='true'] { background: var(--md-sys-color-on-primary-container); color: var(--md-sys-color-primary-container); }
+.landing .particle-story-controls button { transition: box-shadow .18s var(--material-motion), border-radius .2s var(--material-motion); }
+.landing .particle-story-controls > .particle-motion-control { border: 0; }
+.particle-motion-note { font: 400 13px/21px 'Roboto', sans-serif; }
+@media (max-width: 900px) { .particle-story-layout { grid-template-columns: 1fr; gap: 28px; padding-block: 44px; }.particle-story-copy > h2 br { display: none; }.particle-story-copy > h2 { font-size: 40px; line-height: 48px; margin-block: 18px; }.particle-story-copy > p { max-width: 620px; }.particle-story-stage { max-width: 720px; margin-inline: auto; }.particle-story-copy > .landing-button { min-height: 48px; } }
+@media (max-width: 480px) { .particle-story-copy > h2 { font-size: 36px; line-height: 42px; letter-spacing: -1px; }.particle-story-copy > p { font-size: 16px; line-height: 26px; }.particle-story-layout { gap: 12px; }.particle-story-stage { aspect-ratio: 1.4; }.landing .particle-story-controls button { padding-inline: 12px; font-size: 13px; }.particle-story-controls { gap: 8px; }.particle-story-controls > [role='group'] { gap: 6px; } }

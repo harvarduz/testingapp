@@ -11,6 +11,7 @@ import { categories } from './data.js';
 import { AppearanceControls } from './Appearance.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import SkillPlayground from './SkillPlayground.jsx';
+import ParticleStory from './ParticleStory.jsx';
 import './landing.css';
 import { ScrollCatalog, ScrollSkills, useLandingMotion } from './LandingMotion.jsx';
 
@@ -277,6 +278,8 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           </div>
           <LessonPreview onContinue={() => onOpenCourse(courses[0])} />
         </section>
+
+        <ParticleStory onExplore={() => onExplore()} />
 
         <ScrollCatalog courseCount={courses.length} lessonCount={lessonCount} subjectCount={subjectCount} />
 
