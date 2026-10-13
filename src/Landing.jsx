@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, BookOpen, Check, ChevronDown,
   Clock3, Lightbulb, Menu, MoveUpRight, Sparkles, X,
@@ -11,6 +11,7 @@ import { categories } from './data.js';
 import { AppearanceControls } from './Appearance.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import './landing.css';
+import { ScrollLearningStory, ScrollNumber, useLandingMotion } from './LandingMotion.jsx';
 
 const navigation = [
   { href: '#how-it-works', label: 'How it works' },
@@ -233,7 +234,7 @@ function StepIllustration({ type }) {
 
 function LandingCourse({ course, onOpen }) {
   return (
-    <article className="landing-course">
+    <article className="landing-course" data-reveal>
       <button onClick={() => onOpen(course)} aria-label={`Explore ${course.title}`}>
         <span className={`landing-course-art ${course.color}`}><CourseArt type={course.art} /><span>{course.level}</span></span>
         <span className="landing-course-content">
@@ -248,10 +249,14 @@ function LandingCourse({ course, onOpen }) {
 }
 
 export default function Landing({ courses, onExplore, onEnter, onOpenCourse, hasProgress, onCreate, accountMenuProps, serviceError, onRetry, onAppearance }) {
+  const root = useRef(null);
+  useLandingMotion(root);
+  const subjectCount = new Set(courses.map(course => course.category)).size;
   const lessonCount = courses.reduce((count, course) => count + course.lessons.length, 0);
 
   return (
-    <div className="landing" id="home">
+    <div className="landing" id="home" ref={root}>
+      <div className="landing-reading-progress" aria-hidden="true" />
       <a className="skip-link" href="#landing-main">Skip to content</a>
       <LandingHeader onAppearance={onAppearance} onEnter={onEnter} hasProgress={hasProgress} accountMenuProps={accountMenuProps} />
 
@@ -275,20 +280,20 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         <div className="landing-facts-wrap">
           <div className="landing-container landing-facts">
             <p>Big subjects.<br /><strong>A manageable place to start.</strong></p>
-            <div><strong>{courses.length}</strong><span>courses to explore</span></div>
-            <div><strong>{lessonCount}</strong><span>hands-on lessons</span></div>
-            <div><strong>Your pace.</strong><span>every step of the way</span></div>
+            <div><ScrollNumber value={courses.length} /><span>courses to explore</span></div>
+            <div><ScrollNumber value={lessonCount} /><span>hands-on lessons</span></div>
+            <div><ScrollNumber value={subjectCount} /><span>subjects to discover</span></div>
           </div>
         </div>
 
         <section className="landing-section landing-container landing-method" id="how-it-works" aria-labelledby="method-title">
-          <div className="landing-section-heading">
+          <div className="landing-section-heading" data-reveal>
             <div><span className="landing-kicker">HOW IT WORKS</span><h2 id="method-title">Understand the idea.<br />Put it to work.</h2></div>
             <p>Start with one idea, see it in action, then test your understanding. A complete lesson in a few focused minutes.</p>
           </div>
           <div className="landing-steps">
             {learningSteps.map((step, index) => (
-              <article className="landing-step" key={step.title}>
+              <article className="landing-step" key={step.title} data-reveal style={{ '--reveal-delay': `${index * 70}ms` }}>
                 <StepIllustration type={step.illustration} />
                 <div className="landing-step-copy"><span>{String(index + 1).padStart(2, '0')}</span><div><h3>{step.title}</h3><p>{step.description}</p></div></div>
               </article>
@@ -296,9 +301,11 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           </div>
         </section>
 
+        <ScrollLearningStory onContinue={() => onOpenCourse(courses.find(course => course.id === 'numbers') || courses[0], 4)} />
+
         <section className="landing-course-section" id="courses" aria-labelledby="landing-courses-title">
           <div className="landing-container">
-            <div className="landing-section-heading">
+            <div className="landing-section-heading" data-reveal>
               <div><span className="landing-kicker">FOLLOW AN INTEREST</span><h2 id="landing-courses-title">Pick a place to start.</h2></div>
               <button className="landing-text-button" onClick={() => onExplore()}>Explore all {courses.length} courses<ArrowRight size={17} /></button>
             </div>
@@ -310,16 +317,16 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
 
         <section className="landing-section landing-container landing-subjects" id="subjects" aria-labelledby="subjects-title">
-          <div className="landing-section-heading"><div><span className="landing-kicker">ROOM FOR EVERY INTEREST</span><h2 id="subjects-title">Where will curiosity take you?</h2></div><p>A new skill for school, a question about the world, or something just for you. Start with a subject.</p></div>
+          <div className="landing-section-heading" data-reveal><div><span className="landing-kicker">ROOM FOR EVERY INTEREST</span><h2 id="subjects-title">Where will curiosity take you?</h2></div><p>A new skill for school, a question about the world, or something just for you. Start with a subject.</p></div>
           <div className="landing-subject-grid">{categories.slice(1).map((subject, index) => {
             const Icon = subjectIcons[index] || BookOpen;
             const count = courses.filter(course => course.category === subject).length;
-            return <button key={subject} onClick={() => onExplore(subject)}><span className={`subject-icon subject-tint-${index % 6}`}><Icon size={21} strokeWidth={1.5} /></span><span><strong>{subject}</strong><small>{count} {count === 1 ? 'course' : 'courses'}</small></span><ArrowUpRight size={16} /></button>;
+            return <button key={subject} data-reveal onClick={() => onExplore(subject)}><span className={`subject-icon subject-tint-${index % 6}`}><Icon size={21} strokeWidth={1.5} /></span><span><strong>{subject}</strong><small>{count} {count === 1 ? 'course' : 'courses'}</small></span><ArrowUpRight size={16} /></button>;
           })}</div>
         </section>
 
         <section className="landing-container landing-teach-section" id="teach" aria-labelledby="teach-title">
-          <div className="landing-teach"><div className="landing-teach-copy"><span className="landing-offer-tag"><span />LIMITED-TIME CREATOR OFFER</span><h2 id="teach-title">Someone is ready to learn<br />what you know.</h2><p>Turn your knowledge into a course. Write short lessons, add examples and quizzes, or upload a course you’ve already prepared. Your next student could start here.</p><button className="landing-button landing-button-dark" onClick={onCreate}>Create your first course<ArrowRight size={18} /></button><span className="landing-teach-note"><Check size={14} />Free to publish for a limited time. No card needed.</span></div><div className="landing-teach-card"><span className="landing-kicker">A PLACE FOR YOUR IDEAS</span><span className="landing-creator-price">$0<span>course publishing fee</span></span><div><span><Check size={16} /></span><p>Write in the lesson editor</p></div><div><span><Check size={16} /></span><p>Import your own course file</p></div><div><span><Check size={16} /></span><p>Keep drafts private until ready</p></div><div><span><Check size={16} /></span><p>Publish to the shared catalog</p></div><small>Offer available now. Any future fees will be announced before they apply.</small></div></div>
+          <div className="landing-teach" data-reveal><div className="landing-teach-copy"><span className="landing-offer-tag"><span />LIMITED-TIME CREATOR OFFER</span><h2 id="teach-title">Someone is ready to learn<br />what you know.</h2><p>Turn your knowledge into a course. Write short lessons, add examples and quizzes, or upload a course you’ve already prepared. Your next student could start here.</p><button className="landing-button landing-button-dark" onClick={onCreate}>Create your first course<ArrowRight size={18} /></button><span className="landing-teach-note"><Check size={14} />Free to publish for a limited time. No card needed.</span></div><div className="landing-teach-card"><span className="landing-kicker">A PLACE FOR YOUR IDEAS</span><span className="landing-creator-price">$0<span>course publishing fee</span></span><div><span><Check size={16} /></span><p>Write in the lesson editor</p></div><div><span><Check size={16} /></span><p>Import your own course file</p></div><div><span><Check size={16} /></span><p>Keep drafts private until ready</p></div><div><span><Check size={16} /></span><p>Publish to the shared catalog</p></div><small>Offer available now. Any future fees will be announced before they apply.</small></div></div>
         </section>
 
         <section className="landing-section landing-container" id="why-curio" aria-labelledby="why-title">
@@ -352,7 +359,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
 
         <section className="landing-container landing-final-section" aria-labelledby="final-title">
-          <div className="landing-final">
+          <div className="landing-final" data-reveal>
             <span className="landing-final-spark" aria-hidden="true">✦</span>
             <span className="landing-kicker">START LEARNING</span>
             <h2 id="final-title">Choose your<br />first course.</h2>

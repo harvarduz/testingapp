@@ -53,6 +53,14 @@ Catalog, learner-goal, creator, and algorithm dropdowns use the same Material me
 
 Hover uses a consistent state layer; selected chips, quiz choices, course titles, and cover artwork keep their colour and position. Fraction and budget sliders share the current palette while retaining native keyboard controls. Learning updates close on outside clicks, Escape, or navigation. Leaving unsaved course edits opens a themed confirmation: cancel preserves the editor, and discard continues the requested navigation or search.
 
+## Landing motion
+
+The homepage uses small native animations, with no animation library or remote motion assets. Catalog counts animate once when visible and keep stable numbers for screen readers. Section and course entrances use opacity/transform, preserve layout space, and reveal immediately on keyboard focus. The decorative hero animation runs once.
+
+A scroll-driven apple-price example changes its explanation, prices and bar proportions through Notice → Compare → Apply. It shows why a $6 pack of three apples and an $8 pack of five should be compared per apple, then explains the 20% difference and the budget/quantity trade-off. The step buttons work with keyboard and touch; the lesson link opens the actual unit-price lesson.
+
+Scrolling stays native. Animation frames are requested only for scroll updates or the short visible counter sequence; no JavaScript loop runs while idle. Reduced motion, short viewports and browsers without IntersectionObserver use a compact diagram with manual step selection. Reduced motion shows real totals immediately and disables entrances/decorative movement. Preferences can change while the page is open.
+
 ## Data and account behavior
 
 - The same account avatar is available on the homepage and in the student workspace. Open it for Sign in/Create account, My learning, Learning profile, Creator workspace, and Sign out. Identity comes from the real session; account and save status appear here rather than in repeated page banners. Failed saving offers retry, and failed sign-out retains the session with an explanation. Signing out protects unfinished creator edits and clears the private editor after success.
@@ -108,6 +116,7 @@ python tests/select_smoke.py
 python tests/hover_smoke.py
 python tests/navigation_smoke.py
 python tests/platform_ux_smoke.py
+python tests/landing_motion_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
@@ -136,6 +145,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Change | File |
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
+| Scroll counters, entrances and the animated learning diagram | `src/LandingMotion.jsx`, `src/landing-motion.css` |
 | Material tokens, typography, responsive presentation | `src/material.css` |
 | Palette generation, display modes, appearance controls | `src/Appearance.jsx`, `src/appearance-settings.css` |
 | Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |
