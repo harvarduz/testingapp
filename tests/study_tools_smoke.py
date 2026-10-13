@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_account
 from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -118,7 +119,7 @@ with tempfile.TemporaryDirectory(prefix='curio-study-') as directory:
             dialog.get_by_role('button', name='Close dialog').click()
             passed('Completed-lesson review opens the right lesson without increasing completion or activity totals')
 
-            page.get_by_role('button', name='Sign in / Create account', exact=True).click()
+            open_account(page)
             dialog=page.get_by_role('dialog')
             dialog.get_by_label('Your name', exact=True).fill('Study Tester')
             dialog.get_by_label('Email address', exact=True).fill('study@example.test')
@@ -136,7 +137,7 @@ with tempfile.TemporaryDirectory(prefix='curio-study-') as directory:
             other=browser.new_context(viewport={'width':390,'height':900},reduced_motion='reduce')
             phone=other.new_page()
             phone.goto(url+'#learning',wait_until='networkidle')
-            phone.get_by_role('button',name='Sign in / Create account',exact=True).click()
+            open_account(phone)
             dialog=phone.get_by_role('dialog')
             dialog.get_by_role('button',name='Already have an account? Sign in').click()
             dialog.get_by_label('Email address',exact=True).fill('study@example.test')

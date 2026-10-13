@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 import uuid
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_account
 from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,7 +66,7 @@ with sync_playwright() as p:
             page.get_by_role('button', name='Open navigation', exact=True).click()
             audit(page, 'Mobile navigation dialog')
             page.keyboard.press('Escape')
-        page.get_by_role('button', name='Sign in / Create account', exact=True).click()
+        open_account(page)
         audit(page, f'Account dialog at {width}px')
         page.get_by_role('button', name='Close dialog').click()
         page.get_by_role('button', name='Thinking in numbers', exact=True).click()

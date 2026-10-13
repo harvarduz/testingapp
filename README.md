@@ -1,6 +1,6 @@
 # Curio
 
-An English learning platform with 20 original introductory courses, 61 lessons, 48 additional practice questions, seven study paths, three interactive Learning Lab activities, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
+An English learning platform with 20 original introductory courses, 101 lessons, 218 additional practice questions, seven study paths, three interactive Learning Lab activities, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
 
 ## Try the complete platform
 
@@ -29,7 +29,7 @@ npm start
 
 Open **Study paths** to choose a sequence with a practical outcome. Your plan remembers its progress and opens the next unfinished lesson. The order is recommended; courses are not locked.
 
-Sixteen lessons in mathematics, computer science, data, physics, and English include learning goals, worked steps, a common mistake, and three extra questions each. Creators can add the same fields in the lesson editor or JSON upload: up to five goals, eight worked steps, and five extra questions per lesson. Older course files remain supported.
+All 101 starter lessons include learning goals, a stepped worked example, a common mistake, and at least two additional questions. Every course has five or more lessons, including two new application lessons. Use Previous/Next step to work through an example, then answer the in-lesson exercises and read the reasoning after checking. Wrong answers allow another try. The separate lesson check records completion; inline exercises record practice history without awarding premature completion or session coins. New lessons are appended, so earlier completion indices keep their meaning. Creators can add the same fields in the lesson editor or JSON upload: up to five goals, eight worked steps, and five extra questions per lesson. Older course files remain supported.
 
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
@@ -55,6 +55,7 @@ Hover uses a consistent state layer; selected chips, quiz choices, course titles
 
 ## Data and account behavior
 
+- The same account avatar is available on the homepage and in the student workspace. Open it for Sign in/Create account, My learning, Learning profile, Creator workspace, and Sign out. Identity comes from the real session; account and save status appear here rather than in repeated page banners. Failed saving offers retry, and failed sign-out retains the session with an explanation. Signing out protects unfinished creator edits and clears the private editor after success.
 - Guest progress is stored in the browser. Signing in merges it into the account without awarding duplicate completion credit. Signing out clears local account progress.
 - Bookmarks and private notes use timestamped records so removing a bookmark or clearing a note survives a stale-device sync. Notes are limited to 2,000 characters per lesson. Existing progress remains compatible.
 - SQLite stores accounts, salted scrypt password hashes, expiring sessions, drafts, published courses, and account progress. The default file is `.data/curio.sqlite`; set `CURIO_DATA_DIR` to a persistent deployment directory.
@@ -82,7 +83,7 @@ The server can start and pass its health check before a domain is generated. In 
 
 ## Validation
 
-`npm test` runs 28 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 30 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -106,6 +107,7 @@ python tests/material_smoke.py
 python tests/select_smoke.py
 python tests/hover_smoke.py
 python tests/navigation_smoke.py
+python tests/platform_ux_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
@@ -115,6 +117,8 @@ The Material suite checks reference colours/fonts, all four palettes in both dis
 The button suite checks one-time legacy appearance migration, pointer/ripple geometry and cleanup, native Enter/Space activation, disabled controls, cancelled touch gestures, real mobile touchscreen activation, reduced motion, and Escape followed immediately by the search shortcut.
 
 The selection suite exercises all shared menus through keyboard and actual touchscreen input, combined catalog filters, nested profile dialogs, numeric form values, and creator saves. Its 28 additional axe states include opened desktop/mobile menus and readable profile text. The hover suite guards against old colours, moving artwork, lost selected states, active controls, and slider presentation. The navigation suite checks notification dismissal, readable light/dark preferences, unsaved-edit cancellation/discard, deferred search, hash navigation, mobile focus restoration, and the absence of native confirmation dialogs. These suites use isolated accounts and drafts.
+
+The platform UX suite checks real account identity, direct login/register entry, keyboard focus, light/dark mobile menus, save/logout recovery, unfinished-edit protection, and delayed sign-in responses. It exercises the first lesson and both appended lessons in every starter course: 60 lesson flows with stepped examples and explained exercises. Wrong-answer retries and double activation are checked without premature completion or duplicate rewards.
 
 Production container and persistent-volume checks:
 
@@ -145,10 +149,11 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Private notes, course sharing, completed-lesson review | `src/StudyTools.jsx` |
 | Study paths, targeted practice, and Curio coins | `src/LearningExperience.jsx`, `src/learning.js` |
 | Interactive fraction, budget, and algorithm labs | `src/LearningLab.jsx`, `src/labs.js` |
-| Worked lesson content and additional questions | `src/lessonEnrichment.js` |
+| Worked lesson content and additional questions | `src/lessonEnrichment.js`, `src/curriculum.js` |
+| Stepped examples and inline exercises | `src/LearningExperience.jsx`, `src/lesson-workshop.css` |
 | Creator learning goals and practice editor | `src/LessonExtensionEditor.jsx` |
 | Creator editor and JSON import | `src/Creator.jsx`, `src/marketplace.css` |
-| Account forms and API client | `src/Account.jsx`, `src/api.js` |
+| Shared account controls, forms and API client | `src/AccountMenu.jsx`, `src/account-menu.css`, `src/Account.jsx`, `src/api.js` |
 | Course validation and publication rules | `shared/course.js` |
 | Accounts, sessions, SQLite, ownership | `server/app.js` |
 | Server and persistent-volume startup | `server/index.js`, `server/bootstrap.js` |

@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_account
 from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,13 +72,16 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             passed('The sidebar scrolls at short desktop heights, collapses to a working icon rail, and remembers the preference')
 
             page.get_by_role('button',name='Choose Mathematics foundations',exact=True).click()
-            expect(page.locator('.active-path')).to_contain_text('0/13 lessons complete')
+            expect(page.locator('.active-path')).to_contain_text('0/21 lessons complete')
             assert page.evaluate("JSON.parse(localStorage.getItem('curio.student.v1')).enrolled.length") == 0
             page.get_by_role('button',name='Continue your path').click()
             dialog=page.get_by_role('dialog')
             expect(dialog.get_by_role('heading',name='Find the pattern',exact=True)).to_be_visible()
             expect(dialog.get_by_role('heading',name='Work through an example')).to_be_visible()
-            expect(dialog.locator('.worked-lesson ol li')).to_have_count(3)
+            expect(dialog.locator('.worked-lesson ol li')).to_have_count(1)
+            dialog.get_by_role('button',name='Next step',exact=True).click()
+            dialog.get_by_role('button',name='Next step',exact=True).click()
+            expect(dialog.locator('.worked-example-heading')).to_contain_text('Step 3 of 3')
             expect(dialog.locator('.common-mistake')).to_contain_text('other sequences')
             passed('A study path opens an actual lesson with goals, worked calculations, and an explained common mistake')
 
@@ -89,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             page.get_by_role('button',name='Close dialog').click()
             expect(page.get_by_role('button',name='25 Curio coins',exact=True)).to_be_visible()
             page.reload(wait_until='networkidle')
-            expect(page.locator('.active-path')).to_contain_text('1/13 lessons complete')
+            expect(page.locator('.active-path')).to_contain_text('1/21 lessons complete')
             page.get_by_role('button',name='Continue your path').click()
             expect(page.get_by_role('dialog').get_by_role('heading',name='Parts of a whole',exact=True)).to_be_visible()
             page.get_by_role('button',name='Close dialog').click()
@@ -135,7 +139,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             assert value['completed']['numbers'] == [0]
             passed('Repeated practice saves new answers without multiplying daily coins or course completions')
 
-            page.get_by_role('button',name='Sign in / Create account',exact=True).click()
+            open_account(page)
             dialog=page.get_by_role('dialog')
             dialog.get_by_role('textbox',name='Your name',exact=True).fill('Learning Tester')
             dialog.get_by_role('textbox',name='Email address',exact=True).fill('learning@example.test')
@@ -148,7 +152,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             registration=second.request.post(url+'api/auth/login',data={'email':'learning@example.test','password':'A strong learning password 42!'})
             assert registration.status == 200
             phone.reload(wait_until='networkidle')
-            expect(phone.locator('.active-path')).to_contain_text('1/13 lessons complete')
+            expect(phone.locator('.active-path')).to_contain_text('1/21 lessons complete')
             expect(phone.get_by_role('button',name='45 Curio coins')).to_be_visible()
             phone.goto(url+'#practice',wait_until='networkidle')
             expect(phone.locator('.practice-metrics')).to_contain_text('6')

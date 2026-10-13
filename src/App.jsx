@@ -8,12 +8,13 @@ import Creator from './Creator.jsx';
 import Account from './Account.jsx';
 import { api } from './api.js';
 import { CourseShare, LessonNotes, ReviewQueue } from './StudyTools.jsx';
-import { WorkedLesson, StudyPaths, LearningMomentum, PracticeOverview, PracticeSession, RewardToast } from './LearningExperience.jsx';
+import { WorkedLesson, LessonExercises, StudyPaths, LearningMomentum, PracticeOverview, PracticeSession, RewardToast } from './LearningExperience.jsx';
 import { learningRewards } from './learning.js';
 import LearningLab from './LearningLab.jsx';
 import SelectField from './SelectField.jsx';
 import { AppearanceControls, AppearanceSettings, MaterialComposition } from './Appearance.jsx';
 import NavigationConfirm from './NavigationConfirm.jsx';
+import AccountMenu from './AccountMenu.jsx';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -44,7 +45,7 @@ function Modal({ children, onClose, title, wide = false }) {
     const previous = document.activeElement;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    ref.current.focus();
+    (ref.current.querySelector('[data-autofocus]') || ref.current).focus();
     const onKey = e => {
       if (e.defaultPrevented) return;
       if (e.key === 'Escape') onClose();
@@ -92,7 +93,7 @@ function PatternPlayground() {
   return <div className="pattern-playground"><div className="playground-title"><span><Sparkles size={16}/> Make a pattern</span><span>Start at 2. Change the step.</span></div><div className="number-sequence">{Array.from({ length: 5 }, (_, i) => <React.Fragment key={i}>{i > 0 && <span className="sequence-add">+{step}</span>}<span className="sequence-number" style={{ '--i': i }}>{2 + i * step}</span></React.Fragment>)}</div><div className="step-control"><span>Step size</span><button aria-label="Decrease step size" onClick={() => setStep(v => Math.max(1, v - 1))} disabled={step === 1}><Minus size={16}/></button><strong aria-live="polite">{step}</strong><button aria-label="Increase step size" onClick={() => setStep(v => Math.min(9, v + 1))} disabled={step === 9}><Plus size={16}/></button></div></div>;
 }
 
-function CourseModal({ course, progress, enroll, finish, close, onSave, onNote, signedIn, syncStatus, storageError, onPractice, initialLesson = null }) {
+function CourseModal({ course, progress, enroll, finish, close, onSave, onNote, signedIn, syncStatus, storageError, onPractice, onRecord, initialLesson = null }) {
   const [lessonIndex, setLessonIndex] = useState(initialLesson);
   const [phase, setPhase] = useState('idea');
   const [justFinished, setJustFinished] = useState(null);
@@ -104,15 +105,15 @@ function CourseModal({ course, progress, enroll, finish, close, onSave, onNote, 
   return <Modal wide title={lessonIndex === null ? course.title : item.title} onClose={close}>
     {lessonIndex === null ? <><div className={`course-detail-cover ${course.color}`}><CourseArt type={course.art}/><span className="detail-cover-label"><GraduationCap size={18}/>A little more curious</span></div><div className="course-detail-content"><span className="eyebrow">{course.label} · {course.level.toUpperCase()}</span><h2>{course.title}</h2><p>{course.description}</p>{!course.preview && <div className="course-detail-tools"><button className="text-button" onClick={() => onSave(course.id)} aria-pressed={Boolean(progress.savedCourses?.[course.id]?.saved)}><Bookmark size={16} />{progress.savedCourses?.[course.id]?.saved ? 'Saved for later' : 'Save for later'}</button><CourseShare course={course} /></div>}<div className="detail-meta"><span><BookOpen size={16}/>{course.lessons.length} interactive lessons</span><span><Clock3 size={16}/>About {course.minutes} minutes</span></div>
       {justFinished !== null && <div className="completion-notice" role="status"><CheckCheck size={21}/><div><strong>{course.preview ? 'Preview complete. Your students can try this lesson.' : allDone ? 'Course complete. Look at you grow!' : 'Lesson complete. One step forward!'}</strong><span>{course.preview ? 'This preview did not change your learning progress.' : allDone ? 'You’ve completed every lesson in this course.' : `${done} of ${course.lessons.length} lessons complete. Keep your curiosity going.`}</span></div></div>}
-      <div className="detail-progress"><span>Your learning path</span><span>{done}/{course.lessons.length} complete</span></div><div className="progress-track"><span style={{ width: `${done / course.lessons.length * 100}%` }}/></div><div className="lesson-list">{course.lessons.map((l, i) => <button key={i} onClick={() => openLesson(i)}><span className={`lesson-number ${progress.completed[course.id]?.includes(i) ? 'done' : ''}`}>{progress.completed[course.id]?.includes(i) ? <Check size={17}/> : String(i + 1).padStart(2, '0')}</span><span><strong>{l.title}</strong><small>Learn · explore · practice</small></span><ChevronRight size={19}/></button>)}</div><button className="button primary full-width" onClick={() => openLesson(next === -1 ? 0 : next)}>{allDone ? 'Review the first lesson' : done || progress.enrolled.includes(course.id) ? 'Continue learning' : 'Let’s start learning'}<ArrowRight size={18}/></button><p className="detail-note">{course.preview ? 'Creator preview. Trying this lesson does not change your learning progress.' : 'No rush, no pressure. Your progress is saved as you go.'}</p></div></> : <div className="lesson-content"><button className="text-button lesson-back" onClick={() => setLessonIndex(null)}><ChevronLeft size={16}/>{course.title}</button><div className="lesson-header"><span className="eyebrow">LESSON {lessonIndex + 1} OF {course.lessons.length}</span><span>{phase === 'idea' ? '1' : '2'} / 2 steps</span></div><div className="lesson-steps"><span className="active"/><span className={phase === 'quiz' ? 'active' : ''}/></div>{phase === 'idea' ? <><h2>{item.title}</h2><p className="lesson-idea">{item.idea}</p><WorkedLesson lesson={item} />{course.id === 'numbers' && lessonIndex === 0 ? <PatternPlayground/> : <div className={`lesson-art ${course.color}`}><CourseArt type={course.art}/></div>}<div className="example-box"><span><Lightbulb size={19}/></span><div><strong>Let’s make it concrete</strong><p>{item.example}</p></div></div><button className="button primary full-width" onClick={() => setPhase('quiz')}>Got it. Let me try!<ArrowRight size={18}/></button></> : <><Quiz key={lessonIndex} question={item} buttonLabel={course.preview ? 'Finish preview' : 'Finish lesson'} onComplete={() => { finish(course.id, lessonIndex); setJustFinished(lessonIndex); setLessonIndex(null); }}/><button className="text-button revisit" onClick={() => setPhase('idea')}><ChevronLeft size={15}/>Revisit the idea</button></>}{!course.preview && item.practice?.length > 0 && <button className="button outline extra-practice-button" onClick={() => onPractice(course.id, lessonIndex)}><Zap size={17} />Try extra practice</button>}{!course.preview && <LessonNotes course={course} index={lessonIndex} progress={progress} onChange={onNote} signedIn={signedIn} syncStatus={syncStatus} storageError={storageError} />}</div>}
+      <div className="detail-progress"><span>Your learning path</span><span>{done}/{course.lessons.length} complete</span></div><div className="progress-track"><span style={{ width: `${done / course.lessons.length * 100}%` }}/></div><div className="lesson-list">{course.lessons.map((l, i) => <button key={i} onClick={() => openLesson(i)}><span className={`lesson-number ${progress.completed[course.id]?.includes(i) ? 'done' : ''}`}>{progress.completed[course.id]?.includes(i) ? <Check size={17}/> : String(i + 1).padStart(2, '0')}</span><span><strong>{l.title}</strong><small>Learn · explore · practice</small></span><ChevronRight size={19}/></button>)}</div><button className="button primary full-width" onClick={() => openLesson(next === -1 ? 0 : next)}>{allDone ? 'Review the first lesson' : done || progress.enrolled.includes(course.id) ? 'Continue learning' : 'Let’s start learning'}<ArrowRight size={18}/></button><p className="detail-note">{course.preview ? 'Creator preview. Trying this lesson does not change your learning progress.' : 'No rush, no pressure. Your progress is saved as you go.'}</p></div></> : <div className="lesson-content"><button className="text-button lesson-back" onClick={() => setLessonIndex(null)}><ChevronLeft size={16}/>{course.title}</button><div className="lesson-header"><span className="eyebrow">LESSON {lessonIndex + 1} OF {course.lessons.length}</span><span>{phase === 'idea' ? '1' : '2'} / 2 steps</span></div><div className="lesson-steps"><span className="active"/><span className={phase === 'quiz' ? 'active' : ''}/></div>{phase === 'idea' ? <><h2>{item.title}</h2><p className="lesson-idea">{item.idea}</p><WorkedLesson key={lessonIndex} lesson={item} />{course.id === 'numbers' && lessonIndex === 0 ? <PatternPlayground/> : <div className={`lesson-art ${course.color}`}><CourseArt type={course.art}/></div>}<div className="example-box"><span><Lightbulb size={19}/></span><div><strong>Let’s make it concrete</strong><p>{item.example}</p></div></div><LessonExercises key={lessonIndex} course={course} lesson={item} lessonIndex={lessonIndex} onRecord={onRecord} /><button className="button primary full-width" onClick={() => setPhase('quiz')}>Got it. Let me try!<ArrowRight size={18}/></button></> : <><Quiz key={lessonIndex} question={item} buttonLabel={course.preview ? 'Finish preview' : 'Finish lesson'} onComplete={() => { finish(course.id, lessonIndex); setJustFinished(lessonIndex); setLessonIndex(null); }}/><button className="text-button revisit" onClick={() => setPhase('idea')}><ChevronLeft size={15}/>Revisit the idea</button></>}{!course.preview && item.practice?.length > 0 && <button className="button outline extra-practice-button" onClick={() => onPractice(course.id, lessonIndex)}><Zap size={17} />Try extra practice</button>}{!course.preview && <LessonNotes course={course} index={lessonIndex} progress={progress} onChange={onNote} signedIn={signedIn} syncStatus={syncStatus} storageError={storageError} />}</div>}
   </Modal>;
 }
 
-function ProfileModal({ progress, update, close }) {
-  const [name, setName] = useState(progress.name);
+function ProfileModal({ user, progress, update, close }) {
+  const [name, setName] = useState(progress.name === 'Learner' && user ? user.name : progress.name);
   const [goal, setGoal] = useState(progress.goal);
   const [error, setError] = useState('');
-  return <Modal title="Make yourself at home" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LITTLE CORNER</span><h2>Make yourself at home.</h2><p>A few small details for a learning journey that feels like you.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<SelectField id="daily-goal" label="Your daily learning goal" value={goal} onChange={value => setGoal(Number(value))} options={[{ value: 1, label: 'A little curious · 1 activity a day' }, { value: 2, label: 'Keep growing · 2 activities a day' }, { value: 3, label: 'All in · 3 activities a day' }]} /><span className="form-note">A lesson, daily challenge, or completed lab counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">Your preferences are saved in this browser. When signed in, your learning progress is also saved to your account.</p></div></Modal>;
+  return <Modal title="Learning profile" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LEARNING PREFERENCES</span><h2>Learning profile</h2><p>Set your learning name and a daily goal that fits your schedule.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<SelectField id="daily-goal" label="Your daily learning goal" value={goal} onChange={value => setGoal(Number(value))} options={[{ value: 1, label: 'A little curious · 1 activity a day' }, { value: 2, label: 'Keep growing · 2 activities a day' }, { value: 3, label: 'All in · 3 activities a day' }]} /><span className="form-note">A lesson, daily challenge, or completed lab counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">{user ? 'Your learning name, daily goal and progress sync with your account.' : 'Your preferences and guest progress are saved in this browser.'}</p></div></Modal>;
 }
 
 export default function App() {
@@ -122,6 +123,8 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState('');
   const [sessionLoading, setSessionLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [syncRetry, setSyncRetry] = useState(0);
   const [view, setView] = useState(() => linkedCourse() ? 'explore' : views.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
   const [linkedCourseId, setLinkedCourseId] = useState(linkedCourse);
   const [catalogReady, setCatalogReady] = useState(false);
@@ -135,6 +138,8 @@ export default function App() {
   const [sort, setSort] = useState('Recommended');
   const [modal, setModalState] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const modalState = useRef(null);
+  modalState.current = modal;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => { try { return localStorage.getItem('curio.sidebar.collapsed') !== 'false'; } catch { return true; } });
   const [reward, setReward] = useState(null);
   const coins = learningRewards(progress).coins;
@@ -157,7 +162,8 @@ export default function App() {
       const opener = document.activeElement;
       modalOpener.current = opener?.closest('.landing-mobile-nav')
         ? document.querySelector('.landing-menu-button')
-        : opener?.closest('.sidebar.open') ? document.querySelector('.mobile-menu') : opener;
+        : opener?.closest('.sidebar.open') ? document.querySelector('.mobile-menu')
+        : opener?.closest('.account-menu')?.querySelector('.account-trigger') || opener;
     }
     setModalState(next);
   };
@@ -229,7 +235,7 @@ export default function App() {
       api('/progress', { method: 'PUT', body: progress, signal: controller.signal }).then(result => { setSyncStatus('Saved to your account'); setProgress(current => { const merged = mergeProgress(current, result.progress); return JSON.stringify(current) === JSON.stringify(merged) ? current : merged; }); }).catch(error => { if (error.name !== 'AbortError') setSyncStatus(error.message); });
     }, 400);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [progress, user?.id, sessionLoading, signingOut]);
+  }, [progress, user?.id, sessionLoading, signingOut, syncRetry]);
   useEffect(() => {
     if (!linkedCourseId) { setLinkLoading(false); return; }
     const controller = new AbortController();
@@ -320,17 +326,31 @@ export default function App() {
     const owner = savedOwner();
     setUser(session.user); setProgress(p => mergeProgress(owner && owner !== session.user.id ? emptyProgress() : p, session.progress));
     saveOwner(session.user.id);
-    setServiceError(''); setSyncStatus(''); setSessionLoading(false); close();
+    setServiceError(''); setSyncStatus(''); setAccountError(''); setSessionLoading(false);
+    if (modalState.current?.type === 'account') close();
   };
   const signOut = async () => {
-    setSigningOut(true);
+    setSigningOut(true); setAccountError('');
     try {
       await api('/progress', { method: 'PUT', body: progress });
       await api('/auth/logout', { method: 'POST', body: {} });
       setUser(null); setProgress(emptyProgress()); setSyncStatus(''); saveOwner(null);
-    } catch (error) { setServiceError(error.message); }
+    } catch (error) { setAccountError(`Could not sign out: ${error.message}`); }
     finally { setSigningOut(false); }
   };
+  const openAccount = (mode = 'register') => setModal({ type: 'account', mode });
+  const accountMenuProps = {
+    user, loading: sessionLoading, signingOut, error: accountError, syncStatus,
+    onOpen: () => setNotifications(false),
+    onAccount: openAccount,
+    onProfile: () => setModal({ type: 'profile' }),
+    onLearning: () => navigate('learning'),
+    onCreator: () => navigate('creators'),
+    onSignOut: () => requestLeaveEditor(signOut),
+    onRetrySync: () => { setSyncStatus('Saving to your account…'); setSyncRetry(value => value + 1); },
+  };
+  const learningName = progress.name !== 'Learner' ? progress.name : user?.name;
+  const searchShortcut = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘ K' : 'Ctrl K';
   let filtered = courses.filter(c => (category === 'All courses' || c.category === category) && (level === 'All levels' || c.level === level) && (duration === 'Any duration' || (duration === 'Under 20 minutes' ? c.minutes < 20 : duration === '20–40 minutes' ? c.minutes >= 20 && c.minutes <= 40 : c.minutes > 40)) && `${c.title} ${c.category} ${c.description} ${c.author || ''} ${c.lessons.map(l => l.title).join(' ')}`.toLowerCase().includes(query.toLowerCase().trim()));
   if (sort === 'Shortest first') filtered = [...filtered].sort((a, b) => a.minutes - b.minutes);
   if (sort === 'A–Z') filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
@@ -346,8 +366,7 @@ export default function App() {
           courses={courses}
           onExplore={subject => { navigate('explore'); if (typeof subject === 'string') setCategory(subject); }}
           onCreate={() => navigate('creators')}
-          onAccount={() => setModal({ type: 'account' })}
-          user={user}
+          accountMenuProps={accountMenuProps}
           serviceError={serviceError}
           onRetry={refreshCatalog}
           onAppearance={openAppearance}
@@ -364,13 +383,13 @@ export default function App() {
         <nav aria-label="Main navigation"><span className="nav-label">YOUR LEARNING SPACE</span>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} onClick={() => navigate(id)} aria-label={label} title={label} aria-current={view === id ? 'page' : undefined}><Icon size={19} strokeWidth={1.7}/><span>{label}</span>{view === id && <span className="nav-active-dot"/>}</button>)}<div className="nav-divider"/><button className={`nav-item ${view === 'achievements' ? 'active' : ''}`} onClick={() => navigate('achievements')} aria-label="Achievements" title="Achievements" aria-current={view === 'achievements' ? 'page' : undefined}><Trophy size={19} strokeWidth={1.7}/><span>Achievements</span>{view === 'achievements' && <span className="nav-active-dot"/>}</button></nav>
         <div className="sidebar-bottom"><div className="streak-card"><div className="streak-title"><span className="streak-flame"><Flame size={20}/></span><strong>{streak ? `${streak}-day streak` : 'A habit worth growing'}</strong></div><p>{streak ? 'Little by little, a lot becomes possible.' : 'One small discovery. Every day.'}</p><div className="streak-days">{Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const active = progress.activity[localDate(d)] > 0; return <span key={i} className={active ? 'done' : i === 6 ? 'today' : ''} title={`${d.toLocaleDateString('en', { weekday: 'long' })}: ${active ? 'Activity complete' : 'No activity yet'}`}>{active ? <Check size={12}/> : d.toLocaleDateString('en', { weekday: 'narrow' })}</span>; })}</div></div><button aria-label="A little help?" title="A little help?" className="nav-item help-button" onClick={() => setModal({ type: 'help' })}><CircleHelp size={19}/><span>A little help?</span><ArrowUpRight size={15}/></button><button className="mobile-appearance text-button" onClick={openAppearance}>Appearance</button><div className="sidebar-footer"><span className="little-sprout"><Sprout size={15}/></span>Made for curious minds.</div></div>
       </aside>
-      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={event => { const value = event.target.value; requestLeaveEditor(() => { setQuery(value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }); }}/>{query ? <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={14}/></button> : <kbd>⌘ K</kbd>}</div><div className="notification-wrap" ref={notificationRef}><button ref={notificationButtonRef} className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} aria-controls={notifications ? 'learning-updates' : undefined} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div id="learning-updates" className="notification-popover" role="region" aria-label="Learning updates"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><button className="avatar" onClick={() => setModal({ type: 'profile' })} aria-label="Edit learner profile">{progress.name.charAt(0).toUpperCase()}</button></div></header>
-        <main id="main-content"><div className="page-heading"><div><div className="greeting"><span className="greeting-spark"><Sparkles size={14}/></span>{progress.name === 'Learner' ? 'YOUR LEARNING SPACE' : `HELLO, ${progress.name.toUpperCase()}`}</div><h1>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="day-streak" onClick={() => navigate('achievements')}><Flame size={19}/><strong>{streak}</strong><span>day streak</span></button></div>
+      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={event => { const value = event.target.value; requestLeaveEditor(() => { setQuery(value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }); }}/>{query ? <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={14}/></button> : <kbd>{searchShortcut}</kbd>}</div><div className="notification-wrap" ref={notificationRef}><button ref={notificationButtonRef} className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} aria-controls={notifications ? 'learning-updates' : undefined} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div id="learning-updates" className="notification-popover" role="region" aria-label="Learning updates"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><AccountMenu {...accountMenuProps} /></div></header>
+        <main id="main-content"><div className="page-heading"><div>{view === 'overview' && <div className="greeting">{learningName ? `HELLO, ${learningName.toUpperCase()}` : 'YOUR LEARNING SPACE'}</div>}<h1>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="day-streak" onClick={() => navigate('achievements')}><Flame size={19}/><strong>{streak}</strong><span>day streak</span></button></div>
           {storageError && <div className="storage-warning" role="status">Your browser can’t save progress right now. You can still learn, but progress may be lost after refreshing.</div>}
           {serviceError && <div className="storage-warning" role="alert">{serviceError}<button className="text-button" onClick={refreshCatalog}>Retry course service</button></div>}
-          <div className="account-access">{sessionLoading ? <span>Opening your account…</span> : user ? <><span>Signed in as {user.name}</span><button onClick={signOut} disabled={signingOut}>{signingOut ? 'Signing out…' : 'Sign out'}</button></> : <><span>Save your learning across devices.</span><button onClick={() => setModal({ type: 'account' })}>Sign in / Create account</button></>}</div>
-          {user && syncStatus && <p className={`sync-message ${syncStatus.startsWith('Saved') || syncStatus.startsWith('Saving') ? '' : 'sync-error'}`} role="status">{syncStatus}</p>}
-          {view === 'creators' && <Creator user={user} onSession={acceptSession} onCatalogChange={refreshCatalog} onPreview={openCourse} onDirtyChange={onCreatorDirty} />}
+
+
+          {view === 'creators' && <Creator key={user?.id || 'guest'} user={user} onSession={acceptSession} onCatalogChange={refreshCatalog} onPreview={openCourse} onDirtyChange={onCreatorDirty} />}
           {view === 'lab' && <LearningLab courses={courses} progress={progress} onComplete={finishLab} onOpen={openCourse} />}
           {view === 'paths' && <StudyPaths courses={courses} progress={progress} onChoose={choosePath} onOpen={openCourse} />}
           {view === 'overview' && <>
@@ -390,14 +409,14 @@ export default function App() {
       <nav className="mobile-study-nav" inert={sidebarOpen ? true : undefined} aria-label="Mobile learning navigation">{[{ id: 'overview', label: 'Home', accessible: 'Learning overview', icon: LayoutDashboard }, { id: 'explore', label: 'Courses', accessible: 'Browse courses', icon: Compass }, { id: 'learning', label: 'Learning', accessible: 'Your learning', icon: BookOpen }, { id: 'practice', label: 'Practice', accessible: 'Practice questions', icon: Zap }].map(({ id, label, accessible, icon: Icon }) => <button key={id} aria-label={accessible} aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}><Icon size={20} /><span>{label}</span></button>)}</nav>
     </div>
     </>}
-    {modal?.type === 'course' && <CourseModal key={`${modal.course.id}:${modal.initialLesson ?? 'details'}`} initialLesson={modal.initialLesson ?? null} onSave={saveCourse} onNote={saveNote} onPractice={openPractice} signedIn={Boolean(user)} syncStatus={syncStatus} storageError={storageError} course={modal.course} progress={modal.course.preview ? emptyProgress() : progress} enroll={modal.course.preview ? () => {} : enroll} finish={modal.course.preview ? () => {} : finish} close={close}/>}
+    {modal?.type === 'course' && <CourseModal key={`${modal.course.id}:${modal.initialLesson ?? 'details'}`} initialLesson={modal.initialLesson ?? null} onSave={saveCourse} onNote={saveNote} onPractice={openPractice} onRecord={modal.course.preview ? undefined : recordAnswer} signedIn={Boolean(user)} syncStatus={syncStatus} storageError={storageError} course={modal.course} progress={modal.course.preview ? emptyProgress() : progress} enroll={modal.course.preview ? () => {} : enroll} finish={modal.course.preview ? () => {} : finish} close={close}/>}
     {modal?.type === 'practice-session' && <Modal wide title="Targeted practice" onClose={close}><PracticeSession courses={courses} progress={progress} courseId={modal.courseId} lessonIndex={modal.lessonIndex} onRecord={recordAnswer} onComplete={finishPractice} onOpen={openCourse} /></Modal>}
     {modal?.type === 'appearance' && <Modal title="Curio appearance" onClose={close}><AppearanceSettings /></Modal>}
     {modal?.type === 'discard-edits' && <Modal title="Leave without saving?" onClose={close}><NavigationConfirm onCancel={close} onDiscard={() => { const leave = modal.onLeave; creatorDirty.current = false; close(); leave(); }} /></Modal>}
     {modal?.type === 'coins' && <Modal title="Your Curio coins" onClose={close}><div className="coin-dialog"><span className="curio-coin"><Coins size={35} /></span><h2>{coins} Curio coins</h2><p>Earn coins by learning something new and putting it into practice.</p><ul><li>Complete a new lesson <strong>25 coins</strong></li><li>Solve the daily challenge <strong>15 coins</strong></li><li>Complete a learning lab for the first time <strong>30 coins</strong></li><li>Finish your first successful practice session each day <strong>20 coins</strong></li></ul><p>Curio coins celebrate your progress. They have no cash value.</p></div></Modal>}
     <RewardToast reward={reward} onDismiss={() => setReward(null)} />
-    {modal?.type === 'account' && <Modal title="Your Curio account" onClose={close}><Account onSession={acceptSession} /></Modal>}
-    {modal?.type === 'profile' && <ProfileModal progress={progress} update={setProgress} close={close}/>}
+    {modal?.type === 'account' && <Modal title="Your Curio account" onClose={close}><Account initialMode={modal.mode} onSession={acceptSession} /></Modal>}
+    {modal?.type === 'profile' && <ProfileModal user={user} progress={progress} update={setProgress} close={close}/>}
     {modal?.type === 'challenge' && <Modal wide title="Today’s brain stretch" onClose={close}><div className="challenge-dialog"><span className="challenge-dialog-icon"><Lightbulb size={29}/></span><div className="challenge-dialog-heading"><span className="eyebrow">THE DAILY BRAIN STRETCH</span><span>{new Date().toLocaleDateString('en', { month: 'short', day: 'numeric' })}</span></div><Quiz question={challenge} completed={progress.dailyChallenges.includes(today)} buttonLabel="Save my discovery" onComplete={() => { if (!progress.dailyChallenges.includes(today)) celebrate('Daily challenge solved!', 15); setProgress(p => completeChallenge(p, today)); close(); }}/></div></Modal>}
     {modal?.type === 'help' && <Modal title="A little help" onClose={close}><div className="help-dialog"><span className="dialog-icon"><CircleHelp size={27}/></span><span className="eyebrow">WELCOME TO CURIO</span><h2>Learning starts with wondering.</h2><p>Curio makes big ideas approachable with short explanations, concrete examples, and questions you can actually try.</p><div className="help-step"><span>1</span><div><strong>Follow a spark</strong><p>Browse {courses.length} courses across {categories.length - 1} subjects, from mathematics and science to design and languages.</p></div></div><div className="help-step"><span>2</span><div><strong>Learn by doing</strong><p>Read an idea, explore the example, and check your answer. Retry as often as you like.</p></div></div><div className="help-step"><span>3</span><div><strong>Watch yourself grow</strong><p>Build a daily habit, track your lessons, and earn achievements along the way.</p></div></div><div className="help-privacy"><Bookmark size={18}/><p>Guest progress is saved in this browser. Sign in to save progress to your account and continue on another device. Clearing browser data removes guest progress.</p></div><button className="button primary full-width" onClick={() => { close(); navigate('explore'); }}>Let’s explore<ArrowRight size={17}/></button></div></Modal>}
   </>;

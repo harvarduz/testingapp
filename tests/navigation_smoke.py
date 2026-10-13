@@ -11,6 +11,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -84,8 +85,8 @@ with tempfile.TemporaryDirectory(prefix='curio-navigation-') as directory:
             for mode in ['light', 'dark']:
                 if mode == 'dark':
                     page.get_by_role('button', name='Switch to dark theme', exact=True).click()
-                page.get_by_role('button', name='Edit learner profile', exact=True).click()
-                expect(page.get_by_role('dialog', name='Make yourself at home', exact=True)).to_be_visible()
+                open_profile(page)
+                expect(page.get_by_role('dialog', name='Learning profile', exact=True)).to_be_visible()
                 assert page.locator('.privacy-note').evaluate('node => parseFloat(getComputedStyle(node).fontSize) >= 12')
                 audit(page)
                 page.keyboard.press('Escape')

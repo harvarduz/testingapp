@@ -7,6 +7,37 @@ import { studyPaths, pathProgress, practiceQuestions, learningRewards, dailyQues
 
 const restored = value => readProgress({ getItem: () => JSON.stringify(value) });
 
+test('every subject course includes worked application lessons and explained transfer practice', () => {
+  assert.equal(courses.length, 20);
+  assert.equal(courses.reduce((n, course) => n + course.lessons.length, 0), 101);
+  for (const course of courses) {
+    assert.ok(course.lessons.length >= 5, course.id);
+    assert.deepEqual(publicationIssues(normalizeCourse(course, categories.slice(1))), [], course.id);
+    for (const lesson of course.lessons) {
+      assert.ok(lesson.objectives.length >= 2, lesson.title);
+      assert.ok(lesson.steps.length >= 3, lesson.title);
+      assert.ok(lesson.commonMistake.length >= 30, lesson.title);
+      assert.ok(lesson.practice.length >= 2, lesson.title);
+    }
+  }
+});
+
+test('the curriculum extension retains earlier completions and continues at the first appended lesson', () => {
+  let progress = emptyProgress();
+  for (let index = 0; index < 4; index++) progress = completeLesson(progress, 'numbers', index, '2026-10-10');
+  const before = learningRewards(progress).coins;
+  const path = studyPaths.find(item => item.courseIds[0] === 'numbers');
+  const status = pathProgress(path, courses, progress);
+  assert.equal(status.nextCourse.id, 'numbers');
+  assert.equal(status.nextIndex, 4);
+  assert.equal(status.nextCourse.lessons[4].title, 'Compare a unit price');
+  assert.equal(courses[0].lessons[0].title, 'Find the pattern');
+  assert.equal(courses[0].lessons[3].title, 'The power of estimation');
+  assert.equal(before, 100);
+  assert.equal(learningRewards(completeLesson(progress, 'numbers', 3)).coins, before);
+  assert.equal(learningRewards(completeLesson(progress, 'numbers', 4)).coins, before + 25);
+});
+
 test('study paths cover the catalog and choose the first genuinely unfinished lesson', () => {
   assert.equal(new Set(studyPaths.flatMap(path => path.courseIds)).size, courses.length);
   for (const path of studyPaths) assert.ok(path.courseIds.every(id => courses.some(course => course.id === id)));
@@ -75,5 +106,5 @@ test('worked lessons and transfer questions survive uploads; incomplete or malfo
     assert.ok(question.options[question.answer]);
     assert.ok(question.explanation.length >= 20);
   }
-  assert.equal(addedQuestions, 48);
+  assert.equal(addedQuestions, 218);
 });

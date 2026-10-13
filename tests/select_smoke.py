@@ -11,6 +11,7 @@ import time
 import urllib.request
 import uuid
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_profile
 from select_helpers import choose_option
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -111,11 +112,13 @@ with tempfile.TemporaryDirectory(prefix='curio-select-') as directory:
             choose_option(page.get_by_role('combobox',name='Sort courses',exact=True),'A–Z')
             expect(page.locator('.course-card h3').first).to_have_text('A place in the universe')
             choose_option(page.get_by_role('combobox',name='Filter by duration',exact=True),'Under 20 minutes')
-            expect(page.locator('.course-card')).to_have_count(20)
-            choose_option(page.get_by_role('combobox',name='Filter by level',exact=True),'Beginner')
-            expect(page.locator('.course-card')).to_have_count(19)
-            choose_option(page.get_by_role('combobox',name='Filter by duration',exact=True),'20–40 minutes')
             expect(page.get_by_role('heading',name='No discoveries here just yet.')).to_be_visible()
+            choose_option(page.get_by_role('combobox',name='Filter by duration',exact=True),'20–40 minutes')
+            expect(page.locator('.course-card')).to_have_count(17)
+            choose_option(page.get_by_role('combobox',name='Filter by level',exact=True),'Beginner')
+            expect(page.locator('.course-card')).to_have_count(16)
+            choose_option(page.get_by_role('combobox',name='Filter by duration',exact=True),'Over 40 minutes')
+            expect(page.locator('.course-card')).to_have_count(3)
             choose_option(page.get_by_role('combobox',name='Filter by duration',exact=True),'Any duration')
             expect(page.locator('.course-card')).to_have_count(19)
             choose_option(page.get_by_role('combobox',name='Filter by level',exact=True),'Advanced')
@@ -141,8 +144,8 @@ with tempfile.TemporaryDirectory(prefix='curio-select-') as directory:
                         if label=='Choose a subject' and width==390:
                             page.screenshot(path=str(OUTPUT/f'62-subject-menu-mobile-{mode}.png'))
                         page.keyboard.press('Escape')
-                    page.get_by_role('button',name='Edit learner profile',exact=True).click()
-                    profile=page.get_by_role('dialog',name='Make yourself at home')
+                    open_profile(page)
+                    profile=page.get_by_role('dialog',name='Learning profile')
                     goal=profile.get_by_role('combobox',name='Your daily learning goal',exact=True)
                     goal.click();contained(page)
                     if width in [1440,390]:audit(page,f'{mode} {width}px profile goal menu open')
@@ -154,8 +157,8 @@ with tempfile.TemporaryDirectory(prefix='curio-select-') as directory:
 
             page.set_viewport_size({'width':1366,'height':900})
             page.goto(url+'#overview',wait_until='networkidle')
-            page.get_by_role('button',name='Edit learner profile',exact=True).click()
-            profile=page.get_by_role('dialog',name='Make yourself at home')
+            open_profile(page)
+            profile=page.get_by_role('dialog',name='Learning profile')
             choose_option(profile.get_by_role('combobox',name='Your daily learning goal',exact=True),'3')
             profile.get_by_role('button',name='Save my preferences',exact=True).click()
             assert page.evaluate("JSON.parse(localStorage.getItem('curio.student.v1')).goal")==3

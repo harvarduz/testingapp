@@ -1,5 +1,6 @@
 import { extendedCourses } from './catalog.js';
 import { lessonEnrichment } from './lessonEnrichment.js';
+import { courseExtensions, foundationWorkshops } from './curriculum.js';
 export const categories = ['All courses', 'Mathematics', 'Computer science', 'Science', 'Thinking skills', ...extendedCourses.map(c => c.category)];
 
 const lesson = (title, idea, example, question, options, answer, explanation) => ({ title, idea, example, question, options, answer, explanation });
@@ -64,7 +65,12 @@ export const courses = [
 
 courses.push(...extendedCourses);
 for (const course of courses) {
-  course.lessons = course.lessons.map((lesson, index) => ({ ...lesson, ...lessonEnrichment[course.id]?.[index] }));
+  course.lessons = course.lessons.map((lesson, index) => ({ ...lesson, ...foundationWorkshops[course.id]?.[index], ...lessonEnrichment[course.id]?.[index] }));
+  const extension = courseExtensions[course.id];
+  if (extension) {
+    course.lessons.push(...extension.lessons);
+    course.minutes = extension.minutes;
+  }
 }
 
 export const dailyChallenge = {

@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import account_menu, open_account
 from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -140,13 +141,14 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             learning.get_by_role('button', name='Close dialog').click()
             passed('A different student browser finds the published course, sees attribution, and completes its quiz on mobile')
 
-            learning.get_by_role('button', name='Sign in / Create account', exact=True).click()
+            open_account(learning)
             account = learning.get_by_role('dialog')
             account.get_by_role('textbox', name='Your name', exact=True).fill('Taylor Student')
             account.get_by_role('textbox', name='Email address', exact=True).fill('student@example.test')
             account.get_by_role('textbox', name='Password', exact=True).fill('A unique student password 42!')
             account.get_by_role('button', name='Create free account', exact=True).click()
-            expect(learning.get_by_role('status').filter(has_text='Saved to your account')).to_be_visible()
+            expect(account_menu(learning).get_by_role('status')).to_contain_text('Saved to your account')
+            learning.keyboard.press('Escape')
             saved = student.request.get(url + 'api/session').json()['progress']
             assert saved['completed'][private_id] == [0]
 
@@ -154,7 +156,8 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             resumed = another_device.new_page()
             resumed.goto(url, wait_until='networkidle')
             resumed.get_by_role('button', name='Open website navigation', exact=True).click()
-            resumed.get_by_role('navigation', name='Mobile website navigation').get_by_role('button', name='Sign in / Create account', exact=True).click()
+            resumed.get_by_role('button', name='Close website navigation', exact=True).click()
+            open_account(resumed)
             account = resumed.get_by_role('dialog')
             account.get_by_role('button', name='Already have an account? Sign in').click()
             account.get_by_role('textbox', name='Email address', exact=True).fill('student@example.test')
@@ -167,8 +170,9 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             resumed.get_by_role('button', name='My learning', exact=True).click()
             resumed.get_by_role('button', name='Completed', exact=True).click()
             expect(resumed.locator('.course-progress')).to_contain_text('1/1 complete')
-            resumed.get_by_role('button', name='Sign out', exact=True).click()
-            expect(resumed.get_by_role('button', name='Sign in / Create account', exact=True)).to_be_visible()
+            account_menu(resumed).get_by_role('button', name='Sign out', exact=True).click()
+            expect(account_menu(resumed).get_by_role('button', name='Sign in', exact=True)).to_be_visible()
+            resumed.keyboard.press('Escape')
             assert not json.loads(resumed.evaluate("localStorage.getItem('curio.student.v1')"))['completed']
             passed('Guest progress syncs to an account, resumes on another device, and clears locally at sign-out')
 

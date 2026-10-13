@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = os.environ.get('CURIO_TEST_URL', 'http://127.0.0.1:5173/').rstrip('/') + '/'
@@ -140,7 +141,7 @@ with sync_playwright() as p:
     passed('Reduced motion keeps immediate state feedback and native activation while omitting ripple animation')
 
     page.goto(URL+'#overview',wait_until='networkidle')
-    page.get_by_role('button',name='Edit learner profile',exact=True).click()
+    open_profile(page)
     page.keyboard.press('Escape')
     page.keyboard.press('Control+k')
     expect(page.get_by_role('textbox',name='Search courses')).to_be_focused()

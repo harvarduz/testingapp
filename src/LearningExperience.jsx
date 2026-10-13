@@ -1,15 +1,46 @@
 import React, { useRef, useState } from 'react';
-import { ArrowRight, Check, CheckCheck, Coins, RotateCcw, Route, Target, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCheck, Coins, RotateCcw, Route, Target, X } from 'lucide-react';
 import { courseCompleted, localDate } from './progress.js';
 import { dailyQuests, learningRewards, pathProgress, practiceQuestions, studyPaths } from './learning.js';
+import './lesson-workshop.css';
 
 export function WorkedLesson({ lesson }) {
+  const [step, setStep] = useState(0);
   if (!lesson.steps?.length && !lesson.objectives?.length) return null;
   return <div className="worked-lesson">
     {lesson.objectives?.length > 0 && <section aria-label="Learning goals"><h3>By the end of this lesson</h3><ul>{lesson.objectives.map(goal => <li key={goal}><Target size={15} />{goal}</li>)}</ul></section>}
-    {lesson.steps?.length > 0 && <section aria-label="Worked example"><h3>Work through an example</h3><ol>{lesson.steps.map((step, index) => <li key={index}><span>{index + 1}</span><p>{step}</p></li>)}</ol></section>}
+    {lesson.steps?.length > 0 && <section aria-label="Worked example"><div className="worked-example-heading"><h3>Work through an example</h3><span aria-live="polite">Step {step + 1} of {lesson.steps.length}</span></div><ol start={step + 1}><li><span>{step + 1}</span><p>{lesson.steps[step]}</p></li></ol><div className="worked-example-controls"><button className="button outline" disabled={step === 0} onClick={() => setStep(value => value - 1)}><ArrowLeft size={16} />Previous step</button>{step + 1 < lesson.steps.length ? <button className="button primary" onClick={() => setStep(value => value + 1)}>Next step<ArrowRight size={16} /></button> : <button className="text-button" onClick={() => setStep(0)}><RotateCcw size={16} />Review example</button>}</div></section>}
     {lesson.commonMistake && <aside className="common-mistake"><strong>A mistake to watch for</strong><p>{lesson.commonMistake}</p></aside>}
   </div>;
+}
+
+export function LessonExercises({ course, lesson, lessonIndex, onRecord }) {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [checked, setChecked] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const attempted = useRef(false);
+  const questions = lesson.practice || [];
+  if (!questions.length) return null;
+  const question = questions[index];
+  const check = () => {
+    if (selected === null || attempted.current) return;
+    attempted.current = true;
+    setChecked(true);
+    onRecord?.({ ...question, course, lessonIndex, questionIndex: index }, selected === question.answer, crypto.randomUUID());
+  };
+  const resetAnswer = () => { attempted.current = false; setSelected(null); setChecked(false); };
+  const next = () => { if (index + 1 < questions.length) { setIndex(value => value + 1); resetAnswer(); } else setFinished(true); };
+  return <section className="lesson-exercises" aria-label="Lesson exercises">
+    <div className="lesson-exercises-heading"><h3>Put the idea to work</h3><span>{finished ? 'Reviewed' : `${index + 1} / ${questions.length}`}</span></div>
+    {finished ? <><p>You’ve worked through the practice questions. Continue to the lesson check when you’re ready.</p><button className="text-button" onClick={() => { setIndex(0); setFinished(false); resetAnswer(); }}><RotateCcw size={16} />Review these exercises</button></> : <>
+      <p className="lesson-exercise-prompt">{question.question}</p>
+      <div className="practice-options" role="group" aria-label="Lesson practice answers">{question.options.map((option, optionIndex) => <button key={optionIndex} aria-pressed={selected === optionIndex} disabled={checked} className={`${selected === optionIndex ? 'selected' : ''} ${checked && optionIndex === question.answer ? 'correct' : ''}`} onClick={() => setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}{checked && optionIndex === question.answer && <Check size={18} />}</button>)}</div>
+      {checked && <div className={`practice-feedback ${selected === question.answer ? 'correct' : 'retry'}`} role="status"><strong>{selected === question.answer ? 'You’ve got the idea.' : 'Compare your reasoning.'}</strong><p>{question.explanation}</p></div>}
+      <div className="lesson-exercise-controls">{checked ? <><button className="button primary" onClick={next}>{index + 1 < questions.length ? 'Next exercise' : 'Finish these exercises'}<ArrowRight size={16} /></button>{selected !== question.answer && <button className="text-button" onClick={resetAnswer}><RotateCcw size={16} />Try this answer again</button>}</> : <button className="button primary" onClick={check} disabled={selected === null}>Check practice answer<ArrowRight size={16} /></button>}</div>
+    </>}
+    <p className="lesson-exercise-note">These exercises help you learn. The lesson check records your course completion.</p>
+  </section>;
 }
 
 export function StudyPaths({ courses, progress, onChoose, onOpen }) {

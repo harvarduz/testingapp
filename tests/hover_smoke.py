@@ -11,6 +11,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from account_helpers import open_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -88,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='curio-hover-') as directory:
                     page.reload(wait_until='networkidle')
                     stable_hover(page, page.get_by_role('button',name='Find your first course',exact=True))
                     stable_hover(page, page.locator('.landing-enter'))
-                    stable_hover(page, page.get_by_role('button',name='Sign in',exact=True))
+                    stable_hover(page, page.get_by_role('button',name='Open account menu',exact=True))
                     stable_hover(page, page.get_by_role('button',name='Customize appearance',exact=True))
                     answer = page.get_by_role('region',name='Every pattern has a story.').get_by_role('button',name='14',exact=True)
                     answer.click()
@@ -134,7 +135,7 @@ with tempfile.TemporaryDirectory(prefix='curio-hover-') as directory:
                     assert rail.evaluate("(node)=>getComputedStyle(node,'::before').height") == '48px'
                     page.get_by_role('button',name='Collapse navigation',exact=True).click()
 
-                    page.get_by_role('button',name='Edit learner profile',exact=True).click()
+                    open_profile(page)
                     close = page.get_by_role('button',name='Close dialog',exact=True)
                     stable_hover(page,close)
                     page.keyboard.press('Escape')
