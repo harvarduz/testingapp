@@ -8,7 +8,10 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         codeSplitting: {
-          groups: [{ name: 'material-colors', test: /node_modules\/@material\/material-color-utilities\// }],
+          groups: [
+            { name: 'material-colors', test: /node_modules\/@material\/material-color-utilities\// },
+            { name: 'ui-vendor', test: /node_modules\/(?!@material\/)/ },
+          ],
         },
       },
     },

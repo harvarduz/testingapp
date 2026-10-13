@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -101,7 +102,7 @@ with tempfile.TemporaryDirectory(prefix='curio-labs-') as directory:
 
             page.get_by_role('button',name='Edit the inputs').click()
             page.get_by_role('textbox',name='Algorithm number list').fill('7, 2, 9, 4')
-            page.get_by_role('combobox',name='Algorithm',exact=True).select_option('max')
+            choose_option(page.get_by_role('combobox',name='Algorithm',exact=True), 'max')
             page.get_by_role('spinbutton',name='Your predicted result').fill('9')
             page.get_by_role('button',name='Lock prediction & start').click()
             for _ in range(4): page.get_by_role('button',name='Run next step').click()

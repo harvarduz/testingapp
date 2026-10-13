@@ -7,6 +7,7 @@ import { colors, artTypes, emptyCourse, emptyLesson, normalizeCourse, publicatio
 import { CourseArt } from './Art.jsx';
 import './marketplace.css';
 import LessonExtensionEditor from './LessonExtensionEditor.jsx';
+import SelectField from './SelectField.jsx';
 
 function Offer() {
   return <div className="creator-offer"><span className="creator-offer-icon"><Globe size={22} /></span><div><strong>Publish your own courses.</strong><p>Course publishing is free for a limited time. No card needed.</p></div><span className="offer-price">$0<span>publishing fee</span></span></div>;
@@ -66,10 +67,10 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
         <legend>Course details</legend>
         <label className="editor-wide">Course title<input value={course.title} onChange={e => update({ title: e.target.value })} maxLength={100} placeholder="What will students discover?" /></label>
         <label className="editor-wide">Short description<textarea value={course.description} onChange={e => update({ description: e.target.value })} maxLength={500} rows={3} placeholder="Who is this for, and what will they learn?" /></label>
-        <label>Subject<select value={course.category} onChange={e => update({ category: e.target.value })}>{categories.slice(1).map(category => <option key={category}>{category}</option>)}</select></label>
-        <label>Level<select value={course.level} onChange={e => update({ level: e.target.value })}>{['Beginner', 'Intermediate', 'Advanced', 'All levels'].map(level => <option key={level}>{level}</option>)}</select></label>
+        <SelectField label="Subject" value={course.category} onChange={category => update({ category })} options={categories.slice(1)} disabled={busy} />
+        <SelectField label="Level" value={course.level} onChange={level => update({ level })} options={['Beginner', 'Intermediate', 'Advanced', 'All levels']} disabled={busy} />
         <label>Estimated minutes<input type="number" min={1} max={600} value={course.minutes} onChange={e => update({ minutes: Number(e.target.value) })} /></label>
-        <label>Illustration<select value={course.art} onChange={e => update({ art: e.target.value })}>{artTypes.map(art => <option key={art} value={art}>{art[0].toUpperCase() + art.slice(1)}</option>)}</select></label>
+        <SelectField label="Illustration" value={course.art} onChange={art => update({ art })} options={artTypes.map(art => ({ value: art, label: art[0].toUpperCase() + art.slice(1) }))} disabled={busy} />
         <div className="editor-wide editor-colors"><span>Cover color</span><div>{colors.map(color => <button type="button" key={color} aria-label={`${color} cover`} aria-pressed={course.color === color} className={`cover-swatch ${color}`} onClick={() => update({ color })}>{course.color === color && <Check size={17} />}</button>)}</div></div>
       </fieldset>
       <div className="editor-lessons-heading"><h3>The learning journey</h3><span>{course.lessons.length}/50 lessons</span></div>
@@ -83,7 +84,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
           <label>A useful example<textarea aria-label={`Lesson ${index + 1} example`} value={lesson.example} onChange={e => updateLesson(index, { example: e.target.value })} rows={4} maxLength={5000} placeholder="Show how the idea works in a specific situation." /></label>
           <label>Quiz question<input aria-label={`Lesson ${index + 1} question`} value={lesson.question} onChange={e => updateLesson(index, { question: e.target.value })} maxLength={500} /></label>
           <fieldset className="editor-answers"><legend>Four answer options</legend>{lesson.options.map((option, optionIndex) => <label key={optionIndex}>Option {optionIndex + 1}<input aria-label={`Lesson ${index + 1} option ${optionIndex + 1}`} value={option} onChange={e => updateLesson(index, { options: lesson.options.map((v, i) => i === optionIndex ? e.target.value : v) })} maxLength={300} /></label>)}</fieldset>
-          <label>Correct answer<select aria-label={`Lesson ${index + 1} correct answer`} value={lesson.answer} onChange={e => updateLesson(index, { answer: Number(e.target.value) })}>{lesson.options.map((option, i) => <option key={i} value={i}>Option {i + 1}{option && ` — ${option}`}</option>)}</select></label>
+          <SelectField label="Correct answer" aria-label={`Lesson ${index + 1} correct answer`} value={String(lesson.answer)} onChange={answer => updateLesson(index, { answer: Number(answer) })} options={lesson.options.map((option, i) => ({ value: String(i), label: `Option ${i + 1}${option ? ` — ${option}` : ''}` }))} disabled={busy} />
           <label>Why that answer is right<textarea aria-label={`Lesson ${index + 1} answer explanation`} value={lesson.explanation} onChange={e => updateLesson(index, { explanation: e.target.value })} rows={3} maxLength={3000} placeholder="Help students understand, whether their answer was right or wrong." /></label>
           <LessonExtensionEditor lesson={lesson} index={index} onChange={values => updateLesson(index, values)} />
           {course.lessons.length > 1 && (!course.everPublished || index >= initial.lessons.length) && <button type="button" className="text-button danger" onClick={() => update({ lessons: course.lessons.filter((_, i) => i !== index) })}><Trash2 size={15} />Remove lesson {index + 1}</button>}

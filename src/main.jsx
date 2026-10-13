@@ -4,6 +4,8 @@ import App from './App.jsx';
 import './styles.css';
 import './editorial.css';
 import './material.css';
+import './select.css';
+import './material-interactions.css';
 import { AppearanceProvider, initializeAppearance } from './Appearance.jsx';
 
 initializeAppearance();

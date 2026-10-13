@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -53,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             page.get_by_role('button', name='Languages 1 course', exact=True).click()
             expect(page.locator('.course-card')).to_have_count(1)
             expect(page.get_by_role('button', name='Say it clearly', exact=True)).to_be_visible()
-            page.get_by_role('combobox', name='Choose a subject').select_option('Arts & music')
+            choose_option(page.get_by_role('combobox', name='Choose a subject'), 'Arts & music')
             expect(page.get_by_role('button', name='Listen, look, and create', exact=True)).to_be_visible()
             passed('All 18 subjects are discoverable; landing links and subject filters return real courses')
 
@@ -111,8 +112,8 @@ with tempfile.TemporaryDirectory(prefix='curio-marketplace-') as directory:
             passed('A real lesson preview awards no progress, and saved drafts stay out of the public catalog')
 
             page.get_by_role('textbox', name='Course title', exact=True).fill('Patterns with Morgan, revised')
-            page.once('dialog', lambda dialog: dialog.dismiss())
             page.get_by_role('navigation', name='Main navigation').get_by_role('button', name='Explore courses').click()
+            page.get_by_role('dialog', name='Leave without saving?', exact=True).get_by_role('button', name='Keep editing', exact=True).click()
             expect(page.locator('.course-editor')).to_be_visible()
             page.get_by_role('textbox', name='Course title', exact=True).fill('Patterns with Morgan')
             page.get_by_role('button', name='Publish for free', exact=True).click()

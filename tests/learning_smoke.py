@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -167,7 +168,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             phone.get_by_role('button',name='Add practice question').click()
             phone.get_by_role('textbox',name='Lesson 1 practice 1 question').fill('What follows 4, 8, 12 when the same difference continues?')
             for number,answer in enumerate(['14','16','18','20'],1): phone.get_by_role('textbox',name=f'Lesson 1 practice 1 option {number}').fill(answer)
-            phone.get_by_role('combobox',name='Lesson 1 practice 1 correct answer').select_option('1')
+            choose_option(phone.get_by_role('combobox',name='Lesson 1 practice 1 correct answer'), '1')
             phone.get_by_role('textbox',name='Lesson 1 practice 1 explanation').fill('The constant difference is four, so twelve plus four gives sixteen.')
             lesson=catalog[0]['lessons'][0]
             phone.get_by_role('textbox',name='Course title',exact=True).fill('Applied number practice')
@@ -175,7 +176,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             for field in ['title','idea','example','question']:
                 phone.get_by_role('textbox',name=f'Lesson 1 {field}',exact=True).fill(lesson[field])
             for number,answer in enumerate(lesson['options'],1): phone.get_by_role('textbox',name=f'Lesson 1 option {number}',exact=True).fill(answer)
-            phone.get_by_role('combobox',name='Lesson 1 correct answer',exact=True).select_option(str(lesson['answer']))
+            choose_option(phone.get_by_role('combobox',name='Lesson 1 correct answer',exact=True), str(lesson['answer']))
             phone.get_by_role('textbox',name='Lesson 1 answer explanation',exact=True).fill(lesson['explanation'])
             phone.get_by_role('button',name='Publish for free',exact=True).click()
             expect(phone.locator('.status-pill').first).to_contain_text('Published')

@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 import uuid
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = os.environ.get('CURIO_TEST_URL', 'http://127.0.0.1:5173/').rstrip('/') + '/'
@@ -41,8 +42,8 @@ with sync_playwright() as p:
             page.goto(URL + route, wait_until='networkidle')
             audit(page, f'{route or "home"} at {width}px')
             if route == '#explore':
-                page.get_by_role('combobox', name='Filter by level').select_option('Advanced')
-                page.get_by_role('combobox', name='Filter by duration').select_option('Over 40 minutes')
+                choose_option(page.get_by_role('combobox', name='Filter by level'), 'Advanced')
+                choose_option(page.get_by_role('combobox', name='Filter by duration'), 'Over 40 minutes')
                 audit(page, f'Filtered catalog at {width}px')
             if route == '#paths':
                 page.get_by_role('button', name='Choose Mathematics foundations', exact=True).click() if page.get_by_role('button', name='Choose Mathematics foundations', exact=True).count() else None

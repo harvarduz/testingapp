@@ -2,6 +2,8 @@
 
 The Material Expressive adaptation was validated on 12 October 2026; its Google blue and native button update was validated on 13 October with Node.js 24, Chromium, and the compiled production frontend. It applies the supplied Bloom reference across marketing, student, lesson, lab, account, and creator screens. Four tonal palettes, light/dark modes, self-hosted Google Sans Flex/Roboto, a 96 px rail, rounded containers, outlined cards, and pill controls share one appearance system. Blue now uses Google's #0b57d0 primary, with #a8c7fa in dark mode. Guided learning, Curio coins, and all three interactive labs remain functional.
 
+The 13 October interaction update replaces native dropdown menus throughout the catalog, learner preferences, creator forms, and algorithm lab. Hover preserves selected colours and geometry; practice artwork and sliders use the current palette. Unsaved creator navigation uses a themed confirmation, and learning updates dismiss on Escape, outside clicks, or route changes. Final opened-menu checks passed against the compiled production frontend.
+
 | Suite | Passed | What it verifies |
 |---|---:|---|
 | `npm test` | 28 | Content, course imports, progress merges, study paths, practice priority, Curio coin limits, accounts, private drafts, publication, origin protection, and persistence |
@@ -15,8 +17,21 @@ The Material Expressive adaptation was validated on 12 October 2026; its Google 
 | `tests/material_smoke.py` functionality | 12 | Reference fonts/colours, all palettes, appearance persistence, mobile focus restoration, visible close controls in scrolled lessons, reduced motion, corrupt/blocked storage, and layout including intermediate tablet widths |
 | `tests/material_smoke.py` accessibility | 80 | Four palettes in both display modes across nine main pages and the appearance picker |
 | `tests/button_smoke.py` | 9 | Legacy default migration, explicit choice persistence, pointer/ripple geometry, Enter/Space activation, drag cancellation, disabled actions, touch scrolling, actual touchscreen taps, reduced motion, and modal-to-search focus |
+| `tests/hover_smoke.py` | 7 | Stable Material hover layers, selected quiz/chip states, course artwork and titles, disabled controls, palette-aware practice decoration, and native keyboard sliders |
+| `tests/navigation_smoke.py` | 10 | Updates dismissal/focus, readable light/dark profile text, themed edit confirmation, cancellation without losing content, deferred search, hash navigation, mobile drawer/bottom-navigation focus, and absence of native alerts |
+| `tests/select_smoke.py` functionality | 10 | Real subject/sort/level/time filters, keyboard and typeahead, cancellation, popup collision bounds, nested dialog Escape, numeric profile/creator values, and actual touchscreen taps |
+| `tests/select_smoke.py` accessibility | 28 | Opened light/dark desktop/mobile catalog menus, profile goal menus, readable profile dialogs, and creator selection menus |
 | `tests/docker_smoke.py` | 10 | Domain configuration, unprivileged startup, security headers/cookies, publication, replacement-container persistence for accounts/courses/notes/bookmarks/paths/practice/labs, and origin protection |
-| **Total** | **328** | **Passed across the Material adaptation, button update, and retained learning/creator features** |
+| **Total** | **383** | **Passed across retained platform features, shared selection menus, hover polish, navigation, and the production container** |
+
+Build first, then run the interaction suites; each starts an isolated server and removes its temporary accounts and drafts:
+
+```sh
+npm run build
+python tests/select_smoke.py
+python tests/hover_smoke.py
+python tests/navigation_smoke.py
+```
 
 `npm run build` passed. Layout checks cover 320, 390, 768, 800, 1024, and 1366 px widths, including short mobile and desktop heights. Intermediate tablet review found a goal-card overflow inherited from the old horizontal grid; the desktop goal card now uses a vertical layout, while the mobile card uses a bounded two-column grid. The sidebar was reproduced at a 600 px viewport with 812 px of content and no scrolling. It now scrolls independently, collapses to a 96 px icon rail, remembers its browser preference, and expands into a full mobile drawer. Mobile focus trapping, Escape, restored focus, and navigation were tested.
 
@@ -34,7 +49,9 @@ The supplied reference was inspected from TLS-verified downloaded assets in a lo
 
 The requested blue update keeps the reference's shapes and type while applying Google blue primary roles to its generated foundation. A versioned browser preference migrates the earlier automatically persisted purple default once; explicit new choices survive reload. Native button activation stays intact: Space acts on release, Enter acts once, and actual mobile taps still complete the homepage exercise. Ripples start at the pointer or keyboard centre, remain bounded, fade out, and remove their temporary DOM nodes. A drag, scroll, pointer cancellation, loss of focus, or hidden window releases the press state. Disabled buttons remain inert, and reduced motion omits ripple elements. Primary actions have a 48 px height and a 3 px keyboard outline. Ripples replace rather than stack over the hover/focus layer, preserving contrast through the press. A modal focus-restoration race was fixed so Escape followed immediately by the search shortcut does not move focus back to the opener.
 
-Visual screenshots were reviewed. Colour distinguishes learning goals, worked steps, correct answers, useful mistakes, and rewards. Hover effects and celebrations are brief. Reduced-motion CSS disables decorative effects; programmatic navigation also uses immediate scrolling when reduced motion is requested. Automated checks found zero accessibility violations across 208 tested light/dark and palette states; these checks supplement manual review and do not certify complete WCAG compliance.
+Selection behavior uses the pinned MIT-licensed `@radix-ui/react-select` 2.2.6 dependency, with shared Material presentation and a separate UI vendor bundle. Menus stay inside a dialog's focus boundary, and Escape closes a menu before its parent dialog. While a menu is open, controls outside it are inert; closing restores their previous boundaries and returns focus to the trigger. Keyboard options use the current Material primary colour for their inset focus ring. Form options preserve string identifiers and convert quiz answers and daily goals back to numbers. The preference footer's legacy 9 px forced colour was removed after reproducing a 1.89:1 contrast failure; the updated footer passes light/dark axe checks. The themed discard confirmation preserves unsaved values on cancel, captures a requested search before deferring it, and resumes direct hash navigation only after acceptance. Focus returns to the visible mobile menu button even when a route change occurs while its drawer is open.
+
+Visual screenshots were reviewed. Colour distinguishes learning goals, worked steps, correct answers, useful mistakes, and rewards. Hover uses one state layer without shifting course artwork, titles, or selected controls. Reduced-motion CSS disables decorative effects; programmatic navigation also uses immediate scrolling when reduced motion is requested. The main accessibility, palette, and opened-menu suites found zero automated violations across 236 light/dark states. These checks supplement manual review and do not certify complete WCAG compliance.
 
 The public service is https://bup.up.railway.app/. Public verification uses read-only HTTP requests with TLS verification enabled, checking the deployed frontend bundles, catalog, health, and anonymous session. Browser interaction, test registrations, and publishing use local or isolated test databases. The guided-learning commit `72eb560` was verified live on 12 October: its public JS/CSS matched the local production build, the catalog included all 48 extra practice questions, and health returned `ok`. The lab extension commit `0eb4d4a` was also verified live on 12 October: JavaScript `index-7JTHSxFy.js` and CSS `index-D8383usb.css` matched the local production build, all three lab titles were present in the public bundle, and health returned `ok`.
 

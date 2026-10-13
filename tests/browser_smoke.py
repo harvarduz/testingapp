@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = os.environ.get('CURIO_TEST_URL', 'http://127.0.0.1:5173/')
@@ -43,7 +44,7 @@ with sync_playwright() as p:
     expect(page.locator('.course-card')).to_have_count(1)
     expect(page.get_by_role('button', name='The physics of everyday life', exact=True)).to_be_visible()
     page.get_by_role('button', name='All courses', exact=True).click()
-    page.get_by_role('combobox', name='Sort courses').select_option('A–Z')
+    choose_option(page.get_by_role('combobox', name='Sort courses'), 'A–Z')
     expect(page.locator('.course-card h3').first).to_have_text('A place in the universe')
     passed('Course categories and alphabetical sorting change the actual results')
 
@@ -113,7 +114,7 @@ with sync_playwright() as p:
     dialog.get_by_role('button', name='Save my preferences').click()
     expect(dialog.get_by_role('alert')).to_contain_text('Please enter a name')
     dialog.get_by_role('textbox', name='What should we call you?').fill('Azizbek')
-    dialog.get_by_role('combobox', name='Your daily learning goal').select_option('3')
+    choose_option(dialog.get_by_role('combobox', name='Your daily learning goal'), '3')
     dialog.get_by_role('button', name='Save my preferences').click()
     expect(page.locator('.greeting')).to_contain_text('AZIZBEK')
     page.reload(wait_until='networkidle')

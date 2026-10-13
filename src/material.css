@@ -54,7 +54,7 @@
 body { font-family: 'Roboto', sans-serif; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
 h1, h2, h3, h4 { font-family: var(--heading); font-weight: 400; }
 button, a, input, textarea, select, summary { outline-offset: 4px; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--md-sys-color-primary); }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--md-sys-color-primary); }
 button { position: relative; isolation: isolate; overflow: clip; -webkit-tap-highlight-color: transparent; transition: background .18s var(--material-motion), color .18s, box-shadow .18s, border-radius .18s cubic-bezier(.2, 0, 0, 1); }
 button::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: currentColor; opacity: 0; transition: opacity .15s linear; }
 @media (hover: hover) and (pointer: fine) { button:hover:not(:disabled)::before { opacity: .08; } }

@@ -1,0 +1,284 @@
+/* One state layer per control. Keep each control's tonal role and geometry
+   stable on hover; feedback comes from the Material state layer and ripple. */
+:root {
+  --material-hover-opacity: .08;
+  --material-focus-opacity: .12;
+  --material-press-opacity: .12;
+}
+
+button {
+  transition: background-color 180ms var(--material-motion), color 180ms var(--material-motion),
+    box-shadow 180ms var(--material-motion), border-color 180ms var(--material-motion),
+    border-radius 180ms var(--material-motion);
+}
+
+/* Transparent actions need a rounded, comfortably sized state layer too. */
+.text-button, .landing-text-button, .landing-signin {
+  border-radius: 22px;
+  padding-inline: 12px;
+  min-height: 44px;
+}
+.text-button:hover, .landing-text-button:hover {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+}
+.landing-signin:hover {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.landing-why .landing-text-button:hover { color: var(--md-sys-color-on-secondary-container); }
+.text-button.danger:hover, .creator-delete:hover { color: var(--md-sys-color-error); }
+
+.button.primary:hover:not(:disabled), .landing-button-dark:hover:not(:disabled) {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: none;
+  transform: none;
+}
+.button.outline:hover:not(:disabled), .button.outline:hover:disabled {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-outline);
+  box-shadow: none;
+  transform: none;
+}
+.landing-enter:hover {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: transparent;
+}
+.landing-enter { border-color: transparent; }
+.icon-button:hover, .appearance-controls .icon-button:hover {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.icon-button.is-active:hover {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+.modal-close:hover {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.modal-close, .creator-delete, .password-field > button, .reward-toast > button {
+  border-radius: 50%;
+}
+.goal-action:hover { background: transparent; }
+.course-save:hover {
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.course-save.saved:hover {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Hover must not make a selected filter look unselected. */
+.category-tabs > button:hover {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  border-color: var(--md-sys-color-outline);
+}
+.category-tabs > button.active:hover {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: transparent;
+}
+.quiz-option:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-color: var(--md-sys-color-outline);
+}
+.quiz-option.selected:hover:not(:disabled):not(.correct):not(.incorrect) {
+  background: var(--md-sys-color-secondary-container);
+  border-color: var(--md-sys-color-primary);
+}
+.quiz-option.selected .answer-letter {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+.quiz-option.correct .answer-letter {
+  background: var(--curio-success);
+  color: var(--curio-success-container);
+}
+.quiz-option.incorrect .answer-letter {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error, #fff);
+}
+.landing-preview-answers button:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  border-color: var(--md-sys-color-outline);
+}
+.landing-preview-answers button.selected:hover:not(:disabled) {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: transparent;
+}
+.step-control button:hover:not(:disabled) { background: var(--md-sys-color-surface-container-lowest); }
+.step-control button { width: 44px; height: 44px; }
+.step-control strong { color: var(--md-sys-color-on-primary-container); }
+.example-box > span { color: var(--md-sys-color-on-secondary-container); }
+.explore-intro > div > svg { color: var(--md-sys-color-on-primary-container); }
+.review-list > button:hover { border-color: var(--md-sys-color-outline-variant); }
+.lesson-list button:hover { background: transparent; }
+
+/* Navigation rail feedback belongs to the icon indicator, not a second
+   rectangular tile around the icon and label. Drawers retain a full row. */
+.nav-item:hover {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.nav-item.active:hover {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+@media (min-width: 781px) {
+  .navigation-collapsed .sidebar .nav-item:hover,
+  .navigation-collapsed .sidebar .nav-item.active:hover { background: transparent; }
+  .navigation-collapsed .sidebar .nav-item::before {
+    inset: 4px 8px auto;
+    height: 32px;
+    border-radius: 16px;
+    z-index: 1;
+  }
+  .navigation-collapsed .sidebar .nav-item > .material-ripple { display: none; }
+  .navigation-collapsed .sidebar .nav-item:has(> .material-ripple)[data-material-pressed]::before {
+    opacity: var(--material-press-opacity);
+  }
+  .navigation-collapsed .sidebar .nav-item:has(> .material-ripple):focus-visible::before {
+    opacity: var(--material-focus-opacity);
+  }
+}
+
+/* Artwork is content, not hover decoration. Remove the old zoom and bounce
+   while keeping intentional lesson and result animations intact. */
+.course-cover .course-art, .course-cover:hover .course-art,
+.landing-course .course-art, .landing-course:hover .course-art,
+.landing-subject-grid > button svg, .landing-subject-grid > button:hover svg {
+  transform: none;
+  transition: none;
+}
+.course-card:hover, .landing-course:hover {
+  background: var(--md-sys-color-surface);
+  border-color: var(--md-sys-color-outline-variant);
+  transform: none;
+  box-shadow: none;
+}
+.landing-subject-grid > button:hover {
+  background: var(--md-sys-color-surface-container-low);
+  border-color: transparent;
+}
+.landing-course > button, .landing-course > button:hover { border: 0; border-radius: inherit; }
+.course-cover::before, .landing-course > button::before { z-index: 1; }
+.course-cover > .material-ripple, .landing-course > button > .material-ripple { z-index: 1; }
+
+/* The practice illustration follows the active palette, including dark mode. */
+.practice-copy h2 { font-family: var(--heading); font-weight: 400; }
+.practice-decoration {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-radius: 48px 48px 100px 48px;
+}
+.practice-decoration::before {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: inherit;
+}
+.practice-star { color: var(--md-sys-color-primary); }
+.practice-small-star { color: var(--md-sys-color-tertiary); }
+
+/* Native range semantics with the expressive track and slim handle. The
+   percentage comes from the controlled value, so every input method agrees. */
+.lab-experiment > input[type='range'], .budget-controls input[type='range'] {
+  --range-fill: var(--md-sys-color-primary);
+  --range-empty: var(--md-sys-color-secondary-container);
+  --range-state: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin-block: 12px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.lab-experiment > input[type='range']::-webkit-slider-runnable-track,
+.budget-controls input[type='range']::-webkit-slider-runnable-track {
+  height: 16px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(to right,
+    var(--range-fill) 0, var(--range-fill) calc(var(--range-progress, 0%) - 5px),
+    transparent calc(var(--range-progress, 0%) - 5px), transparent calc(var(--range-progress, 0%) + 5px),
+    var(--range-empty) calc(var(--range-progress, 0%) + 5px), var(--range-empty) 100%);
+}
+.lab-experiment > input[type='range']::-webkit-slider-thumb,
+.budget-controls input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 4px;
+  height: 44px;
+  margin-top: -14px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--range-fill);
+  box-shadow: 0 0 0 8px var(--range-state);
+  transition: box-shadow 150ms var(--material-motion);
+}
+.lab-experiment > input[type='range']::-moz-range-track,
+.budget-controls input[type='range']::-moz-range-track {
+  height: 16px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(to right,
+    var(--range-fill) 0, var(--range-fill) calc(var(--range-progress, 0%) - 5px),
+    transparent calc(var(--range-progress, 0%) - 5px), transparent calc(var(--range-progress, 0%) + 5px),
+    var(--range-empty) calc(var(--range-progress, 0%) + 5px), var(--range-empty) 100%);
+}
+.lab-experiment > input[type='range']::-moz-range-thumb,
+.budget-controls input[type='range']::-moz-range-thumb {
+  width: 4px;
+  height: 44px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--range-fill);
+  box-shadow: 0 0 0 8px var(--range-state);
+  transition: box-shadow 150ms var(--material-motion);
+}
+.lab-experiment > input[type='range']:focus-visible,
+.budget-controls input[type='range']:focus-visible {
+  --range-state: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.lab-experiment > input[type='range']:active,
+.budget-controls input[type='range']:active {
+  --range-state: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled)::before { opacity: var(--material-hover-opacity); }
+  .button.primary:hover:not(:disabled), .landing-button-dark:hover:not(:disabled) {
+    box-shadow: 0 1px 2px #0003, 0 1px 3px 1px #0001;
+  }
+  button:hover:not(:disabled):focus-visible::before { opacity: var(--material-focus-opacity); }
+  button:hover:not(:disabled)[data-material-pressed]::before { opacity: var(--material-press-opacity); }
+  button:has(> .material-ripple):not(:disabled):is(:hover, :focus-visible, [data-material-pressed])::before { opacity: 0; }
+  .navigation-collapsed .sidebar .nav-item:has(> .material-ripple)[data-material-pressed]::before { opacity: var(--material-press-opacity); }
+  .lab-experiment > input[type='range']:hover,
+  .budget-controls input[type='range']:hover {
+    --range-state: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  }
+  .lab-experiment > input[type='range']:hover:focus-visible,
+  .budget-controls input[type='range']:hover:focus-visible,
+  .lab-experiment > input[type='range']:hover:active,
+  .budget-controls input[type='range']:hover:active {
+    --range-state: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button { transition-duration: .01ms !important; }
+}

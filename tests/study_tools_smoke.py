@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
+from select_helpers import choose_option
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'test-results'
@@ -166,12 +167,12 @@ with tempfile.TemporaryDirectory(prefix='curio-study-') as directory:
             course_id=created.json()['course']['id']
             assert context.request.post(url+'api/creator/courses/'+course_id+'/publish',data={}).status == 200
             page.goto(url+'#explore',wait_until='networkidle');page.reload(wait_until='networkidle')
-            page.get_by_role('combobox',name='Filter by level').select_option('Advanced')
+            choose_option(page.get_by_role('combobox',name='Filter by level'), 'Advanced')
             expect(page.locator('.course-card')).to_have_count(1)
             expect(page.locator('.course-card')).to_contain_text('Advanced study lab')
-            page.get_by_role('combobox',name='Filter by duration').select_option('Under 20 minutes')
+            choose_option(page.get_by_role('combobox',name='Filter by duration'), 'Under 20 minutes')
             expect(page.locator('.course-card')).to_have_count(0)
-            page.get_by_role('combobox',name='Filter by duration').select_option('Over 40 minutes')
+            choose_option(page.get_by_role('combobox',name='Filter by duration'), 'Over 40 minutes')
             expect(page.locator('.course-card')).to_have_count(1)
             page.get_by_role('button',name='Clear filters',exact=True).click()
             expect(page.locator('.course-card')).to_have_count(21)

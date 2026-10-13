@@ -47,6 +47,10 @@ Blue is the default, with Google's `#0b57d0` filled-button accent and a readable
 
 Native buttons share Material state layers, bounded ripples, 48 px primary actions, a visible keyboard focus ring, and a brief pressed-shape transition. Pointer, keyboard, and touch retain their normal activation behaviour. Dragging away or beginning a scroll cancels feedback; disabled actions produce no ripples. Reduced motion keeps immediate state feedback without ripple animation. The ripple replaces the hover layer while active so the two layers do not reduce filled-button text contrast.
 
+Catalog, learner-goal, creator, and algorithm dropdowns use the same Material menu instead of the browser's native picker. Menus show the current choice, support arrow keys, Home/End and typeahead, and stay within mobile and desktop viewports. Escape closes an open menu before its enclosing dialog. Creator selections retain their underlying subject, illustration, and numeric answer values.
+
+Hover uses a consistent state layer; selected chips, quiz choices, course titles, and cover artwork keep their colour and position. Fraction and budget sliders share the current palette while retaining native keyboard controls. Learning updates close on outside clicks, Escape, or navigation. Leaving unsaved course edits opens a themed confirmation: cancel preserves the editor, and discard continues the requested navigation or search.
+
 ## Data and account behavior
 
 - Guest progress is stored in the browser. Signing in merges it into the account without awarding duplicate completion credit. Signing out clears local account progress.
@@ -97,6 +101,9 @@ python tests/study_tools_smoke.py
 python tests/learning_smoke.py
 python tests/labs_smoke.py
 python tests/material_smoke.py
+python tests/select_smoke.py
+python tests/hover_smoke.py
+python tests/navigation_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
@@ -104,6 +111,8 @@ The marketplace suite tests imports, drafts, previews without progress credit, p
 The Material suite checks reference colours/fonts, all four palettes in both display modes, persistence, mobile appearance dialogs, reduced motion, blocked/corrupt storage, layout, and 80 additional axe states. Run the full accessibility suite again with `CURIO_TEST_THEME=dark` to audit dark lessons, feedback, private notes, and authenticated course editors. Only run these writing browser suites against a development/test database.
 
 The button suite checks one-time legacy appearance migration, pointer/ripple geometry and cleanup, native Enter/Space activation, disabled controls, cancelled touch gestures, real mobile touchscreen activation, reduced motion, and Escape followed immediately by the search shortcut.
+
+The selection suite exercises all shared menus through keyboard and actual touchscreen input, combined catalog filters, nested profile dialogs, numeric form values, and creator saves. Its 28 additional axe states include opened desktop/mobile menus and readable profile text. The hover suite guards against old colours, moving artwork, lost selected states, active controls, and slider presentation. The navigation suite checks notification dismissal, readable light/dark preferences, unsaved-edit cancellation/discard, deferred search, hash navigation, mobile focus restoration, and the absence of native confirmation dialogs. These suites use isolated accounts and drafts.
 
 Production container and persistent-volume checks:
 
@@ -124,6 +133,9 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Material tokens, typography, responsive presentation | `src/material.css` |
 | Palette generation, display modes, appearance controls | `src/Appearance.jsx` |
 | Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |
+| Shared selection menus and responsive popup presentation | `src/SelectField.jsx`, `src/select.css` |
+| Consistent hover states, slider styling, and selected controls | `src/material-interactions.css` |
+| Unsaved-edit confirmation | `src/NavigationConfirm.jsx`, `src/navigation-confirm.css` |
 | Earlier layout and learning-control foundations | `src/editorial.css` |
 | Learning and marketing layout foundations | `src/styles.css`, `src/landing.css` |
 | Courses and original subject lessons | `src/data.js`, `src/catalog.js` |
@@ -142,4 +154,4 @@ Screenshots and current accessibility results are written to ignored `test-resul
 
 Quiz answers use zero-based indices in `options`. Add course content with each new category so the subject has a useful destination. See `docs/competition-demo.md` for presentation and Ustoz evidence.
 
-Conceptual inspiration: Brilliant and Khan Academy. Visual reference: Bloom Material Expressive, linked above. All course content and subject SVG illustrations are original. Icons: Lucide (ISC). Material Color Utilities: Apache 2.0. Bundled fonts: Google Sans Flex, Roboto, DM Sans, and Manrope (SIL Open Font License, files in `public/fonts/`). No third-party course materials or brand artwork were copied.
+Conceptual inspiration: Brilliant and Khan Academy. Visual reference: Bloom Material Expressive, linked above. All course content and subject SVG illustrations are original. Icons: Lucide (ISC). Material Color Utilities: Apache 2.0. Shared selection behavior: Radix Select 2.2.6 (MIT), bundled with the application. Bundled fonts: Google Sans Flex, Roboto, DM Sans, and Manrope (SIL Open Font License, files in `public/fonts/`). No third-party course materials or brand artwork were copied.

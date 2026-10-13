@@ -11,7 +11,9 @@ import { CourseShare, LessonNotes, ReviewQueue } from './StudyTools.jsx';
 import { WorkedLesson, StudyPaths, LearningMomentum, PracticeOverview, PracticeSession, RewardToast } from './LearningExperience.jsx';
 import { learningRewards } from './learning.js';
 import LearningLab from './LearningLab.jsx';
+import SelectField from './SelectField.jsx';
 import { AppearanceControls, AppearanceSettings, MaterialComposition } from './Appearance.jsx';
+import NavigationConfirm from './NavigationConfirm.jsx';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -44,9 +46,10 @@ function Modal({ children, onClose, title, wide = false }) {
     document.body.style.overflow = 'hidden';
     ref.current.focus();
     const onKey = e => {
+      if (e.defaultPrevented) return;
       if (e.key === 'Escape') onClose();
       if (e.key === 'Tab') {
-        const nodes = ref.current.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]');
+        const nodes = [...ref.current.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')].filter(node => node.getClientRects().length && node.tabIndex >= 0);
         const first = nodes[0], last = nodes[nodes.length - 1];
         if (!nodes.length) { e.preventDefault(); return; }
         if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current || !ref.current.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
@@ -109,7 +112,7 @@ function ProfileModal({ progress, update, close }) {
   const [name, setName] = useState(progress.name);
   const [goal, setGoal] = useState(progress.goal);
   const [error, setError] = useState('');
-  return <Modal title="Make yourself at home" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LITTLE CORNER</span><h2>Make yourself at home.</h2><p>A few small details for a learning journey that feels like you.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<label htmlFor="daily-goal">Your daily learning goal</label><select id="daily-goal" value={goal} onChange={e => setGoal(Number(e.target.value))}><option value={1}>A little curious · 1 activity a day</option><option value={2}>Keep growing · 2 activities a day</option><option value={3}>All in · 3 activities a day</option></select><span className="form-note">A lesson, daily challenge, or completed lab counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">Your preferences are saved in this browser. When signed in, your learning progress is also saved to your account.</p></div></Modal>;
+  return <Modal title="Make yourself at home" onClose={close}><div className="profile-dialog"><span className="dialog-icon"><Sprout size={27}/></span><span className="eyebrow">YOUR LITTLE CORNER</span><h2>Make yourself at home.</h2><p>A few small details for a learning journey that feels like you.</p><form noValidate onSubmit={e => { e.preventDefault(); if (!name.trim()) { setError('Please enter a name to continue.'); return; } update(p => ({ ...p, name: name.trim(), goal })); close(); }}><label htmlFor="learner-name">What should we call you?</label><input id="learner-name" value={name} onChange={e => { setName(e.target.value); setError(''); }} maxLength={32} placeholder="Your first name" aria-describedby={error ? 'name-error' : undefined} aria-invalid={Boolean(error)}/>{error && <p className="field-error" id="name-error" role="alert">{error}</p>}<SelectField id="daily-goal" label="Your daily learning goal" value={goal} onChange={value => setGoal(Number(value))} options={[{ value: 1, label: 'A little curious · 1 activity a day' }, { value: 2, label: 'Keep growing · 2 activities a day' }, { value: 3, label: 'All in · 3 activities a day' }]} /><span className="form-note">A lesson, daily challenge, or completed lab counts as one activity.</span><button className="button primary full-width" type="submit">Save my preferences<Check size={17}/></button></form><p className="privacy-note">Your preferences are saved in this browser. When signed in, your learning progress is also saved to your account.</p></div></Modal>;
 }
 
 export default function App() {
@@ -140,19 +143,21 @@ export default function App() {
   const [today, setToday] = useState(localDate());
   const creatorDirty = useRef(false);
   const onCreatorDirty = React.useCallback(value => { creatorDirty.current = value; }, []);
-  const mayLeaveEditor = () => {
-    if (!creatorDirty.current) return true;
-    if (!window.confirm('Leave the course editor? Your unsaved changes will be lost.')) return false;
-    creatorDirty.current = false; return true;
+  const requestLeaveEditor = action => {
+    if (!creatorDirty.current) { action(); return; }
+    setSidebarOpen(false);
+    setModal({ type: 'discard-edits', onLeave: action });
   };
   const searchRef = useRef(null);
+  const notificationRef = useRef(null);
+  const notificationButtonRef = useRef(null);
   const modalOpener = useRef(null);
   const setModal = next => {
     if (next) {
       const opener = document.activeElement;
       modalOpener.current = opener?.closest('.landing-mobile-nav')
         ? document.querySelector('.landing-menu-button')
-        : sidebarOpen ? document.querySelector('.mobile-menu') : opener;
+        : opener?.closest('.sidebar.open') ? document.querySelector('.mobile-menu') : opener;
     }
     setModalState(next);
   };
@@ -167,14 +172,32 @@ export default function App() {
     const tick = () => setToday(localDate());
     const interval = setInterval(tick, 30000);
     const hashChange = () => {
+      const requestedHash = location.hash;
       const value = location.hash.slice(1);
-      if (value !== 'creators' && !mayLeaveEditor()) { location.hash = 'creators'; return; }
       const id = linkedCourse();
-      setLinkedCourseId(id);
-      if (id) { setView('explore'); setSidebarOpen(false); return; }
-      setModalState(current => current?.type === 'course' ? null : current);
-      if (!value || views.includes(value)) setView(value || 'home');
-      else if (landingSections.includes(value)) setView('home');
+      if (value && !views.includes(value) && !landingSections.includes(value) && !id) {
+        setNotifications(false);
+        return;
+      }
+      const applyRoute = () => {
+        setLinkedCourseId(id);
+        setNotifications(false);
+        setSidebarOpen(false);
+        if (id) { setView('explore'); return; }
+        setModalState(current => current?.type === 'course' ? null : current);
+        if (!value || views.includes(value)) setView(value || 'home');
+        else if (landingSections.includes(value)) setView('home');
+      };
+      if (value !== 'creators' && creatorDirty.current) {
+        history.replaceState(null, '', '#creators');
+        requestLeaveEditor(() => {
+          history.pushState(null, '', requestedHash || location.pathname + location.search);
+          applyRoute();
+          scrollToStart();
+        });
+        return;
+      }
+      applyRoute();
     };
     const keyboard = e => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus(); } };
     window.addEventListener('hashchange', hashChange); document.addEventListener('keydown', keyboard);
@@ -243,6 +266,29 @@ export default function App() {
   }, [sidebarOpen]);
   useEffect(() => { try { localStorage.setItem('curio.sidebar.collapsed', String(sidebarCollapsed)); } catch { /* Navigation remains usable without storage. */ } }, [sidebarCollapsed]);
   useEffect(() => { if (!reward) return; const timer = setTimeout(() => setReward(null), 3500); return () => clearTimeout(timer); }, [reward]);
+  useEffect(() => {
+    if (!notifications) return;
+    const outside = event => {
+      if (!notificationRef.current?.contains(event.target)) setNotifications(false);
+    };
+    const keyboard = event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setNotifications(false);
+        notificationButtonRef.current?.focus();
+      }
+    };
+    const routeChange = () => setNotifications(false);
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', keyboard);
+    window.addEventListener('hashchange', routeChange);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', keyboard);
+      window.removeEventListener('hashchange', routeChange);
+    };
+  }, [notifications]);
+  useEffect(() => { if (modal) setNotifications(false); }, [modal]);
   const openAppearance = () => { setSidebarOpen(false); setModal({ type: 'appearance' }); };
   const celebrate = (title, coins) => setReward({ title, coins, id: crypto.randomUUID() });
   const openPractice = (courseId, lessonIndex) => setModal({ type: 'practice-session', courseId, lessonIndex });
@@ -253,7 +299,11 @@ export default function App() {
   const clearFilters = () => { setQuery(''); setCategory('All courses'); setLevel('All levels'); setDuration('Any duration'); };
   const saveCourse = id => { if (user) setSyncStatus('Saving to your account…'); setProgress(current => toggleSavedCourse(current, id)); };
   const saveNote = (id, index, text) => { if (user) setSyncStatus('Saving to your account…'); setProgress(current => writeLessonNote(current, id, index, text)); };
-  const navigate = page => { if (page !== 'creators' && !mayLeaveEditor()) return; setView(page); location.hash = page; setSidebarOpen(false); clearFilters(); setLinkedCourseId(null); setNotifications(false); scrollToStart(); };
+  const navigate = page => {
+    const applyRoute = () => { setView(page); location.hash = page; setSidebarOpen(false); clearFilters(); setLinkedCourseId(null); setNotifications(false); scrollToStart(); };
+    if (page !== 'creators') requestLeaveEditor(applyRoute);
+    else applyRoute();
+  };
   const openCourse = (course, initialLesson = null) => { if (initialLesson !== null) enroll(course.id); setModal({ type: 'course', course, initialLesson }); };
   const enroll = id => setProgress(p => p.enrolled.includes(id) ? p : { ...p, enrolled: [...p.enrolled, id] });
   const finish = (id, index) => { if (!progress.completed[id]?.includes(index)) celebrate('Lesson complete!', 25); setProgress(p => completeLesson(p, id, index, today)); };
@@ -314,7 +364,7 @@ export default function App() {
         <nav aria-label="Main navigation"><span className="nav-label">YOUR LEARNING SPACE</span>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} onClick={() => navigate(id)} aria-label={label} title={label} aria-current={view === id ? 'page' : undefined}><Icon size={19} strokeWidth={1.7}/><span>{label}</span>{view === id && <span className="nav-active-dot"/>}</button>)}<div className="nav-divider"/><button className={`nav-item ${view === 'achievements' ? 'active' : ''}`} onClick={() => navigate('achievements')} aria-label="Achievements" title="Achievements" aria-current={view === 'achievements' ? 'page' : undefined}><Trophy size={19} strokeWidth={1.7}/><span>Achievements</span>{view === 'achievements' && <span className="nav-active-dot"/>}</button></nav>
         <div className="sidebar-bottom"><div className="streak-card"><div className="streak-title"><span className="streak-flame"><Flame size={20}/></span><strong>{streak ? `${streak}-day streak` : 'A habit worth growing'}</strong></div><p>{streak ? 'Little by little, a lot becomes possible.' : 'One small discovery. Every day.'}</p><div className="streak-days">{Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const active = progress.activity[localDate(d)] > 0; return <span key={i} className={active ? 'done' : i === 6 ? 'today' : ''} title={`${d.toLocaleDateString('en', { weekday: 'long' })}: ${active ? 'Activity complete' : 'No activity yet'}`}>{active ? <Check size={12}/> : d.toLocaleDateString('en', { weekday: 'narrow' })}</span>; })}</div></div><button aria-label="A little help?" title="A little help?" className="nav-item help-button" onClick={() => setModal({ type: 'help' })}><CircleHelp size={19}/><span>A little help?</span><ArrowUpRight size={15}/></button><button className="mobile-appearance text-button" onClick={openAppearance}>Appearance</button><div className="sidebar-footer"><span className="little-sprout"><Sprout size={15}/></span>Made for curious minds.</div></div>
       </aside>
-      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={e => { if (!mayLeaveEditor()) return; setQuery(e.target.value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }}/>{query ? <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={14}/></button> : <kbd>⌘ K</kbd>}</div><div className="notification-wrap"><button className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div className="notification-popover"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><button className="avatar" onClick={() => setModal({ type: 'profile' })} aria-label="Edit learner profile">{progress.name.charAt(0).toUpperCase()}</button></div></header>
+      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={event => { const value = event.target.value; requestLeaveEditor(() => { setQuery(value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }); }}/>{query ? <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={14}/></button> : <kbd>⌘ K</kbd>}</div><div className="notification-wrap" ref={notificationRef}><button ref={notificationButtonRef} className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} aria-controls={notifications ? 'learning-updates' : undefined} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div id="learning-updates" className="notification-popover" role="region" aria-label="Learning updates"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><button className="avatar" onClick={() => setModal({ type: 'profile' })} aria-label="Edit learner profile">{progress.name.charAt(0).toUpperCase()}</button></div></header>
         <main id="main-content"><div className="page-heading"><div><div className="greeting"><span className="greeting-spark"><Sparkles size={14}/></span>{progress.name === 'Learner' ? 'YOUR LEARNING SPACE' : `HELLO, ${progress.name.toUpperCase()}`}</div><h1>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="day-streak" onClick={() => navigate('achievements')}><Flame size={19}/><strong>{streak}</strong><span>day streak</span></button></div>
           {storageError && <div className="storage-warning" role="status">Your browser can’t save progress right now. You can still learn, but progress may be lost after refreshing.</div>}
           {serviceError && <div className="storage-warning" role="alert">{serviceError}<button className="text-button" onClick={refreshCatalog}>Retry course service</button></div>}
@@ -330,7 +380,7 @@ export default function App() {
             <section className="courses-section"><div className="section-heading"><div><h2>{dashboardCourses.length ? 'Pick up where you left off' : 'Recommended courses'}<span className="heading-dot">.</span></h2><p>{dashboardCourses.length ? 'Continue with the next unfinished lesson.' : 'Short courses you can start today.'}</p></div><button className="text-button" onClick={() => navigate(dashboardCourses.length ? 'learning' : 'explore')}>{dashboardCourses.length ? 'My learning' : 'View all courses'}<ArrowRight size={16}/></button></div>{!dashboardCourses.length && <div className="category-tabs" aria-label="Filter featured courses">{categories.slice(0, 5).map(cat => <button key={cat} className={category === cat ? 'active' : ''} aria-pressed={category === cat} onClick={() => setCategory(cat)}>{cat}</button>)}</div>}<div className="course-grid">{(dashboardCourses.length ? featured : category === 'All courses' ? courses.slice(0, 3) : courses.filter(c => c.category === category).slice(0, 3)).map(c => <CourseCard key={c.id} course={c} progress={progress} onOpen={openCourse} onSave={saveCourse}/>)}</div></section>
             <LearningMomentum progress={progress} date={today} /><div className="bottom-row"><section className="challenge-banner"><div className="challenge-illustration"><Lightbulb size={34} strokeWidth={1.3}/><span className="mini-star">✦</span></div><div><span className="eyebrow">THE DAILY BRAIN STRETCH</span><h3>Good things come to curious minds.</h3><p>One little challenge. One fresh way to think.</p></div><button className="button outline" onClick={() => setModal({ type: 'challenge' })}>{progress.dailyChallenges.includes(today) ? 'Review challenge' : 'Give it a try'}<ArrowUpRight size={16}/></button></section><div className="learning-note"><span><Sprout size={22}/></span><p>“The beautiful thing about learning is that nobody can take it away from you.”</p><small>— B. B. King</small></div></div>
           </>}
-          {view === 'explore' && <><section className="explore-intro"><div><Compass size={25}/><span>Browse the course library.</span></div><p>{courses.length} courses · {courses.reduce((n, c) => n + c.lessons.length, 0)} hands-on lessons · Always free to explore</p></section><div className="catalog-toolbar"><div className="category-tabs" aria-label="Course category">{categories.slice(0, 5).map(cat => <button key={cat} className={category === cat ? 'active' : ''} aria-pressed={category === cat} onClick={() => setCategory(cat)}>{cat}</button>)}</div><label className="subject-select"><span className="sr-only">Choose a subject</span><select aria-label="Choose a subject" value={category} onChange={e => setCategory(e.target.value)}>{categories.map(cat => <option key={cat}>{cat}</option>)}</select></label><label className="sort-select"><span className="sr-only">Sort courses</span><select aria-label="Sort courses" value={sort} onChange={e => setSort(e.target.value)}><option>Recommended</option><option>Shortest first</option><option>A–Z</option></select><ChevronDown size={14}/></label></div><div className="catalog-refinements"><label>Level<select aria-label="Filter by level" value={level} onChange={event => setLevel(event.target.value)}>{['All levels', 'Beginner', 'Intermediate', 'Advanced'].map(item => <option key={item}>{item}</option>)}</select></label><label>Time available<select aria-label="Filter by duration" value={duration} onChange={event => setDuration(event.target.value)}>{['Any duration', 'Under 20 minutes', '20–40 minutes', 'Over 40 minutes'].map(item => <option key={item}>{item}</option>)}</select></label><span><Bookmark size={16} />Save a course to return to it later.</span></div>{linkedCourseId && catalogReady && !linkLoading && !serviceError && !courses.some(course => course.id === linkedCourseId) && <div className="storage-warning" role="status">This course is unavailable. It may have been unpublished. Browse the current courses below.</div>}<div className="catalog-results" aria-live="polite"><span>{filtered.length} {filtered.length === 1 ? 'course' : 'courses'}{query && <> for <strong>“{query}”</strong></>}</span>{(query || category !== 'All courses' || level !== 'All levels' || duration !== 'Any duration') && <button className="text-button" onClick={clearFilters}>Clear filters<X size={13}/></button>}</div>{filtered.length ? <div className="course-grid">{filtered.map(c => <CourseCard key={c.id} course={c} progress={progress} onOpen={openCourse} onSave={saveCourse}/>)}</div> : <div className="empty-state"><span><Search size={30}/></span><h2>No discoveries here just yet.</h2><p>Try a different word or explore all our courses.</p><button className="button primary" onClick={clearFilters}>Explore all courses<ArrowRight size={16}/></button></div>}</>}
+          {view === 'explore' && <><section className="explore-intro"><div><Compass size={25}/><span>Browse the course library.</span></div><p>{courses.length} courses · {courses.reduce((n, c) => n + c.lessons.length, 0)} hands-on lessons · Always free to explore</p></section><div className="catalog-toolbar"><div className="category-tabs" aria-label="Course category">{categories.slice(0, 5).map(cat => <button key={cat} className={category === cat ? 'active' : ''} aria-pressed={category === cat} onClick={() => setCategory(cat)}>{cat}</button>)}</div><SelectField className="subject-select" aria-label="Choose a subject" menuLabel="Subjects" value={category} onChange={setCategory} options={categories} /><SelectField className="sort-select" aria-label="Sort courses" menuLabel="Sort courses" value={sort} onChange={setSort} options={['Recommended', 'Shortest first', 'A–Z']} /></div><div className="catalog-refinements"><SelectField label="Level" aria-label="Filter by level" value={level} onChange={setLevel} options={['All levels', 'Beginner', 'Intermediate', 'Advanced']} /><SelectField label="Time available" aria-label="Filter by duration" value={duration} onChange={setDuration} options={['Any duration', 'Under 20 minutes', '20–40 minutes', 'Over 40 minutes']} /><span><Bookmark size={16} />Save a course to return to it later.</span></div>{linkedCourseId && catalogReady && !linkLoading && !serviceError && !courses.some(course => course.id === linkedCourseId) && <div className="storage-warning" role="status">This course is unavailable. It may have been unpublished. Browse the current courses below.</div>}<div className="catalog-results" aria-live="polite"><span>{filtered.length} {filtered.length === 1 ? 'course' : 'courses'}{query && <> for <strong>“{query}”</strong></>}</span>{(query || category !== 'All courses' || level !== 'All levels' || duration !== 'Any duration') && <button className="text-button" onClick={clearFilters}>Clear filters<X size={13}/></button>}</div>{filtered.length ? <div className="course-grid">{filtered.map(c => <CourseCard key={c.id} course={c} progress={progress} onOpen={openCourse} onSave={saveCourse}/>)}</div> : <div className="empty-state"><span><Search size={30}/></span><h2>No discoveries here just yet.</h2><p>Try a different word or explore all our courses.</p><button className="button primary" onClick={clearFilters}>Explore all courses<ArrowRight size={16}/></button></div>}</>}
           {view === 'learning' && <><div className="learning-stats"><div><span className="stat-icon green"><BookOpen size={23}/></span><span><strong>{enrolledCourses.length}</strong><small>courses started</small></span></div><div><span className="stat-icon purple"><CheckCheck size={23}/></span><span><strong>{totalDone}</strong><small>lessons completed</small></span></div><div><span className="stat-icon orange"><Trophy size={23}/></span><span><strong>{completedCourses}</strong><small>courses completed</small></span></div></div><div className="section-heading learning-section-heading"><h2>Your learning collection<span className="heading-dot">.</span></h2></div><div className="category-tabs" aria-label="Filter my learning">{['In progress', 'Completed', 'Saved', 'All courses'].map(f => <button key={f} className={learningFilter === f ? 'active' : ''} aria-pressed={learningFilter === f} onClick={() => setLearningFilter(f)}>{f}</button>)}</div>{learningCourses.length ? <div className="course-grid">{learningCourses.map(c => <CourseCard key={c.id} course={c} progress={progress} onOpen={openCourse} onSave={saveCourse}/>)}</div> : <div className="empty-state"><span><Bookmark size={31}/></span><h2>{learningFilter === 'Saved' ? 'Keep a course for later.' : learningFilter === 'Completed' ? 'Your first finish line is ahead.' : 'Your next chapter is unwritten.'}</h2><p>{learningFilter === 'Saved' ? 'Use the bookmark on any course to add it to this list.' : learningFilter === 'Completed' ? 'Finish every lesson in a course to see it here. Small steps get you there.' : 'Start any course and it’ll find a home right here. What are you curious about?'}</p><button className="button primary" onClick={() => navigate('explore')}>Find something to learn<ArrowRight size={16}/></button></div>}</>}
           {view === 'practice' && <><PracticeOverview courses={courses} progress={progress} onStart={openPractice} onExplore={() => navigate('explore')} /><section className="practice-feature"><div className="practice-copy"><span className="hero-tag"><span/>A FRESH CHALLENGE, EVERY DAY</span><h2>Stretch your mind.<br/>Surprise yourself.</h2><p>{challenge.question}</p><button className="button primary" onClick={() => setModal({ type: 'challenge' })}>{progress.dailyChallenges.includes(today) ? 'Review today’s challenge' : 'Take today’s challenge'}<ArrowRight size={17}/></button><span className="practice-time"><Clock3 size={14}/>About 2 minutes · No pressure</span></div><div className="practice-decoration"><Lightbulb size={90} strokeWidth={.8}/><span className="practice-star">✦</span><span className="practice-small-star">✧</span></div></section>{progress.dailyChallenges.includes(today) && <div className="completion-notice"><CheckCheck size={21}/><div><strong>Today’s challenge? Done.</strong><span>A new challenge arrives tomorrow. Keep exploring in the meantime.</span></div></div>}<ReviewQueue courses={courses} progress={progress} onOpen={openCourse} /><div className="section-heading practice-section-heading"><div><h2>Keep those ideas fresh<span className="heading-dot">.</span></h2><p>A quick lesson is a great way to build a lasting skill.</p></div></div><div className="course-grid">{courses.slice(0, 3).map(c => <CourseCard key={c.id} course={c} progress={progress} onOpen={openCourse} onSave={saveCourse}/>)}</div></>}
           {view === 'achievements' && <><section className="achievements-intro"><div className="achievement-big-icon"><Trophy size={43} strokeWidth={1.4}/></div><h2>Progress is a collection<br/>of little moments.</h2><p>You’ve made {totalDone} {totalDone === 1 ? 'discovery' : 'discoveries'} so far. Here’s to your next one.</p></section><div className="badge-grid">{[{ title: 'First spark', text: 'Complete your very first lesson.', icon: Sparkles, unlocked: totalDone >= 1, color: 'purple' }, { title: 'Curiosity in motion', text: 'Complete five different lessons.', icon: Compass, unlocked: totalDone >= 5, color: 'green' }, { title: 'A beautiful habit', text: 'Learn three days in a row.', icon: Flame, unlocked: streak >= 3, color: 'orange' }, { title: 'Chapter complete', text: 'Finish every lesson in a course.', icon: GraduationCap, unlocked: completedCourses >= 1, color: 'blue' }, { title: 'Brain stretcher', text: 'Solve your first daily challenge.', icon: Lightbulb, unlocked: progress.dailyChallenges.length >= 1, color: 'yellow' }, { title: 'Wonderfully rounded', text: 'Complete a lesson in three courses.', icon: Sprout, unlocked: courses.filter(c => courseCompleted(progress, c) > 0).length >= 3, color: 'pink' }].map(({ title, text, icon: Icon, unlocked, color }) => <article className={`badge-card ${unlocked ? 'unlocked' : ''}`} key={title}><span className={`badge-medal ${color}`}><Icon size={34} strokeWidth={1.5}/></span><span className="badge-state">{unlocked ? <><Check size={12}/>Earned</> : 'Yet to discover'}</span><h3>{title}</h3><p>{text}</p></article>)}</div></>}
@@ -343,6 +393,7 @@ export default function App() {
     {modal?.type === 'course' && <CourseModal key={`${modal.course.id}:${modal.initialLesson ?? 'details'}`} initialLesson={modal.initialLesson ?? null} onSave={saveCourse} onNote={saveNote} onPractice={openPractice} signedIn={Boolean(user)} syncStatus={syncStatus} storageError={storageError} course={modal.course} progress={modal.course.preview ? emptyProgress() : progress} enroll={modal.course.preview ? () => {} : enroll} finish={modal.course.preview ? () => {} : finish} close={close}/>}
     {modal?.type === 'practice-session' && <Modal wide title="Targeted practice" onClose={close}><PracticeSession courses={courses} progress={progress} courseId={modal.courseId} lessonIndex={modal.lessonIndex} onRecord={recordAnswer} onComplete={finishPractice} onOpen={openCourse} /></Modal>}
     {modal?.type === 'appearance' && <Modal title="Curio appearance" onClose={close}><AppearanceSettings /></Modal>}
+    {modal?.type === 'discard-edits' && <Modal title="Leave without saving?" onClose={close}><NavigationConfirm onCancel={close} onDiscard={() => { const leave = modal.onLeave; creatorDirty.current = false; close(); leave(); }} /></Modal>}
     {modal?.type === 'coins' && <Modal title="Your Curio coins" onClose={close}><div className="coin-dialog"><span className="curio-coin"><Coins size={35} /></span><h2>{coins} Curio coins</h2><p>Earn coins by learning something new and putting it into practice.</p><ul><li>Complete a new lesson <strong>25 coins</strong></li><li>Solve the daily challenge <strong>15 coins</strong></li><li>Complete a learning lab for the first time <strong>30 coins</strong></li><li>Finish your first successful practice session each day <strong>20 coins</strong></li></ul><p>Curio coins celebrate your progress. They have no cash value.</p></div></Modal>}
     <RewardToast reward={reward} onDismiss={() => setReward(null)} />
     {modal?.type === 'account' && <Modal title="Your Curio account" onClose={close}><Account onSession={acceptSession} /></Modal>}

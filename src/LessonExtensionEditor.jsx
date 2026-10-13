@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import SelectField from './SelectField.jsx';
 
 const blankQuestion = () => ({ question: '', options: ['', '', '', ''], answer: 0, explanation: '' });
 export default function LessonExtensionEditor({ lesson, index, onChange }) {
@@ -20,7 +21,7 @@ export default function LessonExtensionEditor({ lesson, index, onChange }) {
     {practice.map((question, position) => <fieldset className="extra-question-editor" key={position}><legend>Practice question {position + 1}</legend>
       <label>Question<input aria-label={`Lesson ${index + 1} practice ${position + 1} question`} value={question.question} maxLength={500} onChange={event => updateQuestion(position, { question: event.target.value })} /></label>
       {question.options.map((option, number) => <label key={number}>Option {number + 1}<input aria-label={`Lesson ${index + 1} practice ${position + 1} option ${number + 1}`} value={option} maxLength={300} onChange={event => updateQuestion(position, { options: question.options.map((item, optionIndex) => optionIndex === number ? event.target.value : item) })} /></label>)}
-      <label>Correct answer<select aria-label={`Lesson ${index + 1} practice ${position + 1} correct answer`} value={question.answer} onChange={event => updateQuestion(position, { answer: Number(event.target.value) })}>{question.options.map((_, number) => <option value={number} key={number}>Option {number + 1}</option>)}</select></label>
+      <SelectField label="Correct answer" aria-label={`Lesson ${index + 1} practice ${position + 1} correct answer`} value={String(question.answer)} onChange={answer => updateQuestion(position, { answer: Number(answer) })} options={question.options.map((_, number) => ({ value: String(number), label: `Option ${number + 1}` }))} />
       <label>Explain the answer<textarea aria-label={`Lesson ${index + 1} practice ${position + 1} explanation`} value={question.explanation} rows={3} maxLength={3000} onChange={event => updateQuestion(position, { explanation: event.target.value })} /></label>
       <button type="button" className="text-button danger" onClick={() => onChange({ practice: practice.filter((_, number) => number !== position) })}><Trash2 size={15} />Remove practice question {position + 1}</button>
     </fieldset>)}
