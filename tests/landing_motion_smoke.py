@@ -111,6 +111,13 @@ with tempfile.TemporaryDirectory(prefix='curio-landing-motion-') as directory:
             assert 0<float(before['offsets'][1])<1
             passed('Native wheel scrolling drives numbers, arcs and pointer positions; reverse scroll restores them and pausing freezes the exact frame')
 
+            assert page.locator('.landing-catalog-total').all_text_contents()==[f'of {total}' for total in totals]
+            skip=page.get_by_role('button',name='Show all totals',exact=True)
+            skip.focus();page.keyboard.press('Enter')
+            expect(skip).to_be_focused()
+            for i,total in enumerate(totals): expect(values.nth(i)).to_have_text(str(total))
+            passed('Visible inventory totals clarify partial scroll values; the keyboard shortcut reveals every total without losing focus')
+
             for progress,index in [(.10,0),(.50,1),(.90,2),(.50,1),(1,2)]:
                 go_to(page,'.landing-skills-scene',progress)
                 expect(page.get_by_role('group',name='Explore connected skills').get_by_role('button').nth(index)).to_have_attribute('aria-pressed','true')

@@ -1,6 +1,6 @@
 # Curio
 
-An English learning platform with 20 original introductory courses, 101 lessons, 218 additional practice questions, seven study paths, three interactive Learning Lab activities, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
+An English learning platform with 20 original introductory courses, 121 lessons, 278 additional practice questions, seven study paths, three interactive Learning Lab activities, and 18 subject areas. Students can learn as guests or use an account, save courses for later, and keep private lesson notes; creators can write, import, preview, and publish courses. Course publishing is **free for a limited time**, with no card or payment simulation.
 
 ## Try the complete platform
 
@@ -29,7 +29,9 @@ npm start
 
 Open **Study paths** to choose a sequence with a practical outcome. Your plan remembers its progress and opens the next unfinished lesson. The order is recommended; courses are not locked.
 
-All 101 starter lessons include learning goals, a stepped worked example, a common mistake, and at least two additional questions. Every course has five or more lessons, including two new application lessons. Use Previous/Next step to work through an example, then answer the in-lesson exercises and read the reasoning after checking. Wrong answers allow another try. Opening a lesson, its check, or the idea again returns the dialog to its top and focuses it, so a long lesson starts with its heading. The separate lesson check records completion; inline exercises record practice history without awarding premature completion or session coins. New lessons are appended, so earlier completion indices keep their meaning. Creators can add the same fields in the lesson editor or JSON upload: up to five goals, eight worked steps, and five extra questions per lesson. Older course files remain supported.
+All 121 starter lessons include learning goals, a stepped worked example, a common mistake, and at least two additional questions. Every course has six or more lessons, including three application lessons. Use Previous/Next step to work through an example, then answer the in-lesson exercises and read the reasoning after checking. Wrong answers allow another try. Opening a lesson, its check, or the idea again returns the dialog to its top and focuses it, so a long lesson starts with its heading. The separate lesson check records completion; inline exercises record practice history without awarding premature completion or session coins. New lessons are appended, so earlier completion indices keep their meaning. Creators can add the same fields in the lesson editor or JSON upload: up to five goals, eight worked steps, and five extra questions per lesson. Older course files remain supported.
+
+The homepage’s **Make the idea work** section offers three practice models: shade a target fraction, find a discount and compare editable pack prices. Calculations update as you interact; checking gives a specific explanation, and each model opens its related lesson. Blank or invalid prices/quantities get field-level recovery instructions. Unit prices are compared exactly before the displayed amounts are rounded. These local previews award no completion or coins. Catalog gauges show their actual inventory totals throughout scrolling, with **Show all totals** for immediate access.
 
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
@@ -93,7 +95,7 @@ The server can start and pass its health check before a domain is generated. In 
 
 ## Validation
 
-`npm test` runs 30 backend/content/progress checks, including automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 34 backend/content/progress checks, including exact currency comparisons, appended lesson compatibility, automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -102,6 +104,7 @@ python tests/browser_smoke.py
 python tests/landing_smoke.py
 python tests/accessibility_smoke.py
 python tests/button_smoke.py
+python tests/skill_playground_smoke.py
 ```
 
 Set `CURIO_TEST_URL` to use another application server. Accessibility checks use the npm-installed axe-core on desktop/mobile pages, dialogs, and the editor. Automated checks supplement manual keyboard and visual review; they do not certify complete WCAG compliance.
@@ -129,7 +132,7 @@ The button suite checks one-time legacy appearance migration, pointer/ripple geo
 
 The selection suite exercises all shared menus through keyboard and actual touchscreen input, combined catalog filters, nested profile dialogs, numeric form values, and creator saves. Its 28 additional axe states include opened desktop/mobile menus and readable profile text. The hover suite guards against old colours, moving artwork, lost selected states, active controls, and slider presentation. The navigation suite checks notification dismissal, readable light/dark preferences, unsaved-edit cancellation/discard, deferred search, hash navigation, mobile focus restoration, and the absence of native confirmation dialogs. These suites use isolated accounts and drafts.
 
-The platform UX suite checks real account identity, direct login/register entry, keyboard focus, light/dark mobile menus, save/logout recovery, unfinished-edit protection, and delayed sign-in responses. It exercises the first lesson and both appended lessons in every starter course: 60 lesson flows with stepped examples and explained exercises. Wrong-answer retries and double activation are checked without premature completion or duplicate rewards.
+The platform UX suite checks real account identity, direct login/register entry, keyboard focus, light/dark mobile menus, save/logout recovery, unfinished-edit protection, and delayed sign-in responses. It exercises the first and two most recently appended lessons in every starter course: 60 flows with stepped examples and explained exercises, plus mobile completion of all 20 deeper application lessons. Wrong-answer retries and double activation are checked without premature completion or duplicate rewards. The playground suite adds fraction/discount/price checks, exact rounded-price edge cases, keyboard and real touch input, links to the correct lessons, and 24 light/dark accessibility states at 320/390/1366 px.
 
 Production container and persistent-volume checks:
 
@@ -148,6 +151,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
 | Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
+| Homepage practice models and exact pack comparisons | `src/SkillPlayground.jsx`, `src/skill-playground.css`, `src/skillModels.js` |
 | Material tokens, typography, responsive presentation | `src/material.css` |
 | Palette generation, display modes, appearance controls | `src/Appearance.jsx`, `src/appearance-settings.css` |
 | Native pointer, keyboard, and touch button feedback | `src/MaterialButtons.jsx` |
@@ -161,7 +165,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Private notes, course sharing, completed-lesson review | `src/StudyTools.jsx` |
 | Study paths, targeted practice, and Curio coins | `src/LearningExperience.jsx`, `src/learning.js` |
 | Interactive fraction, budget, and algorithm labs | `src/LearningLab.jsx`, `src/labs.js` |
-| Worked lesson content and additional questions | `src/lessonEnrichment.js`, `src/curriculum.js` |
+| Worked lesson content and additional questions | `src/lessonEnrichment.js`, `src/curriculum.js`, `src/applicationLessons.js` |
 | Stepped examples and inline exercises | `src/LearningExperience.jsx`, `src/lesson-workshop.css` |
 | Creator learning goals and practice editor | `src/LessonExtensionEditor.jsx` |
 | Creator editor and JSON import | `src/Creator.jsx`, `src/marketplace.css` |

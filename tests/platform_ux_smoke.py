@@ -152,8 +152,8 @@ with tempfile.TemporaryDirectory(prefix='curio-platform-ux-') as directory:
             learner = guest.new_page(); learner.on('pageerror', lambda error: errors.append(str(error)))
             learner.goto(url + '#explore', wait_until='networkidle')
             catalog = guest.request.get(url + 'api/courses').json()['courses']
-            assert len(catalog) == 20 and sum(len(c['lessons']) for c in catalog) == 101
-            assert sum(len(l['practice']) for c in catalog for l in c['lessons']) == 218
+            assert len(catalog) == 20 and sum(len(c['lessons']) for c in catalog) == 121
+            assert sum(len(l['practice']) for c in catalog for l in c['lessons']) == 278
             for course in catalog:
                 learner.get_by_role('button', name=course['title'], exact=True).click()
                 dialog = learner.get_by_role('dialog')
@@ -229,6 +229,30 @@ with tempfile.TemporaryDirectory(prefix='curio-platform-ux-') as directory:
             expect(appearance).to_be_visible()
             appearance.get_by_role('button', name='Close dialog').click()
             passed('A delayed sign-in response accepts the real account without closing a newer appearance dialog')
+            completion_context = browser.new_context(viewport={'width':390,'height':844}, reduced_motion='reduce')
+            completion = completion_context.new_page()
+            completion.on('pageerror', lambda error: errors.append(str(error)))
+            completion.goto(url + '#explore', wait_until='networkidle')
+            expected = {}
+            for course in catalog:
+                completion.get_by_role('button', name=course['title'], exact=True).click()
+                check_dialog = completion.get_by_role('dialog')
+                index = len(course['lessons']) - 1
+                lesson = course['lessons'][index]
+                check_dialog.locator('.lesson-list button').nth(index).click()
+                check_dialog.get_by_role('button', name='Got it. Let me try!', exact=True).click()
+                check_dialog.locator('.quiz-option').nth(lesson['answer']).click()
+                check_dialog.get_by_role('button', name='Check my answer', exact=True).click()
+                expect(check_dialog.get_by_role('status')).to_contain_text(lesson['explanation'])
+                check_dialog.get_by_role('button', name='Finish lesson', exact=True).click()
+                expected[course['id']] = [index]
+                check_dialog.get_by_role('button', name='Close dialog', exact=True).click()
+            completion.reload(wait_until='networkidle')
+            saved = json.loads(completion.evaluate("localStorage.getItem('curio.student.v1')"))
+            assert saved['completed'] == expected
+            expect(completion.get_by_role('button', name='500 Curio coins', exact=True)).to_be_visible()
+            completion_context.close()
+            passed('All 20 deeper application lessons can be completed on mobile; their exact completion indices and 500 earned coins survive refresh')
             assert not errors, errors
             browser.close()
     finally:

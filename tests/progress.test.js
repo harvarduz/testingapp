@@ -16,9 +16,9 @@ test('reviewing the same lesson cannot inflate activity or earn a second complet
 test('completing a whole course updates its real lesson count without losing another course', () => {
   let progress = completeLesson(emptyProgress(), 'computing', 0, '2026-10-10');
   for (let i = 0; i < courses[0].lessons.length; i++) progress = completeLesson(progress, 'numbers', i, '2026-10-10');
-  assert.equal(courseCompleted(progress, courses[0]), 6);
+  assert.equal(courseCompleted(progress, courses[0]), 7);
   assert.equal(courseCompleted(progress, courses[1]), 1);
-  assert.equal(progress.activity['2026-10-10'], 7);
+  assert.equal(progress.activity['2026-10-10'], 8);
   assert.deepEqual(progress.enrolled, ['computing', 'numbers']);
 });
 

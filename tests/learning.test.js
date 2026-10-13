@@ -7,11 +7,30 @@ import { studyPaths, pathProgress, practiceQuestions, learningRewards, dailyQues
 
 const restored = value => readProgress({ getItem: () => JSON.stringify(value) });
 
+test('each course appends a deeper application without shifting earlier completion records', () => {
+  const priorLastTitles = ['Scale a recipe fairly', 'Search without skipping a case', 'Necessary is not sufficient', 'Balance forces, not appearances', 'Compare rates fairly', 'Use a scale drawing', 'Plan a fair plant test', 'Separate using a property', 'Sort objects by their role', 'Reason about runoff risk', 'Build a focused paragraph', 'Build a cautious causal argument', 'Compare population density', 'Define a useful customer experiment', 'Read a price signal carefully', 'Make a form error recoverable', 'Read a measurement tolerance', 'Ask what a study can support', 'Turn feedback into a revision', 'Compare purchasing power'];
+  for (const [position, course] of courses.entries()) {
+    const priorCount = course.id === 'numbers' ? 6 : 5;
+    assert.equal(course.lessons[priorCount - 1].title, priorLastTitles[position]);
+    const lesson = course.lessons[priorCount];
+    assert.equal(lesson.practice.length, 3, course.id);
+    assert.equal(lesson.steps.length, 4, course.id);
+    assert.equal(new Set([lesson.question, ...lesson.practice.map(item => item.question)]).size, 4);
+    let progress = emptyProgress();
+    for (let index = 0; index < priorCount; index++) progress = completeLesson(progress, course.id, index);
+    const before = learningRewards(progress).coins;
+    assert.deepEqual(progress.completed[course.id], Array.from({ length: priorCount }, (_, i) => i));
+    progress = completeLesson(progress, course.id, priorCount);
+    assert.equal(learningRewards(progress).coins, before + 25);
+    assert.equal(learningRewards(completeLesson(progress, course.id, priorCount)).coins, before + 25);
+  }
+});
+
 test('every subject course includes worked application lessons and explained transfer practice', () => {
   assert.equal(courses.length, 20);
-  assert.equal(courses.reduce((n, course) => n + course.lessons.length, 0), 101);
+  assert.equal(courses.reduce((n, course) => n + course.lessons.length, 0), 121);
   for (const course of courses) {
-    assert.ok(course.lessons.length >= 5, course.id);
+    assert.ok(course.lessons.length >= 6, course.id);
     assert.deepEqual(publicationIssues(normalizeCourse(course, categories.slice(1))), [], course.id);
     for (const lesson of course.lessons) {
       assert.ok(lesson.objectives.length >= 2, lesson.title);
@@ -106,5 +125,5 @@ test('worked lessons and transfer questions survive uploads; incomplete or malfo
     assert.ok(question.options[question.answer]);
     assert.ok(question.explanation.length >= 20);
   }
-  assert.equal(addedQuestions, 218);
+  assert.equal(addedQuestions, 278);
 });

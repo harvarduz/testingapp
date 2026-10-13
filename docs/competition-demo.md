@@ -4,12 +4,12 @@ Context: https://azizbeksafarov.github.io/ustoz/, reviewed 10 October 2026. The 
 
 ## Problem and result
 
-Students need a clear starting point, ideas they can apply, and useful feedback. Curio offers 20 original courses across 18 subjects, 101 lessons, 218 additional transfer questions, seven study paths, an interactive pattern activity, quizzes with retries, saved learning progress, course bookmarks, and private lesson notes. Creators write or import courses, keep drafts private, and publish to a shared catalog. Publishing is free for a limited time, as requested.
+Students need a clear starting point, ideas they can apply, and useful feedback. Curio offers 20 original courses across 18 subjects, 121 lessons, 278 additional transfer questions, seven study paths, an interactive pattern activity, quizzes with retries, saved learning progress, course bookmarks, and private lesson notes. Creators write or import courses, keep drafts private, and publish to a shared catalog. Publishing is free for a limited time, as requested.
 
 ## Demonstration
 
-1. Show the public page on desktop and mobile. Scroll through the catalog gauges, stop to show that the numbers freeze, and reverse to restore an earlier frame. Continue to the knowledge map: connect fractions, percentages and unit prices, select a skill with the keyboard, and open its real lesson. Try a wrong hero preview answer and recover; the preview awards no progress.
-2. Open Thinking in numbers. Adjust the sequence, step through the worked example, answer an inline exercise incorrectly and retry with its explanation. Complete the separate lesson check, refresh My learning, and continue. Show one of the appended application lessons, such as unit prices.
+1. Show the public page on desktop and mobile. Scroll through the catalog gauges, stop to show that the numbers freeze, and reverse to restore an earlier frame. Show the visible inventory totals and keyboard-accessible Show all totals action. Continue to the knowledge map, then Make the idea work: shade 6/8, find the 25% discount on $80, and compare two pack prices. Try a mistake, read the explanation and open the related lesson. Previews award no progress.
+2. Open Thinking in numbers. Adjust the sequence, step through the worked example, answer an inline exercise incorrectly and retry with its explanation. Complete the separate lesson check, refresh My learning, and continue. Show an appended application such as percentage change, then a different subject’s deeper lesson, such as balancing atoms or interpreting a sample.
 3. Save a course for later, open My learning → Saved, write a private lesson note, and copy its course link. Reopen a completed lesson from Practice & review and show that totals do not increase.
 4. Combine subject, level, and duration filters; search for an absent course, clear filters, and browse a non-STEM subject such as Languages or Design.
 5. Register in the creator workspace, download/upload a template, edit, preview, save a private draft, then publish free.
@@ -25,7 +25,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 | Area | Implementation | Acceptance evidence |
 |---|---|---|
 | Functionality, 30 | Interactive labs, study paths, worked lessons, targeted practice, Curio coins, combined filters, bookmarks, private notes, direct course links, lessons/review, actual progress, accounts, imports, drafts, publishing | Student, study-tools, and marketplace suites; API ownership/persistence tests |
-| Content, 20 | 20 courses, 101 explanations/examples/quizzes and 218 extra practice questions, 18 subjects, accurate counts and author attribution | Content integrity test; published course in another browser |
+| Content, 20 | 20 courses, 121 explanations/examples/quizzes and 278 extra practice questions, 18 subjects, accurate counts and author attribution | Content integrity test; published course in another browser |
 | UX/UI, 10 | Material Expressive typography and tonal roles, four palettes, light/dark mode, consistent controls, keyboard focus, responsive creator/student pages, collapsible desktop navigation, mobile bottom navigation, and reduced-motion support | 320/390/768/1366 px tests, light/dark axe-core checks, palette persistence tests, screenshot review |
 | Presentation, 10 | Clear problem, complete student and creator stories, editable source, honest technical explanation | Demonstration above and README editing map |
 | Technology, 20 | React/Vite, Node 24, SQLite, salted scrypt, expiring HttpOnly sessions, same-origin writes, Docker deployment | Backend tests and production container replacement/volume test |

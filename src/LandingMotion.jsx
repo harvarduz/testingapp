@@ -131,6 +131,13 @@ export function ScrollCatalog({ courseCount, lessonCount, subjectCount }) {
     });
   }, [totals]);
   const still = useScrollScene(scene, stage, render);
+  const showTotals = () => {
+    if (still) return;
+    const bounds = scene.current.getBoundingClientRect();
+    const top = parseFloat(getComputedStyle(stage.current).top) || 0;
+    window.scrollTo({ top: scrollY + bounds.top - top + bounds.height - stage.current.offsetHeight, behavior: 'instant' });
+    render(1);
+  };
   return <section className={`landing-catalog-scene ${still ? 'is-static' : ''}`} ref={scene} aria-label="The Curio course library">
     <div className="landing-facts-wrap landing-catalog-stage" ref={stage}>
       <div className="landing-container landing-facts">
@@ -148,12 +155,12 @@ export function ScrollCatalog({ courseCount, lessonCount, subjectCount }) {
               <circle className="landing-catalog-fill" cx="60" cy="60" r="52" pathLength="1" strokeDasharray="1" />
               <circle className="landing-catalog-knob" cx="60" cy="8" r="4" />
             </svg>
-            <strong className="landing-scroll-number"><span data-scroll-value aria-hidden="true">{total}</span><span className="sr-only">{total}</span></strong>
+            <div className="landing-catalog-counter"><strong className="landing-scroll-number"><span data-scroll-value aria-hidden="true">{total}</span><span className="sr-only">{total}</span></strong><span className="landing-catalog-total" aria-hidden="true">of {total}</span></div>
           </div>
           <span>{['courses to explore', 'hands-on lessons', 'subjects to discover'][index]}</span>
         </div>)}
       </div>
-      <a className="landing-catalog-continue" href="#how-it-works">Continue to how it works<ArrowRight size={16} /></a>
+      <div className="landing-catalog-actions">{!still && <button className="landing-catalog-continue" onClick={showTotals}>Show all totals<ArrowDown size={16} /></button>}<a className="landing-catalog-continue" href="#how-it-works">Continue to how it works<ArrowRight size={16} /></a></div>
     </div>
   </section>;
 }

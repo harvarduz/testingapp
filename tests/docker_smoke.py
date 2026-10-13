@@ -68,6 +68,11 @@ try:
     passed('An unexposed production service starts without PUBLIC_URL; account writes remain disabled')
     command('rm', '-f', name)
     base = start()
+    starters = request(base, '/api/courses')[1]['courses']
+    assert len(starters) == 20
+    assert sum(len(course['lessons']) for course in starters) == 121
+    assert sum(len(lesson['practice']) for course in starters for lesson in course['lessons']) == 278
+    passed('The production image includes every curriculum module and serves 121 lessons with 278 transfer questions')
     passed('Production starts with the automatic Railway public domain and a root-owned volume')
     status, html, headers = request(base, '/')
     assert status == 200 and 'Curio' in html

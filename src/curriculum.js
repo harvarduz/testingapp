@@ -1,12 +1,12 @@
 // Original course workshops. Positions of existing lessons never change.
-const q = (question, options, answer, explanation) => {
+export const q = (question, options, answer, explanation) => {
   // Stable positions avoid rewarding a habitual choice of A. They never change
   // during a retry, reload or cross-device practice session.
   const offset = [...question].reduce((hash, char) => (hash * 31 + char.codePointAt(0)) >>> 0, 0) % options.length;
   return { question, options: options.map((_, index) => options[(index + offset) % options.length]), answer: (answer - offset + options.length) % options.length, explanation };
 };
 const w = (objectives, steps, commonMistake, practice) => ({ objectives, steps, commonMistake, practice });
-const l = (title, idea, example, objectives, steps, commonMistake, questions) => ({
+export const l = (title, idea, example, objectives, steps, commonMistake, questions) => ({
   title, idea, example, ...questions[0], ...w(objectives, steps, commonMistake, questions.slice(1)),
 });
 

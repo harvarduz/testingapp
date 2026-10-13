@@ -10,6 +10,7 @@ import { BrandMark, CourseArt } from './Art.jsx';
 import { categories } from './data.js';
 import { AppearanceControls } from './Appearance.jsx';
 import AccountMenu from './AccountMenu.jsx';
+import SkillPlayground from './SkillPlayground.jsx';
 import './landing.css';
 import { ScrollCatalog, ScrollSkills, useLandingMotion } from './LandingMotion.jsx';
 
@@ -295,6 +296,8 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
 
         <ScrollSkills onOpenLesson={index => { const course = courses.find(item => item.id === 'numbers'); if (course) onOpenCourse(course, index); }} />
+
+        <SkillPlayground onOpenLesson={index => { const course = courses.find(item => item.id === 'numbers'); if (course) onOpenCourse(course, index); }} />
 
         <section className="landing-course-section" id="courses" aria-labelledby="landing-courses-title">
           <div className="landing-container">

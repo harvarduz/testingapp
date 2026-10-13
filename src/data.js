@@ -1,6 +1,7 @@
 import { extendedCourses } from './catalog.js';
 import { lessonEnrichment } from './lessonEnrichment.js';
 import { courseExtensions, foundationWorkshops } from './curriculum.js';
+import { applicationLessons } from './applicationLessons.js';
 export const categories = ['All courses', 'Mathematics', 'Computer science', 'Science', 'Thinking skills', ...extendedCourses.map(c => c.category)];
 
 const lesson = (title, idea, example, question, options, answer, explanation) => ({ title, idea, example, question, options, answer, explanation });
@@ -70,6 +71,10 @@ for (const course of courses) {
   if (extension) {
     course.lessons.push(...extension.lessons);
     course.minutes = extension.minutes;
+  }
+  if (applicationLessons[course.id]) {
+    course.lessons.push(applicationLessons[course.id]);
+    course.minutes += 8;
   }
 }
 

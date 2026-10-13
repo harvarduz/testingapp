@@ -72,7 +72,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             passed('The sidebar scrolls at short desktop heights, collapses to a working icon rail, and remembers the preference')
 
             page.get_by_role('button',name='Choose Mathematics foundations',exact=True).click()
-            expect(page.locator('.active-path')).to_contain_text('0/21 lessons complete')
+            expect(page.locator('.active-path')).to_contain_text('0/25 lessons complete')
             assert page.evaluate("JSON.parse(localStorage.getItem('curio.student.v1')).enrolled.length") == 0
             page.get_by_role('button',name='Continue your path').click()
             dialog=page.get_by_role('dialog')
@@ -93,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             page.get_by_role('button',name='Close dialog').click()
             expect(page.get_by_role('button',name='25 Curio coins',exact=True)).to_be_visible()
             page.reload(wait_until='networkidle')
-            expect(page.locator('.active-path')).to_contain_text('1/21 lessons complete')
+            expect(page.locator('.active-path')).to_contain_text('1/25 lessons complete')
             page.get_by_role('button',name='Continue your path').click()
             expect(page.get_by_role('dialog').get_by_role('heading',name='Parts of a whole',exact=True)).to_be_visible()
             page.get_by_role('button',name='Close dialog').click()
@@ -152,7 +152,7 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
             registration=second.request.post(url+'api/auth/login',data={'email':'learning@example.test','password':'A strong learning password 42!'})
             assert registration.status == 200
             phone.reload(wait_until='networkidle')
-            expect(phone.locator('.active-path')).to_contain_text('1/21 lessons complete')
+            expect(phone.locator('.active-path')).to_contain_text('1/25 lessons complete')
             expect(phone.get_by_role('button',name='45 Curio coins')).to_be_visible()
             phone.goto(url+'#practice',wait_until='networkidle')
             expect(phone.locator('.practice-metrics')).to_contain_text('6')
