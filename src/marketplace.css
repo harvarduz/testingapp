@@ -59,8 +59,8 @@
 .editor-details > legend { padding: 0 10px; font-size: 14px; font-weight: 600; }
 .editor-wide { grid-column: 1/-1; }
 .editor-colors > span { font-size: 13px; font-weight: 600; }
-.editor-colors > div { display: flex; gap: 12px; margin-top: 12px; }
-.cover-swatch { border: 2px solid transparent; border-radius: 50%; display: grid; place-items: center; width: 37px; height: 37px; }
+.editor-colors > div { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.cover-swatch { border: 2px solid transparent; border-radius: 50%; display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; }
 .cover-swatch[aria-pressed=true] { border-color: #2d4e3a; }
 .lavender { background-color: #e9e1f2; }.blue { background-color: #e0ebf6; }.peach { background-color: #f6e3d4; }.sage { background-color: #e0ebdf; }.yellow { background-color: #f3edd3; }.pink { background-color: #f2e0e9; }
 .editor-lessons-heading { display: flex; align-items: center; justify-content: space-between; margin: 34px 0 18px; }
@@ -78,6 +78,9 @@
 .editor-answers > legend { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
 .publication-issues { background: #fff4e5; border: 1px solid #ecdfc3; color: #795d31; border-radius: 12px; padding: 20px; margin-top: 22px; font-size: 12px; line-height: 1.8; }
 .publication-issues ul { margin-bottom: 0; padding-left: 18px; }
+.course-editor > .publication-issues { margin: 0 0 24px; max-height: min(360px, 50dvh); overflow-y: auto; }
+.course-editor > [role='alert'] { scroll-margin-block: 100px; }
+.course-editor > [role='alert']:focus, .account-panel [role='alert']:focus { outline: 2px solid var(--md-sys-color-primary); outline-offset: 3px; }
 .editor-actions { border-top: 1px solid #dfe5d8; margin-top: 30px; padding-top: 25px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
 .editor-actions > span { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #6c7a60; }
 .editor-actions > div { display: flex; gap: 12px; }

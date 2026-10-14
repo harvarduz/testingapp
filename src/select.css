@@ -29,3 +29,12 @@
 @media (max-width: 1180px) { .catalog-toolbar { grid-template-columns: minmax(0, 1fr) minmax(160px, 200px); }.catalog-toolbar > .category-tabs { grid-column: 1 / -1; }.catalog-toolbar > .select-field.subject-select { width: min(260px, 100%); }.catalog-toolbar > .select-field.sort-select { min-width: 170px; } }
 @media (max-width: 620px) { .catalog-toolbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }.catalog-toolbar > .select-field.subject-select, .catalog-toolbar > .select-field.sort-select { width: 100%; min-width: 0; }.select-trigger { padding-inline: 12px; gap: 8px; }.catalog-refinements > .select-field { min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .select-menu { animation: none; }.select-chevron { transition: none; } }
+
+/* Subjects remain a quick, scrollable strip; filter values stay readable. */
+@media (max-width: 620px) {
+  .catalog-toolbar > .category-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 3px 8px; scrollbar-width: thin; }
+  .catalog-toolbar > .category-tabs > button { flex: 0 0 auto; }
+  .catalog-toolbar > .select-field .select-trigger > span:first-child { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .catalog-toolbar > .select-field .select-trigger { height: 100%; padding-inline: 10px; gap: 6px; font-size: 13px; }
+  .catalog-toolbar > .select-field.subject-select, .catalog-toolbar > .select-field.sort-select { align-self: stretch; }
+}

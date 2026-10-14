@@ -125,8 +125,10 @@ export default function App() {
   const [courses, setCourses] = useState(starterCourses);
   const [user, setUser] = useState(null);
   const [serviceError, setServiceError] = useState('');
+  const [sessionError, setSessionError] = useState('');
   const [syncStatus, setSyncStatus] = useState('');
   const [sessionLoading, setSessionLoading] = useState(true);
+  const sessionRevision = useRef(0);
   const [signingOut, setSigningOut] = useState(false);
   const [accountError, setAccountError] = useState('');
   const [syncRetry, setSyncRetry] = useState(0);
@@ -143,6 +145,7 @@ export default function App() {
   const [sort, setSort] = useState('Recommended');
   const [modal, setModalState] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileNavigation, setMobileNavigation] = useState(() => window.matchMedia('(max-width: 780px)').matches);
   const modalState = useRef(null);
   modalState.current = modal;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => { try { return localStorage.getItem('curio.sidebar.collapsed') !== 'false'; } catch { return true; } });
@@ -161,6 +164,7 @@ export default function App() {
   const searchRef = useRef(null);
   const notificationRef = useRef(null);
   const notificationButtonRef = useRef(null);
+  const previousView = useRef(view);
   const modalOpener = useRef(null);
   const setModal = next => {
     if (next) {
@@ -179,6 +183,27 @@ export default function App() {
   const enrolledCourses = courses.filter(c => progress.enrolled.includes(c.id));
   const challenge = challengeForDay(today);
   useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); setStorageError(false); } catch { setStorageError(true); } }, [progress]);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 780px)');
+    const change = () => setMobileNavigation(media.matches);
+    media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
+  }, []);
+  useEffect(() => {
+    if (previousView.current === view) return;
+    previousView.current = view;
+    // Searching keeps the text cursor; navigation gives keyboard users a
+    // meaningful starting point on the newly rendered page.
+    if (document.activeElement === searchRef.current || modalState.current) return;
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement === searchRef.current || modalState.current) return;
+      const heading = document.querySelector(view === 'home' ? '.landing-hero h1' : '#main-content h1');
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [view]);
   useEffect(() => {
     const tick = () => setToday(localDate());
     const interval = setInterval(tick, 30000);
@@ -218,25 +243,37 @@ export default function App() {
     try { setCourses((await api('/courses')).courses); setCatalogReady(true); setServiceError(''); }
     catch (error) { setServiceError(error.message); }
   };
-  useEffect(() => {
-    const controller = new AbortController();
-    api('/courses', { signal: controller.signal }).then(result => { setCourses(result.courses); setCatalogReady(true); }).catch(error => { if (error.name !== 'AbortError') setServiceError(error.message); });
-    api('/session', { signal: controller.signal }).then(session => {
+  const loadSession = React.useCallback(async signal => {
+    const revision = ++sessionRevision.current;
+    setSessionLoading(true);
+    try {
+      const session = await api('/session', { signal });
+      if (revision !== sessionRevision.current || signal?.aborted) return;
       setUser(session.user);
       if (session.user) {
         const owner = savedOwner();
         setProgress(p => mergeProgress(owner && owner !== session.user.id ? emptyProgress() : p, session.progress));
         saveOwner(session.user.id);
       } else if (savedOwner()) { setProgress(emptyProgress()); saveOwner(null); }
-      setSessionLoading(false);
-    }).catch(error => { if (error.name !== 'AbortError') { setSessionLoading(false); setServiceError(error.message); } });
+      setSessionError('');
+    } catch (error) {
+      if (revision === sessionRevision.current && error.name !== 'AbortError') setSessionError(`Could not load your account. ${error.message}`);
+    } finally {
+      if (revision === sessionRevision.current && !signal?.aborted) setSessionLoading(false);
+    }
+  }, []);
+  const retryConnection = () => { refreshCatalog(); if (sessionError) loadSession(); };
+  useEffect(() => {
+    const controller = new AbortController();
+    api('/courses', { signal: controller.signal }).then(result => { setCourses(result.courses); setCatalogReady(true); }).catch(error => { if (error.name !== 'AbortError') setServiceError(error.message); });
+    loadSession(controller.signal);
     return () => controller.abort();
   }, []);
   useEffect(() => {
     if (!user || sessionLoading || signingOut) return;
     const controller = new AbortController();
+    setSyncStatus('Saving to your account…');
     const timer = setTimeout(() => {
-      setSyncStatus('Saving to your account…');
       api('/progress', { method: 'PUT', body: progress, signal: controller.signal }).then(result => { setSyncStatus('Saved to your account'); setProgress(current => { const merged = mergeProgress(current, result.progress); return JSON.stringify(current) === JSON.stringify(merged) ? current : merged; }); }).catch(error => { if (error.name !== 'AbortError') setSyncStatus(error.message); });
     }, 400);
     return () => { clearTimeout(timer); controller.abort(); };
@@ -324,14 +361,19 @@ export default function App() {
     requestAnimationFrame(() => {
       // Restore focus after inert is removed, without stealing a newer focus
       // request such as the search shortcut immediately after Escape.
-      if (document.activeElement === document.body) modalOpener.current?.focus();
+      if (document.activeElement === document.body) {
+        const opener = modalOpener.current;
+        if (opener?.isConnected && !opener.closest('[inert]')) opener.focus();
+        else document.querySelector('#main-content h1, .landing-hero h1')?.focus();
+      }
     });
   }, []);
   const acceptSession = session => {
+    sessionRevision.current++;
     const owner = savedOwner();
     setUser(session.user); setProgress(p => mergeProgress(owner && owner !== session.user.id ? emptyProgress() : p, session.progress));
     saveOwner(session.user.id);
-    setServiceError(''); setSyncStatus(''); setAccountError(''); setSessionLoading(false);
+    setSessionError(''); setSyncStatus(''); setAccountError(''); setSessionLoading(false);
     if (modalState.current?.type === 'account') close();
   };
   const signOut = async () => {
@@ -339,7 +381,8 @@ export default function App() {
     try {
       await api('/progress', { method: 'PUT', body: progress });
       await api('/auth/logout', { method: 'POST', body: {} });
-      setUser(null); setProgress(emptyProgress()); setSyncStatus(''); saveOwner(null);
+      sessionRevision.current++;
+      setUser(null); setProgress(emptyProgress()); setSyncStatus(''); setSessionError(''); setSessionLoading(false); saveOwner(null);
     } catch (error) { setAccountError(`Could not sign out: ${error.message}`); }
     finally { setSigningOut(false); }
   };
@@ -372,8 +415,8 @@ export default function App() {
           onExplore={subject => { navigate('explore'); if (typeof subject === 'string') setCategory(subject); }}
           onCreate={() => navigate('creators')}
           accountMenuProps={accountMenuProps}
-          serviceError={serviceError}
-          onRetry={refreshCatalog}
+          serviceError={[serviceError, sessionError].filter(Boolean).join(' ')}
+          onRetry={retryConnection}
           onAppearance={openAppearance}
           onEnter={() => navigate(progress.enrolled.length ? 'learning' : 'overview')}
           onOpenCourse={openCourse}
@@ -384,14 +427,14 @@ export default function App() {
     <a className="skip-link" href="#main-content" inert={modal || sidebarOpen ? true : undefined}>Skip to learning content</a>
     <div className={`app-shell ${sidebarCollapsed ? 'navigation-collapsed' : ''}`} inert={modal ? true : undefined}>
       {sidebarOpen && <div className="sidebar-scrim" onClick={() => setSidebarOpen(false)}/>}
-      <aside id="learning-sidebar" className={`sidebar ${sidebarOpen ? 'open' : ''}`} role={sidebarOpen ? 'dialog' : undefined} aria-modal={sidebarOpen ? true : undefined} aria-label={sidebarOpen ? 'Learning navigation' : undefined}><button className="icon-button sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close navigation"><X size={22} /></button><button className="brand" onClick={() => navigate('home')} aria-label="Curio home"><BrandMark/><span>curio<span className="brand-dot">.</span></span></button><span className="sidebar-caption">LEARN WITH UNDERSTANDING</span><button className="sidebar-toggle" aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={!sidebarCollapsed} aria-controls="learning-sidebar" onClick={() => setSidebarCollapsed(value => !value)}>{sidebarCollapsed ? <PanelLeftOpen size={20} /> : <><PanelLeftClose size={18} /><span>Collapse panel</span></>}</button>
+      <aside inert={mobileNavigation && !sidebarOpen ? true : undefined} id="learning-sidebar" className={`sidebar ${sidebarOpen ? 'open' : ''}`} role={sidebarOpen ? 'dialog' : undefined} aria-modal={sidebarOpen ? true : undefined} aria-label={sidebarOpen ? 'Learning navigation' : undefined}><button className="icon-button sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close navigation"><X size={22} /></button><button className="brand" onClick={() => navigate('home')} aria-label="Curio home"><BrandMark/><span>curio<span className="brand-dot">.</span></span></button><span className="sidebar-caption">LEARN WITH UNDERSTANDING</span><button className="sidebar-toggle" aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={!sidebarCollapsed} aria-controls="learning-sidebar" onClick={() => setSidebarCollapsed(value => !value)}>{sidebarCollapsed ? <PanelLeftOpen size={20} /> : <><PanelLeftClose size={18} /><span>Collapse panel</span></>}</button>
         <nav aria-label="Main navigation"><span className="nav-label">YOUR LEARNING SPACE</span>{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} onClick={() => navigate(id)} aria-label={label} title={label} aria-current={view === id ? 'page' : undefined}><Icon size={19} strokeWidth={1.7}/><span>{label}</span>{view === id && <span className="nav-active-dot"/>}</button>)}<div className="nav-divider"/><button className={`nav-item ${view === 'achievements' ? 'active' : ''}`} onClick={() => navigate('achievements')} aria-label="Achievements" title="Achievements" aria-current={view === 'achievements' ? 'page' : undefined}><Trophy size={19} strokeWidth={1.7}/><span>Achievements</span>{view === 'achievements' && <span className="nav-active-dot"/>}</button></nav>
         <div className="sidebar-bottom"><div className="streak-card"><div className="streak-title"><span className="streak-flame"><Flame size={20}/></span><strong>{streak ? `${streak}-day streak` : 'A habit worth growing'}</strong></div><p>{streak ? 'Little by little, a lot becomes possible.' : 'One small discovery. Every day.'}</p><div className="streak-days">{Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const active = progress.activity[localDate(d)] > 0; return <span key={i} className={active ? 'done' : i === 6 ? 'today' : ''} title={`${d.toLocaleDateString('en', { weekday: 'long' })}: ${active ? 'Activity complete' : 'No activity yet'}`}>{active ? <Check size={12}/> : d.toLocaleDateString('en', { weekday: 'narrow' })}</span>; })}</div></div><button aria-label="A little help?" title="A little help?" className="nav-item help-button" onClick={() => setModal({ type: 'help' })}><CircleHelp size={19}/><span>A little help?</span><ArrowUpRight size={15}/></button><button className="mobile-appearance text-button" onClick={openAppearance}>Appearance</button><div className="sidebar-footer"><span className="little-sprout"><Sprout size={15}/></span>Made for curious minds.</div></div>
       </aside>
-      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={event => { const value = event.target.value; requestLeaveEditor(() => { setQuery(value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }); }}/>{query ? <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={14}/></button> : <kbd>{searchShortcut}</kbd>}</div><div className="notification-wrap" ref={notificationRef}><button ref={notificationButtonRef} className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} aria-controls={notifications ? 'learning-updates' : undefined} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div id="learning-updates" className="notification-popover" role="region" aria-label="Learning updates"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><AccountMenu {...accountMenuProps} /></div></header>
-        <main id="main-content"><div className="page-heading"><div>{view === 'overview' && <div className="greeting">{learningName ? `HELLO, ${learningName.toUpperCase()}` : 'YOUR LEARNING SPACE'}</div>}<h1>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="day-streak" onClick={() => navigate('achievements')}><Flame size={19}/><strong>{streak}</strong><span>day streak</span></button></div>
+      <div className="main-shell" inert={sidebarOpen ? true : undefined}><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setSidebarOpen(v => !v)} aria-label="Open navigation" aria-expanded={sidebarOpen}><Menu size={22}/></button><span className="breadcrumb">Your learning space<ChevronRight size={13}/><strong>{view === 'achievements' ? 'Achievements' : navItems.find(n => n.id === view)?.label}</strong></span></div><div className="topbar-actions"><button className="coin-balance" onClick={() => setModal({ type: 'coins' })} aria-label={`${coins} Curio coins`}><Coins size={19} /><strong>{coins}</strong></button><div className="search-field"><Search size={16}/><input ref={searchRef} aria-label="Search courses" placeholder="Search courses" value={query} onChange={event => { const value = event.target.value; requestLeaveEditor(() => { setQuery(value); if (view !== 'explore') { setView('explore'); location.hash = 'explore'; setCategory('All courses'); } }); }}/>{query ? <button className="search-clear" onClick={() => { setQuery(''); searchRef.current?.focus(); }} aria-label="Clear search"><X size={14}/></button> : <kbd>{searchShortcut}</kbd>}</div><div className="notification-wrap" ref={notificationRef}><button ref={notificationButtonRef} className={`icon-button notification-button ${notifications ? 'is-active' : ''}`} aria-label="Learning updates" aria-expanded={notifications} aria-controls={notifications ? 'learning-updates' : undefined} onClick={() => setNotifications(v => !v)}><Bell size={19}/></button>{notifications && <div id="learning-updates" className="notification-popover" role="region" aria-label="Learning updates"><span className="eyebrow">A NOTE FOR YOU</span><h3>{activities ? 'You’re making progress!' : 'Your next discovery is waiting.'}</h3><p>{activities ? `You’ve completed ${activities} ${activities === 1 ? 'activity' : 'activities'} today. Every small step counts.` : `${courses.length} courses. New discoveries. Start a lesson and see where it takes you.`}</p><button className="text-button" onClick={() => navigate('learning')}>Visit my learning<ArrowRight size={14}/></button></div>}</div><AppearanceControls onOpen={openAppearance} /><span className="topbar-divider"/><AccountMenu {...accountMenuProps} /></div></header>
+        <main id="main-content" tabIndex={-1}><div className="page-heading"><div>{view === 'overview' && <div className="greeting">{learningName ? `HELLO, ${learningName.toUpperCase()}` : 'YOUR LEARNING SPACE'}</div>}<h1 tabIndex={-1}>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="day-streak" onClick={() => navigate('achievements')}><Flame size={19}/><strong>{streak}</strong><span>day streak</span></button></div>
           {storageError && <div className="storage-warning" role="status">Your browser can’t save progress right now. You can still learn, but progress may be lost after refreshing.</div>}
-          {serviceError && <div className="storage-warning" role="alert">{serviceError}<button className="text-button" onClick={refreshCatalog}>Retry course service</button></div>}
+          {(serviceError || sessionError) && <div className="storage-warning" role="alert">{[serviceError, sessionError].filter(Boolean).join(" ")}<button className="text-button" onClick={retryConnection}>Retry connection</button></div>}
 
 
           {view === 'creators' && <Creator key={user?.id || 'guest'} user={user} onSession={acceptSession} onCatalogChange={refreshCatalog} onPreview={openCourse} onDirtyChange={onCreatorDirty} />}

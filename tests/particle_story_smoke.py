@@ -27,7 +27,10 @@ def pixels(page):
     return page.locator('.particle-story-stage canvas').evaluate('node=>node.toDataURL()')
 
 def position(page, progress):
-    return page.locator('.particle-story-stage').evaluate('(node,p)=>scrollY+node.getBoundingClientRect().top-innerHeight+p*(innerHeight+node.offsetHeight)',progress)
+    return page.locator('.particle-story-stage').evaluate('''(node,p)=>{
+        const header=document.querySelector('.landing-header').getBoundingClientRect().bottom;
+        return scrollY+node.getBoundingClientRect().bottom-innerHeight+p*(innerHeight-header-node.offsetHeight);
+    }''',progress)
 
 def settle(page):
     page.evaluate('document.fonts.ready');page.wait_for_timeout(150)
@@ -42,9 +45,11 @@ with sync_playwright() as p:
     expect(stage).to_have_attribute('data-canvas-ready','true')
     expect(stage.locator('canvas')).to_have_attribute('aria-hidden','true')
     expect(stage).to_have_attribute('data-particle-count','900')
-    for progress,view in [(.35,'curio'),(.67,'orbit'),(.89,'book'),(.35,'curio')]:
+    for progress,view in [(.1,'curio'),(.45,'orbit'),(.8,'book'),(.1,'curio')]:
         page.mouse.wheel(0,position(page,progress)-page.evaluate('scrollY'));page.wait_for_timeout(220)
         expect(stage).to_have_attribute('data-view',view)
+        box=stage.bounding_box();header=page.locator('.landing-header').bounding_box()
+        assert box['y']>=header['height'] and box['y']+box['height']<=page.viewport_size['height']+1,box
     passed('Native scrolling morphs the sampled Curio lettering into an orbit and book, and reverses to the original view')
 
     button=choices.get_by_role('button',name='Curio',exact=True);button.focus();page.keyboard.press('Space')
@@ -71,6 +76,14 @@ with sync_playwright() as p:
     a=pixels(page);page.wait_for_timeout(180);assert pixels(page)!=a
     passed('Pause freezes exact canvas pixels and stops frames; manual views work while paused and Play resumes the orbit')
 
+    expect(page.locator('.particle-story-figure figcaption')).to_contain_text('Your selected view stays in place')
+    page.get_by_role('button',name='Follow scroll',exact=True).click()
+    expect(page.get_by_role('button',name='Follow scroll',exact=True)).to_have_count(0)
+    for progress,view in [(.1,'curio'),(.8,'book'),(.45,'orbit')]:
+        page.mouse.wheel(0,position(page,progress)-page.evaluate('scrollY'));page.wait_for_timeout(220)
+        expect(stage).to_have_attribute('data-view',view)
+    passed('A manually selected shape can return to reversible scroll playback with accurate instructions')
+
     page.mouse.wheel(0,page.evaluate('document.documentElement.scrollHeight'));page.wait_for_timeout(300)
     expect(stage).to_have_attribute('data-particle-motion','offscreen')
     before=page.evaluate('window.__rafCalls');page.wait_for_timeout(300);assert page.evaluate('window.__rafCalls')==before
@@ -96,6 +109,7 @@ with sync_playwright() as p:
     passed('Three views fit 320/390/1366 px, cap canvas resolution, and pass 18 light/dark accessibility states')
 
     page.emulate_media(reduced_motion='reduce');expect(page.get_by_text('Motion reduced',exact=True)).to_be_visible()
+    expect(page.locator('.particle-story-figure figcaption')).to_contain_text('Motion is reduced')
     expect(page.get_by_role('button',name='Play animation',exact=True)).to_have_count(0)
     choices.get_by_role('button',name='Curio',exact=True).click();settle(page)
     expect(stage).to_have_attribute('data-particle-motion','reduced')

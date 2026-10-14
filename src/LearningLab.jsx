@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Coins, FlaskConical, Play, RotateCcw } from 'lucide-react';
 import { budgetResult, learningLabs, parseNumberList, simplifyFraction, traceAlgorithm } from './labs.js';
 import SelectField from './SelectField.jsx';
@@ -8,6 +8,8 @@ function FractionStudio({ onComplete }) {
   const [shaded, setShaded] = useState([]);
   const [feedback, setFeedback] = useState(null);
   const fraction = simplifyFraction(shaded.length, parts);
+  const exactPercent = (shaded.length * 100) % parts === 0;
+  const percent = Math.round(shaded.length / parts * 100);
   const changeParts = value => { setParts(value); setShaded([]); setFeedback(null); };
   const toggle = index => { setShaded(current => current.includes(index) ? current.filter(value => value !== index) : [...current, index]); setFeedback(null); };
   const check = () => {
@@ -18,7 +20,7 @@ function FractionStudio({ onComplete }) {
   return <div className="lab-experiment"><span className="eyebrow">MAKE THE IDEA VISIBLE</span><h2>Different pieces. The same amount.</h2><p>Shade an amount equal to <strong>3/4</strong>, using at least eight equal pieces. Click a piece to shade or clear it.</p>
     <label className="lab-range-label" htmlFor="fraction-parts">Equal pieces <strong>{parts}</strong></label><input id="fraction-parts" type="range" min={2} max={12} value={parts} style={{ '--range-progress': `${(parts - 2) / 10 * 100}%` }} onChange={event => changeParts(Number(event.target.value))} />
     <div className="fraction-grid" style={{ '--parts': parts }} role="group" aria-label="Fraction pieces">{Array.from({ length: parts }, (_, index) => <button key={index} aria-label={`Piece ${index + 1}`} aria-pressed={shaded.includes(index)} className={shaded.includes(index) ? 'shaded' : ''} onClick={() => toggle(index)}>{shaded.includes(index) ? <Check size={21} /> : index + 1}</button>)}</div>
-    <div className="fraction-equation" aria-live="polite"><span><strong>{shaded.length}</strong><small>{parts}</small></span><b>=</b><span><strong>{fraction.numerator}</strong><small>{fraction.denominator}</small></span><b>=</b><strong>{Math.round(shaded.length / parts * 100)}%</strong></div>
+    <div className="fraction-equation" role="img" aria-label={`${shaded.length} out of ${parts} equals ${fraction.numerator} over ${fraction.denominator}, ${exactPercent ? 'equal to' : 'approximately'} ${percent} percent`} aria-live="polite"><span><strong>{shaded.length}</strong><small>{parts}</small></span><b>=</b><span><strong>{fraction.numerator}</strong><small>{fraction.denominator}</small></span><b>{exactPercent ? '=' : '≈'}</b><strong>{percent}%</strong></div>
     <p className="lab-teaching-note">Change the number of pieces to see why a fraction depends on equal parts, not just a count of shaded pieces.</p>
     <button className="button primary" onClick={check}>Check my model<ArrowRight size={17} /></button>{feedback && <div className={`lab-feedback ${feedback.correct ? 'success' : 'hint'}`} role="status"><strong>{feedback.correct ? 'Equivalent fractions, understood.' : 'Try a different model.'}</strong><p>{feedback.text}</p></div>}
   </div>;
@@ -47,27 +49,41 @@ function AlgorithmTracer({ onComplete }) {
   const [prediction, setPrediction] = useState('');
   const [locked, setLocked] = useState(null);
   const [step, setStep] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [checked, setChecked] = useState(false);
+  const inputRef = useRef(null);
+  const predictionRef = useRef(null);
+  const traceRef = useRef(null);
+  const previousLocked = useRef(locked);
+  useLayoutEffect(() => {
+    if (previousLocked.current === locked) return;
+    previousLocked.current = locked;
+    const target = locked ? traceRef.current : inputRef.current;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: 'nearest' });
+  }, [locked]);
   const start = () => {
+    let values;
     try {
-      const values = parseNumberList(input);
-      if (!prediction.trim() || !Number.isFinite(Number(prediction)) || Number(prediction) < 0 || Number(prediction) > 800) throw new Error('Enter a prediction from 0 to 800 before tracing.');
-      setLocked({ values, prediction: Number(prediction), operation }); setStep(0); setChecked(false); setError('');
-    } catch (error) { setError(error.message); }
+      values = parseNumberList(input);
+    } catch (error) { setError({ field: 'list', message: error.message }); inputRef.current?.focus(); return; }
+    if (!prediction.trim() || !Number.isFinite(Number(prediction)) || Number(prediction) < 0 || Number(prediction) > 800) {
+      setError({ field: 'prediction', message: 'Enter a prediction from 0 to 800 before tracing.' }); predictionRef.current?.focus(); return;
+    }
+    setLocked({ values, prediction: Number(prediction), operation }); setStep(0); setChecked(false); setError(null);
   };
   const trace = locked ? traceAlgorithm(locked.values, locked.operation) : [];
   const finished = locked && step === trace.length;
   const correct = finished && locked.prediction === trace.at(-1).result;
   const compare = () => { setChecked(true); if (correct) onComplete('algorithms'); };
-  const reset = () => { setLocked(null); setStep(0); setPrediction(''); setChecked(false); setError(''); };
+  const reset = () => { setLocked(null); setStep(0); setPrediction(''); setChecked(false); setError(null); };
   const nextList = () => { reset(); setInput(Array.from({ length: 4 }, () => 1 + Math.floor(Math.random() * 12)).join(', ')); };
   return <div className="lab-experiment"><span className="eyebrow">THINK BEFORE YOU RUN IT</span><h2>Follow every change.</h2><p>Predict the result first. Then run the algorithm one step at a time and compare your prediction with the trace.</p>
-    <div className="algorithm-inputs"><label>Number list<input aria-label="Algorithm number list" value={input} maxLength={40} disabled={Boolean(locked)} onChange={event => setInput(event.target.value)} /></label><SelectField label="Algorithm" value={operation} disabled={Boolean(locked)} onChange={setOperation} options={[{ value: 'sum', label: 'Add all numbers' }, { value: 'max', label: 'Find the largest number' }]} /><label>Your predicted result<input type="number" min={0} max={800} value={prediction} disabled={Boolean(locked)} onChange={event => setPrediction(event.target.value)} /></label></div>
+    <div className="algorithm-inputs"><label>Number list<input ref={inputRef} aria-label="Algorithm number list" aria-invalid={error?.field === 'list'} aria-describedby={`algorithm-list-hint${error?.field === 'list' ? ' algorithm-error' : ''}`} value={input} maxLength={40} disabled={Boolean(locked)} onChange={event => { setInput(event.target.value); if (error?.field === 'list') setError(null); }} /><small id="algorithm-list-hint">2–8 whole numbers from 0 to 100, separated by commas.</small></label><SelectField label="Algorithm" value={operation} disabled={Boolean(locked)} onChange={setOperation} options={[{ value: 'sum', label: 'Add all numbers' }, { value: 'max', label: 'Find the largest number' }]} /><label>Your predicted result<input ref={predictionRef} type="number" min={0} max={800} aria-invalid={error?.field === 'prediction'} aria-describedby={error?.field === 'prediction' ? 'algorithm-error' : undefined} value={prediction} disabled={Boolean(locked)} onChange={event => { setPrediction(event.target.value); if (error?.field === 'prediction') setError(null); }} /></label></div>
     {!locked && <button className="button primary" onClick={start}>Lock prediction & start<Play size={16} /></button>}
-    {error && <p className="form-message error" role="alert">{error}</p>}
+    {error && <p className="form-message error" id="algorithm-error" role="alert">{error.message}</p>}
     {locked && <><pre className="algorithm-code"><code>{locked.operation === 'sum' ? 'total = 0\nfor each number:\n  total = total + number\nreturn total' : 'largest = first number\nfor each remaining number:\n  largest = max(largest, number)\nreturn largest'}</code></pre><div className="algorithm-values" aria-label="Algorithm inputs">{locked.values.map((value, index) => <span key={index} className={index < step ? 'processed' : ''}>{value}</span>)}</div>
-      <div className="trace-current" role="status">{step ? <>After step {step}: <strong>{locked.operation === 'sum' ? 'total' : 'largest'} = {trace[step - 1].result}</strong></> : 'Your prediction is locked. Run the first step.'}</div>
+      <div className="trace-current" ref={traceRef} tabIndex={-1} role="status">{step ? <>After step {step}: <strong>{locked.operation === 'sum' ? 'total' : 'largest'} = {trace[step - 1].result}</strong></> : 'Your prediction is locked. Run the first step.'}</div>
       {step > 0 && <div className="trace-table-wrap"><table className="trace-table"><caption>How the variable changes</caption><thead><tr><th scope="col">Step</th><th scope="col">Number</th><th scope="col">Before</th><th scope="col">After</th></tr></thead><tbody>{trace.slice(0, step).map(row => <tr key={row.step}><td>{row.step}</td><td>{row.value}</td><td>{row.previous}</td><td>{row.result}</td></tr>)}</tbody></table></div>}
       <div className="lab-actions">{!finished ? <button className="button primary" onClick={() => setStep(current => Math.min(current + 1, trace.length))}>Run next step<Play size={16} /></button> : <button className="button primary" onClick={compare}>Compare my prediction<ArrowRight size={17} /></button>}<button className="text-button" onClick={reset}><RotateCcw size={16} />Edit the inputs</button></div>
       {checked && <div className={`lab-feedback ${correct ? 'success' : 'hint'}`} role="status"><strong>{correct ? 'Your prediction matches the trace.' : 'The trace reveals the difference.'}</strong><p>You predicted {locked.prediction}. The final {locked.operation === 'sum' ? 'total' : 'largest value'} is {trace.at(-1).result}. {locked.operation === 'sum' ? 'Each step carries the previous total forward and adds the next value.' : 'A smaller value does not replace the current largest candidate.'}</p><button className="text-button" onClick={nextList}>Try a new list<ArrowRight size={16} /></button></div>}

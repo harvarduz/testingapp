@@ -79,7 +79,7 @@ with sync_playwright() as p:
     dialog.get_by_role('button', name='Check my answer').click()
     expect(dialog.get_by_role('status')).to_contain_text('Each step adds 3')
     dialog.get_by_role('button', name='Finish lesson').click()
-    expect(dialog.get_by_role('status')).to_contain_text('1 of 7 lessons complete')
+    expect(dialog.locator('.completion-notice')).to_contain_text('1 of 7 lessons complete')
     page.screenshot(path=str(OUTPUT / '02-lesson-completed.png'), full_page=True)
     dialog.get_by_role('button', name='Close dialog').click()
     passed('Wrong answers allow retry; a correct answer explains the idea and completes the lesson')
@@ -103,7 +103,7 @@ with sync_playwright() as p:
         dialog.get_by_role('button', name='Finish lesson').click()
         if answer != '25%':
             dialog.get_by_role('button', name='Continue learning', exact=True).click()
-    expect(dialog.get_by_role('status')).to_contain_text('Course complete')
+    expect(dialog.locator('.completion-notice')).to_contain_text('Course complete')
     dialog.get_by_role('button', name='Close dialog').click()
     page.get_by_role('button', name='Completed', exact=True).click()
     expect(page.locator('.course-progress')).to_contain_text('7/7 complete')

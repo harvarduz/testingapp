@@ -55,7 +55,7 @@ with sync_playwright() as p:
     dialog.locator('.quiz-option').filter(has_text='14').click()
     dialog.get_by_role('button', name='Check my answer').click()
     dialog.get_by_role('button', name='Finish lesson').click()
-    expect(dialog.get_by_role('status')).to_contain_text('1 of 7 lessons complete')
+    expect(dialog.locator('.completion-notice')).to_contain_text('1 of 7 lessons complete')
     page.keyboard.press('Escape')
     expect(dialog).to_have_count(0)
     expect(preview.get_by_role('button', name='Keep learning')).to_be_focused()

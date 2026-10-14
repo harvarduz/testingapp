@@ -29,7 +29,7 @@
 .landing-catalog-scene.is-static { height: auto; min-height: 0; }
 .landing .landing-catalog-scene.is-static .landing-catalog-stage { position: static; height: auto; min-height: 0; padding-block: 48px; gap: 24px; }
 .landing .landing-skills-scene { height: 230svh; min-height: 1500px; padding-block: 0; }
-.landing-skills-stage { display: grid; grid-template-columns: 1fr 1.2fr; align-items: center; gap: clamp(32px, 4vw, 64px); position: sticky; top: 96px; height: calc(100svh - 116px); }
+.landing-skills-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: clamp(32px, 4vw, 64px); position: sticky; top: 96px; height: calc(100svh - 116px); }
 .landing-skills-copy { min-width: 0; }
 .landing-skills-copy > h2 { font: 400 clamp(32px, 4vw, 48px)/1.12 var(--heading); letter-spacing: -1px; color: var(--md-sys-color-on-surface); margin: 18px 0 22px; }
 .landing-skills-copy > p { font: 400 17px/28px 'Roboto', sans-serif; color: var(--md-sys-color-on-surface-variant); }
@@ -39,7 +39,7 @@
 .landing-skill-explanation { min-height: 116px; margin-bottom: 24px; }
 .landing-skill-explanation > h3 { font: 500 18px/26px var(--heading); color: var(--md-sys-color-on-surface); }
 .landing-skill-explanation > p { margin-top: 8px; font: 400 16px/26px 'Roboto', sans-serif; color: var(--md-sys-color-on-surface-variant); }
-.landing-skill-map { margin: 0 0 32px; width: 100%; aspect-ratio: 560 / 400; position: relative; }
+.landing-skill-map { margin: 0 0 32px; min-width: 0; width: 100%; aspect-ratio: 560 / 400; min-height: 450px; position: relative; }
 .landing-skill-map > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .landing-skill-route, .landing-skill-connection { fill: none; stroke-width: 3; }
 .landing-skill-route { stroke: var(--md-sys-color-outline-variant); }
@@ -77,7 +77,7 @@
   .landing-skill-explanation { min-height: 88px; margin-bottom: 16px; }
   .landing-skill-explanation > h3 { font-size: 16px; line-height: 22px; }
   .landing-skill-explanation > p { font-size: 14px; line-height: 21px; margin-top: 4px; }
-  .landing-skill-map { max-width: 480px; justify-self: center; margin-bottom: 34px; }
+  .landing-skill-map { max-width: 480px; min-height: 228px; justify-self: center; margin-bottom: 34px; }
   .landing-skill-node { padding: 10px 12px; border-radius: 16px; }
   .landing-skill-node > h3 { font-size: 14px; line-height: 20px; }
   .landing-skill-node > strong { font-size: 17px; line-height: 24px; margin-top: 2px; }

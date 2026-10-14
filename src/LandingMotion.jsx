@@ -59,7 +59,7 @@ export function useLandingMotion(root) {
 // A scroll position is the animation clock. No elapsed-time counter or
 // transition can keep a number moving after the reader stops scrolling.
 const ease = progress => progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
-const compactQuery = '(max-height: 460px)';
+const compactQuery = '(max-height: 460px), (max-width: 800px) and (max-height: 640px)';
 const needsStaticScene = (query = compactQuery) => matchMedia('(prefers-reduced-motion: reduce)').matches
   || matchMedia(query).matches || !('IntersectionObserver' in window);
 
@@ -180,15 +180,16 @@ export function ScrollSkills({ onOpenLesson }) {
   const render = useCallback(progress => {
     const element = map.current;
     if (!element) return;
-    const count = String(Math.round(progress * 3));
-    const number = element.querySelector('[data-skill-count]');
-    if (number.textContent !== count) number.textContent = count;
     const nodes = element.querySelectorAll('.landing-skill-node');
+    let connected = 0;
     element.querySelectorAll('.landing-skill-connection').forEach((connection, index) => {
       const local = ease(clamp(progress * 3 - index));
       connection.style.strokeDashoffset = String(1 - local);
       nodes[index].dataset.connected = String(local >= .98);
+      if (local >= .98) connected++;
     });
+    const number = element.querySelector('[data-skill-count]');
+    if (number.textContent !== String(connected)) number.textContent = String(connected);
     const next = Math.min(2, Math.floor(progress * 3));
     if (next !== lastActive.current) { lastActive.current = next; setActive(next); }
   }, []);
@@ -213,7 +214,7 @@ export function ScrollSkills({ onOpenLesson }) {
         <button className="landing-button landing-button-dark" onClick={() => onOpenLesson(current.lesson)}>{current.button}<ArrowRight size={17} /></button>
       </div>
       <figure className="landing-skill-map" ref={map} aria-labelledby="landing-skill-map-caption">
-        <svg viewBox="0 0 560 400" aria-hidden="true">
+        <svg viewBox="0 0 560 400" preserveAspectRatio="none" aria-hidden="true">
           {['M 166 200 C 224 200 207 67 274 67', 'M 166 200 L 274 200', 'M 166 200 C 224 200 207 333 274 333'].map(path => <React.Fragment key={path}><path className="landing-skill-route" d={path} /><path className="landing-skill-connection" d={path} pathLength="1" strokeDasharray="1" /></React.Fragment>)}
         </svg>
         <div className="landing-skill-core" aria-hidden="true"><Sigma size={22} /><strong data-skill-count>3</strong><span>ideas connected</span></div>

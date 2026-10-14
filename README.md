@@ -15,7 +15,7 @@ The frontend and backend start together on port 5173. No API keys or separate da
 
 To test publishing: choose **Create your first course**, register, download a template, and upload it. Edit the lesson, preview, save a draft, and publish for free. Use another browser or private window to find the published course and complete a lesson. Sign in with a student account on a different browser to check saved progress.
 
-To try the study tools: save a course using its bookmark button, then open **My learning → Saved**. Start a lesson and expand **Your notes**; notes save automatically. **Copy course link** opens that course directly in another browser. In **Practice & review**, reopen completed lessons without adding duplicate progress. Catalog filters combine subject, level, duration, search, and sort.
+To try the study tools: save a course using its bookmark button, then open **My learning → Saved**. Start a lesson and expand **Your notes**; notes save automatically. **Copy course link** opens that course directly in another browser. In **Practice & review**, reopen completed lessons without adding duplicate progress. Catalog filters combine subject, level, duration, search, and sort. On small phones the search has its own full-width row, subject shortcuts scroll horizontally, and filter values wrap instead of disappearing behind an ellipsis.
 
 ```sh
 npm test
@@ -33,13 +33,15 @@ All 121 starter lessons include learning goals, a stepped worked example, a comm
 
 The homepage’s **Make the idea work** section offers three practice models: shade a target fraction, find a discount and compare editable pack prices. Calculations update as you interact; checking gives a specific explanation, and each model opens its related lesson. Blank or invalid prices/quantities get field-level recovery instructions. Unit prices are compared exactly before the displayed amounts are rounded. These local previews award no completion or coins. Catalog gauges show their actual inventory totals throughout scrolling, with **Show all totals** for immediate access.
 
-The **Small ideas. A bigger picture.** particle scene follows the requested SI.gov motion reference: dots reshape into Curio lettering, an orbit and an open book. Scroll chooses the scene until a view is selected manually. Pointer movement displaces the dots; Pause/Play controls the orbit. Canvas draws at approximately 30 times per second with 900 desktop or 480 narrow-screen points and pixel density capped at 2. Settled lettering/books, offscreen scenes and hidden tabs stop animation frames. Reduced motion and missing observer support use static shapes; without Canvas, the brand remains visible. No animation library or remote animation asset is required.
+The **Small ideas. A bigger picture.** particle scene follows the requested SI.gov motion reference: dots reshape into Curio lettering, an orbit and an open book. Scroll changes shapes while the canvas is visible, including phone landscape. Selecting a view holds that shape; **Follow scroll** restores the scroll sequence. The caption explains the current paused, manual or reduced-motion mode. Pointer movement displaces the dots; Pause/Play controls the orbit. Canvas draws at approximately 30 times per second with 900 desktop or 480 narrow-screen points and pixel density capped at 2. Settled lettering/books, offscreen scenes and hidden tabs stop animation frames. Reduced motion and missing observer support use static shapes; without Canvas, the brand remains visible. No animation library or remote animation asset is required.
 
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
 **Learning Lab** makes ideas observable: shade equivalent fractions, adjust a student budget while protecting essential needs and savings, or lock an algorithm prediction before tracing each update. Labs link to their related lessons. Completing each lab earns 30 coins once and contributes one activity to the daily learning goal.
 
 **Curio coins** reward learning: 25 for each newly completed lesson, 15 for each daily challenge, and 20 for the first successful practice session each day. A session must include a correct answer. Repeating a lesson or same-day session adds no extra coins. Each completed lab also earns 30 coins once. The balance is derived from saved learning records. Coins are motivational points with no cash value, purchases, or withdrawal facility.
+
+The closed mobile drawer is excluded from keyboard navigation. Page navigation focuses the destination heading; searching and clearing a query retain the input cursor. Temporary account-loading failures can be retried without reloading; a delayed retry cannot replace a newer authenticated session.
 
 The desktop sidebar can collapse to an icon rail and remembers that browser preference. It scrolls independently on short screens. Mobile uses a full drawer and bottom navigation. Colour, feedback, coin celebrations, and hover effects respect reduced-motion settings.
 
@@ -108,6 +110,8 @@ python tests/accessibility_smoke.py
 python tests/button_smoke.py
 python tests/skill_playground_smoke.py
 python tests/particle_story_smoke.py
+python tests/landing_ux_smoke.py
+python tests/interface_audit_smoke.py
 ```
 
 Set `CURIO_TEST_URL` to use another application server. Accessibility checks use the npm-installed axe-core on desktop/mobile pages, dialogs, and the editor. Automated checks supplement manual keyboard and visual review; they do not certify complete WCAG compliance.
@@ -125,6 +129,8 @@ python tests/hover_smoke.py
 python tests/navigation_smoke.py
 python tests/platform_ux_smoke.py
 python tests/landing_motion_smoke.py
+python tests/account_creator_ux_smoke.py
+python tests/learning_ux_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.

@@ -11,6 +11,7 @@ export default function ParticleStory({ onExplore }) {
   const engine = useRef(null);
   const [view, setView] = useState('curio');
   const [paused, setPaused] = useState(false);
+  const [following, setFollowing] = useState(true);
   const [supported, setSupported] = useState(true);
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -124,6 +125,7 @@ export default function ParticleStory({ onExplore }) {
     const resize = () => { if (resizeFrame === null) resizeFrame = requestAnimationFrame(measure); };
     const choose = (next, explicit = false) => {
       manual ||= explicit;
+      if (explicit) setFollowing(false);
       if (current === next) return;
       current = next; setView(next);
       if (!animated()) paint(true);
@@ -132,8 +134,12 @@ export default function ParticleStory({ onExplore }) {
     const scroll = () => {
       if (manual || staticMode() || stopped || !visible) return;
       const bounds = host.getBoundingClientRect();
-      const progress = clamp((innerHeight - bounds.top) / (innerHeight + bounds.height));
-      choose(progress < .57 ? 'curio' : progress < .78 ? 'orbit' : 'book');
+      const headerBottom = document.querySelector('.landing-header')?.getBoundingClientRect().bottom || 0;
+      // Morph while the whole drawing is visible, rather than waiting until
+      // its upper half has disappeared beneath the sticky header.
+      const travel = Math.max(1, innerHeight - headerBottom - bounds.height);
+      const progress = clamp((innerHeight - bounds.bottom) / travel);
+      choose(progress < .3 ? 'curio' : progress < .65 ? 'orbit' : 'book');
     };
     const move = event => {
       if (event.pointerType === 'touch' || !animated()) return;
@@ -153,7 +159,11 @@ export default function ParticleStory({ onExplore }) {
     host.addEventListener('pointermove', move, { passive: true }); host.addEventListener('pointerleave', leave);
     window.addEventListener('scroll', scroll, { passive: true }); window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', schedule); preference.addEventListener('change', preferenceChanged);
-    engine.current = { choose, pause(value) { stopped = value; leave(); schedule(); } };
+    engine.current = {
+      choose,
+      follow() { manual = false; setFollowing(true); scroll(); schedule(); },
+      pause(value) { stopped = value; leave(); if (!value) scroll(); schedule(); },
+    };
     return () => {
       destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect(); appearance.disconnect();
       host.removeEventListener('pointermove', move); host.removeEventListener('pointerleave', leave);
@@ -166,7 +176,7 @@ export default function ParticleStory({ onExplore }) {
   return <section className="landing-particle-story" aria-labelledby="particle-story-title">
     <div className="landing-container particle-story-layout">
       <div className="particle-story-copy"><span className="landing-kicker">FOLLOW YOUR CURIOSITY</span><h2 id="particle-story-title">Small ideas.<br />A bigger picture.</h2><p>Start with a question. Follow the connections. See what you can figure out.</p><button className="landing-button landing-button-dark" onClick={onExplore}>Explore a subject<ArrowRight size={17} /></button></div>
-      <figure className="particle-story-figure"><div className="particle-story-stage" ref={stage} data-view={view}><span className="particle-story-fallback" aria-hidden="true">curio.</span><canvas ref={canvas} aria-hidden="true" /></div><figcaption>{supported ? 'Scroll to reshape the dots, or choose a view. Move your pointer through them.' : 'A little curiosity can open a bigger picture.'}</figcaption>{supported && <div className="particle-story-controls"><div role="group" aria-label="Particle views">{views.map(({ id, label, Icon }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id, true)}><Icon size={17} />{label}</button>)}</div>{reduced ? <span className="particle-motion-note">Motion reduced</span> : <button className="particle-motion-control" onClick={() => { setPaused(value => !value); engine.current?.pause(!paused); }}>{paused ? <Play size={17} /> : <Pause size={17} />}{paused ? 'Play animation' : 'Pause animation'}</button>}</div>}</figure>
+      <figure className="particle-story-figure"><div className="particle-story-stage" ref={stage} data-view={view}><span className="particle-story-fallback" aria-hidden="true">curio.</span><canvas ref={canvas} aria-hidden="true" /></div><figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : following ? 'Scroll to reshape the dots, or choose a view. Move your pointer through them.' : 'Your selected view stays in place. Follow scroll to see the story again.'}</figcaption>{supported && <div className="particle-story-controls"><div role="group" aria-label="Particle views">{views.map(({ id, label, Icon }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id, true)}><Icon size={17} />{label}</button>)}</div>{reduced ? <span className="particle-motion-note">Motion reduced</span> : <><button className="particle-motion-control" onClick={() => { setPaused(value => !value); engine.current?.pause(!paused); }}>{paused ? <Play size={17} /> : <Pause size={17} />}{paused ? 'Play animation' : 'Pause animation'}</button>{!following && <button className="particle-motion-control" onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}>Follow scroll</button>}</>}</div>}</figure>
     </div>
   </section>;
 }

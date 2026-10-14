@@ -1,15 +1,29 @@
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, CheckCheck, Coins, RotateCcw, Route, Target, X } from 'lucide-react';
 import { courseCompleted, localDate } from './progress.js';
 import { dailyQuests, learningRewards, pathProgress, practiceQuestions, studyPaths } from './learning.js';
 import './lesson-workshop.css';
+
+// Keep the next prompt in view and in the keyboard reading order when a
+// checked answer is replaced. The opening dialog owns initial focus.
+function usePromptFocus(screen) {
+  const ref = useRef(null);
+  const previous = useRef(screen);
+  useLayoutEffect(() => {
+    if (previous.current === screen) return;
+    previous.current = screen;
+    ref.current?.focus({ preventScroll: true });
+    ref.current?.scrollIntoView({ block: 'nearest' });
+  }, [screen]);
+  return ref;
+}
 
 export function WorkedLesson({ lesson }) {
   const [step, setStep] = useState(0);
   if (!lesson.steps?.length && !lesson.objectives?.length) return null;
   return <div className="worked-lesson">
     {lesson.objectives?.length > 0 && <section aria-label="Learning goals"><h3>By the end of this lesson</h3><ul>{lesson.objectives.map(goal => <li key={goal}><Target size={15} />{goal}</li>)}</ul></section>}
-    {lesson.steps?.length > 0 && <section aria-label="Worked example"><div className="worked-example-heading"><h3>Work through an example</h3><span aria-live="polite">Step {step + 1} of {lesson.steps.length}</span></div><ol start={step + 1}><li><span>{step + 1}</span><p>{lesson.steps[step]}</p></li></ol><div className="worked-example-controls"><button className="button outline" disabled={step === 0} onClick={() => setStep(value => value - 1)}><ArrowLeft size={16} />Previous step</button>{step + 1 < lesson.steps.length ? <button className="button primary" onClick={() => setStep(value => value + 1)}>Next step<ArrowRight size={16} /></button> : <button className="text-button" onClick={() => setStep(0)}><RotateCcw size={16} />Review example</button>}</div></section>}
+    {lesson.steps?.length > 0 && <section aria-label="Worked example"><div className="worked-example-heading"><h3>Work through an example</h3><span>Step {step + 1} of {lesson.steps.length}</span></div><ol start={step + 1} aria-live="polite" aria-atomic="true"><li><span>{step + 1}</span><p>{lesson.steps[step]}</p></li></ol><div className="worked-example-controls"><button className="button outline" disabled={step === 0} onClick={() => setStep(value => value - 1)}><ArrowLeft size={16} />Previous step</button>{step + 1 < lesson.steps.length ? <button className="button primary" onClick={() => setStep(value => value + 1)}>Next step<ArrowRight size={16} /></button> : <button className="text-button" onClick={() => setStep(0)}><RotateCcw size={16} />Review example</button>}</div></section>}
     {lesson.commonMistake && <aside className="common-mistake"><strong>A mistake to watch for</strong><p>{lesson.commonMistake}</p></aside>}
   </div>;
 }
@@ -19,6 +33,8 @@ export function LessonExercises({ course, lesson, lessonIndex, onRecord }) {
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const promptRef = usePromptFocus(`${index}:${finished}:${retry}`);
   const attempted = useRef(false);
   const questions = lesson.practice || [];
   if (!questions.length) return null;
@@ -29,12 +45,12 @@ export function LessonExercises({ course, lesson, lessonIndex, onRecord }) {
     setChecked(true);
     onRecord?.({ ...question, course, lessonIndex, questionIndex: index }, selected === question.answer, crypto.randomUUID());
   };
-  const resetAnswer = () => { attempted.current = false; setSelected(null); setChecked(false); };
+  const resetAnswer = () => { attempted.current = false; setSelected(null); setChecked(false); setRetry(value => value + 1); };
   const next = () => { if (index + 1 < questions.length) { setIndex(value => value + 1); resetAnswer(); } else setFinished(true); };
   return <section className="lesson-exercises" aria-label="Lesson exercises">
     <div className="lesson-exercises-heading"><h3>Put the idea to work</h3><span>{finished ? 'Reviewed' : `${index + 1} / ${questions.length}`}</span></div>
-    {finished ? <><p>You’ve worked through the practice questions. Continue to the lesson check when you’re ready.</p><button className="text-button" onClick={() => { setIndex(0); setFinished(false); resetAnswer(); }}><RotateCcw size={16} />Review these exercises</button></> : <>
-      <p className="lesson-exercise-prompt">{question.question}</p>
+    {finished ? <><p ref={promptRef} tabIndex={-1}>You’ve worked through the practice questions. Continue to the lesson check when you’re ready.</p><button className="text-button" onClick={() => { setIndex(0); setFinished(false); resetAnswer(); }}><RotateCcw size={16} />Review these exercises</button></> : <>
+      <p className="lesson-exercise-prompt" ref={promptRef} tabIndex={-1}>{question.question}</p>
       <div className="practice-options" role="group" aria-label="Lesson practice answers">{question.options.map((option, optionIndex) => <button key={optionIndex} aria-pressed={selected === optionIndex} disabled={checked} className={`${selected === optionIndex ? 'selected' : ''} ${checked && optionIndex === question.answer ? 'correct' : ''}`} onClick={() => setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}{checked && optionIndex === question.answer && <Check size={18} />}</button>)}</div>
       {checked && <div className={`practice-feedback ${selected === question.answer ? 'correct' : 'retry'}`} role="status"><strong>{selected === question.answer ? 'You’ve got the idea.' : 'Compare your reasoning.'}</strong><p>{question.explanation}</p></div>}
       <div className="lesson-exercise-controls">{checked ? <><button className="button primary" onClick={next}>{index + 1 < questions.length ? 'Next exercise' : 'Finish these exercises'}<ArrowRight size={16} /></button>{selected !== question.answer && <button className="text-button" onClick={resetAnswer}><RotateCcw size={16} />Try this answer again</button>}</> : <button className="button primary" onClick={check} disabled={selected === null}>Check practice answer<ArrowRight size={16} /></button>}</div>
@@ -97,6 +113,7 @@ export function PracticeSession({ courses, progress, courseId, lessonIndex, onRe
   const [checked, setChecked] = useState(false);
   const [finished, setFinished] = useState(false);
   const [coins, setCoins] = useState(0);
+  const promptRef = usePromptFocus(`${index}:${finished}`);
   const answerId = useRef(crypto.randomUUID());
   const recordedAnswers = useRef(new Set());
   const question = questions[index];
@@ -127,12 +144,12 @@ export function PracticeSession({ courses, progress, courseId, lessonIndex, onRe
   if (!questions.length) return <div className="practice-session"><h2>No practice questions yet.</h2><p>Complete a lesson to build your personal practice set.</p></div>;
   if (finished) {
     const missed = answers.filter(answer => !answer.correct).filter((answer, index, items) => items.findIndex(item => item.course.id === answer.course.id && item.lessonIndex === answer.lessonIndex) === index);
-    return <div className="practice-session session-result"><span className="result-medal"><CheckCheck size={36} /></span><span className="eyebrow">PRACTICE COMPLETE</span><h2>{correctCount === questions.length ? 'Every answer, understood.' : 'You know what to work on next.'}</h2><p><strong>{correctCount} of {questions.length}</strong> answers correct.</p>{coins > 0 && <div className="session-coins"><Coins size={23} />+{coins} Curio coins</div>}
+    return <div className="practice-session session-result"><span className="result-medal"><CheckCheck size={36} /></span><span className="eyebrow">PRACTICE COMPLETE</span><h2 ref={promptRef} tabIndex={-1}>{correctCount === questions.length ? 'Every answer, understood.' : 'You know what to work on next.'}</h2><p><strong>{correctCount} of {questions.length}</strong> answers correct.</p>{coins > 0 && <div className="session-coins"><Coins size={23} />+{coins} Curio coins</div>}
       {missed.length > 0 ? <section className="practice-next"><h3>Return to these ideas</h3><p>Read the explanation, then practise it again.</p>{missed.map(answer => <button key={`${answer.course.id}:${answer.lessonIndex}`} onClick={() => onOpen(answer.course, answer.lessonIndex)}><span><strong>{answer.lesson.title}</strong><small>{answer.course.title}</small></span><ArrowRight size={17} /></button>)}</section> : <p>You applied these ideas successfully. Come back later to check what you remember.</p>}
       <button className="button primary full-width" onClick={restart}><RotateCcw size={17} />Practice again</button><small>Repeating a session does not add course completions or more practice coins today.</small>
     </div>;
   }
-  return <div className="practice-session"><div className="practice-session-top"><span className="eyebrow">TARGETED PRACTICE</span><span>{index + 1}/{questions.length} questions</span></div><div className="progress-track"><span style={{ width: `${index / questions.length * 100}%` }} /></div><p className="practice-topic">{question.course.title} · {question.lesson.title}</p><h2>{question.question}</h2><p>Try to answer before looking back at the lesson.</p><div className="practice-options" role="group" aria-label="Practice answer options">{question.options.map((option, optionIndex) => <button key={optionIndex} aria-pressed={selected === optionIndex} disabled={checked} className={`${selected === optionIndex ? 'selected' : ''} ${checked && optionIndex === question.answer ? 'correct' : ''}`} onClick={() => setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}{checked && optionIndex === question.answer && <Check size={18} />}</button>)}</div>
+  return <div className="practice-session"><div className="practice-session-top"><span className="eyebrow">TARGETED PRACTICE</span><span>{index + 1}/{questions.length} questions</span></div><div className="progress-track"><span style={{ width: `${index / questions.length * 100}%` }} /></div><p className="practice-topic">{question.course.title} · {question.lesson.title}</p><h2 ref={promptRef} tabIndex={-1}>{question.question}</h2><p>Try to answer before looking back at the lesson.</p><div className="practice-options" role="group" aria-label="Practice answer options">{question.options.map((option, optionIndex) => <button key={optionIndex} aria-pressed={selected === optionIndex} disabled={checked} className={`${selected === optionIndex ? 'selected' : ''} ${checked && optionIndex === question.answer ? 'correct' : ''}`} onClick={() => setSelected(optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}{checked && optionIndex === question.answer && <Check size={18} />}</button>)}</div>
     {checked && <div className={`practice-feedback ${answers.at(-1)?.correct ? 'correct' : 'retry'}`} role="status"><strong>{answers.at(-1)?.correct ? consecutive >= 2 ? `${consecutive} correct in a row!` : 'That’s right.' : 'A useful mistake. Here’s why.'}</strong><p>{question.explanation}</p></div>}
     <button className="button primary full-width" onClick={checked ? next : check} disabled={!checked && selected === null}>{checked ? index + 1 === questions.length ? 'See my results' : 'Next question' : 'Check answer'}<ArrowRight size={18} /></button><small>Your answers save as you go. Practice does not change your lesson completion totals.</small>
   </div>;

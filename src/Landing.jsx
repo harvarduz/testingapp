@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, BookOpen, Check, ChevronDown,
   Clock3, Lightbulb, Menu, MoveUpRight, Sparkles, X,
@@ -67,9 +67,46 @@ const questions = [
 
 function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const header = useRef(null);
+  const menuButton = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = event => {
+      if (event.type === 'keydown') {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        menuButton.current?.focus();
+      } else if (header.current?.contains(event.target)) return;
+      setMenuOpen(false);
+    };
+    const desktop = matchMedia('(min-width: 1001px)');
+    const resize = () => { if (desktop.matches) setMenuOpen(false); };
+    document.addEventListener('keydown', dismiss);
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('focusin', dismiss);
+    desktop.addEventListener('change', resize);
+    return () => {
+      document.removeEventListener('keydown', dismiss);
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('focusin', dismiss);
+      desktop.removeEventListener('change', resize);
+    };
+  }, [menuOpen]);
+
+  const visitSection = event => {
+    const destination = document.getElementById(event.currentTarget.hash.slice(1));
+    setMenuOpen(false);
+    // The clicked menu link is removed. Continue keyboard navigation at the
+    // destination instead of dropping focus back to the document body.
+    requestAnimationFrame(() => {
+      const heading = destination?.querySelector('h2');
+      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+    });
+  };
 
   return (
-    <header className="landing-header">
+    <header className="landing-header" ref={header}>
       <div className="landing-container landing-header-inner">
         <a className="landing-brand" href="#home" aria-label="Curio home" onClick={() => setMenuOpen(false)}>
           <BrandMark />
@@ -89,6 +126,7 @@ function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance })
           <AccountMenu {...accountMenuProps} onOpen={() => { setMenuOpen(false); accountMenuProps.onOpen?.(); }} />
           <button
             className="landing-menu-button"
+            ref={menuButton}
             aria-label={menuOpen ? 'Close website navigation' : 'Open website navigation'}
             aria-expanded={menuOpen}
             aria-controls="landing-mobile-nav"
@@ -102,7 +140,7 @@ function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance })
       {menuOpen && (
         <nav id="landing-mobile-nav" className="landing-mobile-nav" aria-label="Mobile website navigation">
           {navigation.map(link => (
-            <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
+            <a key={link.href} href={link.href} onClick={visitSection}>
               {link.label}<ArrowUpRight size={16} />
             </a>
           ))}

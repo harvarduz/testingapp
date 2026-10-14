@@ -8,4 +8,6 @@
 .lesson-exercises .lesson-exercise-note { margin-top: 20px; color: var(--md-sys-color-on-surface-variant); font-size: 13px; line-height: 20px; }
 .lesson-exercises .practice-options { margin-block: 20px; }
 .lesson-exercises .practice-feedback { margin-block: 16px; }
+.algorithm-inputs { align-items: start; }
+.algorithm-inputs label > small { color: var(--md-sys-color-on-surface-variant); font: 400 12px/18px 'Roboto', sans-serif; }
 @media (max-width: 480px) { .lesson-exercises { padding: 18px 14px; }.worked-example-controls { gap: 8px; }.worked-example-controls .button { padding-inline: 12px; font-size: 13px; } }
