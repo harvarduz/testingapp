@@ -39,6 +39,8 @@ For the 15 October hero revision, the refreshed particle suite passed 11 behavio
 
 For the subsequent page-wide effects revision, the build and 104 checks/audits passed: 11 hero checks with 21 accessibility states, 8 page-effect checks with 8 accessibility states, 11 homepage checks, 5 landing UX checks, and 9 scroll-reaction checks with 31 accessibility states. In local Chromium, both renderers painted 40 times during 40 display frames over approximately 0.66 seconds; the cadence assertion compares paints with actual display callbacks rather than promising a frame rate on every device. Shared pause, preference changes, 320/390/820/1440 px light/dark layouts, text/action exclusion, original-illustration fallbacks and actual touchscreen swipes/course entry were verified. Entrance transitions are allowed to complete before contrast audits. No backend or full platform rerun is claimed for this visual revision.
 
+The screenshot-driven Connections correction keeps the sphere centered above the first-screen heading, then interpolates its position and size beside the second-panel text. Narrow screens use a smaller initial sphere to preserve the heading and controls. The build, 12 particle behavior checks and 21 accessibility states passed; the new regression checks actual canvas ink bounds in the centered and second-panel compositions. Visual review covered 1440×1000, 1366×768, 390×844 and 320×568. Other page-effect and platform results above are retained rather than claimed as rerun for this focused correction.
+
 The account/curriculum suite exercises 60 stepped-example/practice flows across all subjects, followed by completion of all 20 new lessons on mobile. It confirms exact saved indices and 500 earned coins after refresh, with no premature rewards during inline exercises. The full course-completion journey now finishes all seven Numbers lessons. Automated accessibility evidence covers 320 light/dark page, palette, selection, account-menu, scroll and playground states. These checks supplement visual and keyboard review; they do not certify full accessibility or enterprise readiness.
 
 | Suite | Passed | What it verifies |
@@ -65,7 +67,7 @@ The account/curriculum suite exercises 60 stepped-example/practice flows across 
 | `tests/landing_motion_smoke.py` accessibility | 31 | Initial/middle/final catalog and knowledge frames in light/dark desktop/mobile, manually selected reduced-motion skills and observer fallback |
 | `tests/skill_playground_smoke.py` functionality | 7 | Interactive fractions, native discount slider, editable prices, exact ties, invalid fields, retries, reset, related lesson links, honest preview state and touch input |
 | `tests/skill_playground_smoke.py` accessibility | 24 | Model feedback and invalid pack inputs in light/dark at 320/390/1366 px |
-| `tests/particle_story_smoke.py` functionality | 11 | First-screen scale and white lettering, hover/tap transformation, persistent scroll morphing, pointer displacement, text clearance during intermediate frames, settling without idle frames, pixel-exact pause, offscreen suspension, static fallbacks, real touch swipes and the course entry point |
+| `tests/particle_story_smoke.py` functionality | 12 | First-screen scale, centered manual Connections and scroll composition, white lettering, hover/tap transformation, persistent scroll morphing, pointer displacement, text clearance during intermediate frames, settling without idle frames, pixel-exact pause, offscreen suspension, static fallbacks, real touch swipes and the course entry point |
 | `tests/particle_story_smoke.py` accessibility | 21 | Curio lettering, phrase and Connections states in light/dark at 320/390/1366 px, reduced motion and missing observer/Canvas fallbacks |
 | `tests/landing_particles_smoke.py` functionality | 8 | Page-wide helix/network/towers/orbits/broadcast regions, display cadence, shared pause, responsive exclusions, reduced motion, actual touchscreen navigation and Canvas fallback |
 | `tests/landing_particles_smoke.py` accessibility | 8 | Settled light/dark page effects at 320/390/820/1440 px |
@@ -73,7 +75,7 @@ The account/curriculum suite exercises 60 stepped-example/practice flows across 
 | `tests/learning_ux_smoke.py` | 5 | Prompt/retry/result focus at 320/390/1366 px, announced examples/copying, algorithm error recovery, rounded fractions, and honest note sync status |
 | `tests/account_creator_ux_smoke.py` | 12 | Eight behavioral checks for unsaved imports, new lesson/error focus, failed uploads, duplicate requests and published lesson protection; four mobile light/dark form audits |
 | `tests/interface_audit_smoke.py` | 8 | Six behavioral checks for session recovery/stale responses, route/dialog focus, mobile search and drawer Tab order; two queried-catalog light/dark audits |
-| **Retained evidence total** | **558** | **Current and earlier platform checks; this is not a claim that every suite was rerun for this release** |
+| **Retained evidence total** | **559** | **Current and earlier platform checks; this is not a claim that every suite was rerun for this release** |
 
 Build first, then run the interaction suites; each starts an isolated server and removes its temporary accounts and drafts:
 

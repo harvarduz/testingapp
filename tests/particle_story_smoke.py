@@ -115,6 +115,25 @@ with sync_playwright() as p:
     page.screenshot(path=str(OUTPUT / 'particles-reference-hero.png'))
     passed('The first screen is a full-width navy particle hero with large, predominantly white lettering, rather than a small lower-page illustration')
 
+    page.get_by_role('button', name='Pause animation', exact=True).click()
+    choices.get_by_role('button', name='Connections', exact=True).click()
+    centered = ink_bounds(page)
+    assert abs(centered['left'] + centered['width'] / 2 - .5) < .025, centered
+    assert centered['left'] > .15 and centered['left'] + centered['width'] < .85, centered
+    heading_top = page.locator('#landing-title').bounding_box()['y']
+    assert box['y'] + (centered['top'] + centered['height']) * box['height'] < heading_top - 20, centered
+    page.screenshot(path=str(OUTPUT / 'particles-connections-centered.png'))
+    scroll_to(page, .95)
+    choices.get_by_role('button', name='Curio', exact=True).click()
+    choices.get_by_role('button', name='Connections', exact=True).click()
+    beside_copy = ink_bounds(page)
+    assert beside_copy['left'] + beside_copy['width'] / 2 > .68, beside_copy
+    scroll_to(page, 0)
+    choices.get_by_role('button', name='Curio', exact=True).click()
+    page.get_by_role('button', name='Follow scroll', exact=True).click()
+    page.wait_for_timeout(100)
+    passed('Connections is centered above the first-screen heading and moves right only beside the second-panel text')
+
     baseline = pixels(page)
     page.mouse.move(box['x'] + box['width'] * .5, box['y'] + box['height'] * .25)
     expect(stage).to_have_attribute('data-view', 'phrase')
@@ -193,7 +212,7 @@ with sync_playwright() as p:
     assert pixels(page) != a
     passed('Pause freezes exact canvas pixels and stops frames; manual views work while paused and Play resumes the sphere')
 
-    expect(page.locator('.particle-story-figure figcaption')).to_contain_text('Your selected view stays in place')
+    expect(page.locator('.particle-story-figure figcaption')).to_contain_text('Your selected shape stays active')
     page.get_by_role('button', name='Follow scroll', exact=True).click()
     expect(page.get_by_role('button', name='Follow scroll', exact=True)).to_have_count(0)
     for progress, view in [(.02, 'curio'), (.95, 'orbit'), (.02, 'curio')]:

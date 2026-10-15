@@ -97,13 +97,17 @@ export function createParticleGeometry(width, height, count) {
   const phrase = lettering(['Stay', 'curious.'], 73943);
   const ringCount = Math.max(1, Math.floor(total * .2));
   const sphereCount = Math.max(1, total - ringCount);
-  const centerX = w * (mobile ? .5 : .735);
-  const centerY = h * (mobile ? .29 : .46);
-  const radius = Math.min(w * (mobile ? .36 : .20), h * (mobile ? .21 : .30));
   const ringTilt = -.32;
 
   // Time is in seconds; pointer coordinates are normalized to [-1, 1].
-  const orbit = (index, time = 0, pointer = {}) => {
+  const orbit = (index, time = 0, pointer = {}, composition = 1) => {
+    // The first screen has centered copy; the second has a left text column.
+    // Move the same sphere between those compositions instead of leaving a
+    // right-aligned illustration above a centered heading.
+    const layout = clamp(composition, 0, 1);
+    const centerX = w * (mobile ? .5 : .5 + .235 * layout);
+    const centerY = h * (mobile ? .25 + .04 * layout : .32 + .14 * layout);
+    const radius = Math.min(w * (mobile ? .31 + .05 * layout : .24 - .04 * layout), h * (mobile ? .14 + .07 * layout : .25 + .05 * layout));
     const nx = clamp(Number(pointer?.nx) || 0, -1, 1);
     const ny = clamp(Number(pointer?.ny) || 0, -1, 1);
     if (index < ringCount) {
