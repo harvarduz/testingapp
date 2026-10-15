@@ -16,7 +16,7 @@ function shuffle(points, seed) {
   return points;
 }
 
-export function createParticleGeometry(width, height, count) {
+export function createParticleGeometry(width, height, count, { compact = false } = {}) {
   const w = Math.max(1, Math.round(Number(width) || 1));
   const h = Math.max(1, Math.round(Number(height) || 1));
   const mobile = w < 900;
@@ -28,8 +28,8 @@ export function createParticleGeometry(width, height, count) {
   if (!ink) throw new Error('Particle lettering needs a 2D canvas context.');
 
   const textArea = {
-    top: Math.max(80, h * (mobile ? .035 : .045)),
-    bottom: Math.max(170, h * (mobile ? .40 : .62)),
+    top: compact ? 76 : Math.max(80, h * (mobile ? .035 : .045)),
+    bottom: compact ? h - 30 : Math.max(170, h * (mobile ? .40 : .62)),
     width: w * (mobile ? .86 : .80),
   };
 
@@ -106,8 +106,8 @@ export function createParticleGeometry(width, height, count) {
     // right-aligned illustration above a centered heading.
     const layout = clamp(composition, 0, 1);
     const centerX = w * (mobile ? .5 : .5 + .235 * layout);
-    const centerY = h * (mobile ? .25 + .04 * layout : .32 + .14 * layout);
-    const radius = Math.min(w * (mobile ? .31 + .05 * layout : .24 - .04 * layout), h * (mobile ? .14 + .07 * layout : .25 + .05 * layout));
+    const centerY = compact ? 76 + (h - 106) / 2 : h * (mobile ? .25 + .04 * layout : .32 + .14 * layout);
+    const radius = compact ? Math.min(w * .31, (h - 100) * .45) : Math.min(w * (mobile ? .31 + .05 * layout : .24 - .04 * layout), h * (mobile ? .14 + .07 * layout : .25 + .05 * layout));
     const nx = clamp(Number(pointer?.nx) || 0, -1, 1);
     const ny = clamp(Number(pointer?.ny) || 0, -1, 1);
     if (index < ringCount) {

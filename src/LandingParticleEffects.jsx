@@ -7,6 +7,7 @@ import './landing-particles.css';
 // publishing section and final invitation. No individual card owns a loop.
 export default function LandingParticleEffects({ root, paused, onPauseChange }) {
   const canvas = useRef(null), renderer = useRef(null);
+  const [compact, setCompact] = useState(() => matchMedia('(max-width: 899px), (max-height: 540px)').matches);
   const [active, setActive] = useState(false);
   const [control, setControl] = useState(null);
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -19,8 +20,11 @@ export default function LandingParticleEffects({ root, paused, onPauseChange }) 
     let scenes = [], frame = null, layoutFrame = null, destroyed = false, stopped = paused;
     let time = 0, last = 0, width = 1, height = 1, paintCount = 0;
     const pointer = { x: -1000, y: -1000 }, waves = [];
+    const obstructionHost = page.parentElement;
+    const obscured = () => obstructionHost.hasAttribute('inert');
+    let tapStart = null;
     const still = () => preference.matches || !('IntersectionObserver' in window);
-    const running = () => !stopped && !still() && !document.hidden && scenes.some(scene => scene.visible);
+    const running = () => !stopped && !still() && !document.hidden && !obscured() && scenes.some(scene => scene.visible);
     const paint = (dt = 0) => {
       context.clearRect(0, 0, width, height);
       const visible = scenes.filter(scene => scene.visible);
@@ -67,7 +71,7 @@ export default function LandingParticleEffects({ root, paused, onPauseChange }) 
       context.globalAlpha = 1;
       surface.dataset.paintCount = String(++paintCount);
       surface.dataset.activeScenes = visible.map(scene => scene.kind).join(' ');
-      surface.dataset.motion = still() ? 'reduced' : stopped ? 'paused' : document.hidden || !visible.length ? 'idle' : 'active';
+      surface.dataset.motion = still() ? 'reduced' : stopped ? 'paused' : obscured() ? 'obscured' : document.hidden || !visible.length ? 'idle' : 'active';
     };
     const tick = stamp => {
       frame = null;
@@ -112,16 +116,30 @@ export default function LandingParticleEffects({ root, paused, onPauseChange }) 
       queueLayout();
     };
     const resize = () => {
+      setCompact(matchMedia('(max-width: 899px), (max-height: 540px)').matches);
+      const widthChanged = width !== innerWidth;
+      if (!widthChanged && height === innerHeight) { queueLayout(); return; }
       width = innerWidth; height = innerHeight;
       const ratio = Math.min(devicePixelRatio || 1, 2);
       surface.width = Math.round(width * ratio); surface.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      for (const scene of scenes) scene.dots = [];
+      if (widthChanged) for (const scene of scenes) scene.dots = [];
       queueLayout();
     };
     const move = event => { if (event.pointerType !== 'touch' && running()) { pointer.x = event.clientX; pointer.y = event.clientY; } };
     const leave = () => { pointer.x = pointer.y = -1000; };
-    const pulse = event => { if (running() && event.target.closest('[data-particle-effect]')) { waves.push({ x: event.clientX, y: event.clientY, radius: 0 }); if (waves.length > 3) waves.shift(); } };
+    const down = event => {
+      tapStart = running() && !event.target.closest('button,a,input') && event.target.closest('[data-particle-effect]')
+        ? { x: event.clientX, y: event.clientY, id: event.pointerId, stamp: performance.now() } : null;
+    };
+    const cancelTap = () => { tapStart = null; };
+    const pulse = event => {
+      const start = tapStart; tapStart = null;
+      if (!start || start.id !== event.pointerId || !running() || performance.now() - start.stamp > 600 || Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 12) return;
+      waves.push({ x: event.clientX, y: event.clientY, radius: 0 }); if (waves.length > 3) waves.shift();
+    };
+    const obstruction = new MutationObserver(() => { cancelTap(); leave(); schedule(); surface.dataset.motion = obscured() ? 'obscured' : stopped ? 'paused' : still() ? 'reduced' : 'idle'; });
+    obstruction.observe(obstructionHost, { attributes: true, attributeFilter: ['inert'] });
     const preferenceChanged = () => { setReduced(still()); waves.length = 0; leave(); layout(); };
     const visibilityChanged = () => { leave(); if (!document.hidden) queueLayout(); schedule(); };
     const appearance = new MutationObserver(queueLayout);
@@ -129,15 +147,15 @@ export default function LandingParticleEffects({ root, paused, onPauseChange }) 
     const content = new MutationObserver(scan); content.observe(page, { childList: true, subtree: true });
     scan(); resize(); setReduced(still());
     window.addEventListener('scroll', queueLayout, { passive: true }); window.addEventListener('resize', resize);
-    page.addEventListener('pointermove', move, { passive: true }); page.addEventListener('pointerleave', leave); page.addEventListener('pointerdown', pulse, { passive: true });
+    page.addEventListener('pointermove', move, { passive: true }); page.addEventListener('pointerleave', leave); page.addEventListener('pointerdown', down, { passive: true }); page.addEventListener('pointerup', pulse, { passive: true }); page.addEventListener('pointercancel', cancelTap);
     document.addEventListener('visibilitychange', visibilityChanged); preference.addEventListener('change', preferenceChanged);
     document.fonts?.ready.then(() => { if (!destroyed) queueLayout(); });
     renderer.current = value => { stopped = value; waves.length = 0; leave(); if (!stopped) schedule(); else { schedule(); surface.dataset.motion = still() ? 'reduced' : 'paused'; } };
     return () => {
-      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(layoutFrame); appearance.disconnect(); content.disconnect();
+      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(layoutFrame); appearance.disconnect(); content.disconnect(); obstruction.disconnect();
       for (const scene of scenes) delete scene.node.dataset.particleReady;
       window.removeEventListener('scroll', queueLayout); window.removeEventListener('resize', resize);
-      page.removeEventListener('pointermove', move); page.removeEventListener('pointerleave', leave); page.removeEventListener('pointerdown', pulse);
+      page.removeEventListener('pointermove', move); page.removeEventListener('pointerleave', leave); page.removeEventListener('pointerdown', down); page.removeEventListener('pointerup', pulse); page.removeEventListener('pointercancel', cancelTap);
       document.removeEventListener('visibilitychange', visibilityChanged); preference.removeEventListener('change', preferenceChanged);
       renderer.current = null;
     };
@@ -145,6 +163,6 @@ export default function LandingParticleEffects({ root, paused, onPauseChange }) 
   useEffect(() => { renderer.current?.(paused); }, [paused]);
   return <div className="landing-particle-effects">
     <canvas className="landing-effects-canvas" ref={canvas} aria-hidden="true" />
-    {active && control && !reduced && <button className="landing-effects-pause" style={{ left: control.left, top: control.top }} aria-label={paused ? 'Play page animations' : 'Pause page animations'} title={paused ? 'Play page animations' : 'Pause page animations'} onClick={() => onPauseChange(!paused)}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
+    {active && control && !reduced && !compact && <button className="landing-effects-pause" style={{ left: control.left, top: control.top }} aria-label={paused ? 'Play page animations' : 'Pause page animations'} title={paused ? 'Play page animations' : 'Pause page animations'} onClick={() => onPauseChange(!paused)}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
   </div>;
 }

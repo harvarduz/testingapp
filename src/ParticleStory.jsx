@@ -6,10 +6,12 @@ import './particle-story.css';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const smooth = value => value * value * (3 - 2 * value);
+const compactQuery = '(max-width: 899px), (max-height: 540px)';
 const views = [{ id: 'curio', label: 'Curio' }, { id: 'orbit', label: 'Connections' }];
 
 export default function ParticleStory({ onExplore, paused = false, onPauseChange }) {
   const root = useRef(null), stage = useRef(null), canvas = useRef(null), engine = useRef(null);
+  const [compact, setCompact] = useState(() => matchMedia(compactQuery).matches);
   const [view, setView] = useState('curio');
   const setPaused = onPauseChange;
   const [following, setFollowing] = useState(true);
@@ -22,13 +24,16 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
     try { context = surface.getContext('2d'); } catch { setSupported(false); return; }
     if (!context) { setSupported(false); return; }
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const layoutPreference = matchMedia(compactQuery);
+    const page = section.closest('.landing').parentElement;
+    const obscured = () => page.hasAttribute('inert');
     const canObserve = 'IntersectionObserver' in window;
     let visible = !canObserve, stopped = false, destroyed = false, manual = null, hovered = false;
     let frame = null, resizeFrame = null, lastPaint = 0, time = 0, width = 1, height = 1, blend = 0, progress = 0, composition = 0;
     let current = 'curio', geometry, dots = [], waves = [], clearance = [], touchStart = null;
     const pointer = { x: -1000, y: -1000, nx: 0, ny: 0 };
     const staticMode = () => preference.matches || !canObserve;
-    const animated = () => !staticMode() && !stopped && visible && !document.hidden;
+    const animated = () => !staticMode() && !stopped && visible && !document.hidden && !obscured();
     const updateView = next => { if (next !== current) { current = next; setView(next); } };
     const target = index => {
       const letter = (current === 'phrase' ? geometry.phrase : geometry.word)[index];
@@ -75,13 +80,13 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       frame = requestAnimationFrame(tick);
     };
     const schedule = () => {
-      host.dataset.particleMotion = staticMode() ? 'reduced' : stopped ? 'paused' : visible && !document.hidden ? 'active' : 'offscreen';
+      host.dataset.particleMotion = staticMode() ? 'reduced' : stopped ? 'paused' : obscured() ? 'obscured' : visible && !document.hidden ? 'active' : 'offscreen';
       if (animated()) {
         if (frame === null) { lastPaint = performance.now(); frame = requestAnimationFrame(tick); }
       } else { cancelAnimationFrame(frame); frame = null; }
     };
     const select = () => {
-      blend = manual ? (manual === 'orbit' ? 1 : 0) : staticMode() ? 0 : smooth(clamp((progress - .10) / .62));
+      blend = manual ? (manual === 'orbit' ? 1 : 0) : staticMode() || layoutPreference.matches ? 0 : smooth(clamp((progress - .10) / .62));
       updateView(manual || (blend > .36 ? 'orbit' : hovered ? 'phrase' : 'curio'));
       if (!animated() && !stopped) paint(true);
       schedule();
@@ -102,11 +107,13 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
     const measure = () => {
       if (destroyed) return;
       resizeFrame = null;
-      width = host.clientWidth; height = host.clientHeight;
+      const nextWidth = host.clientWidth, nextHeight = host.clientHeight;
+      if (geometry && width === nextWidth && height === nextHeight) { scroll(); return; }
+      width = nextWidth; height = nextHeight;
       const ratio = Math.min(devicePixelRatio || 1, 2);
       surface.width = Math.round(width * ratio); surface.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      try { geometry = createParticleGeometry(width, height, width < 900 ? 1200 : 1800); }
+      try { geometry = createParticleGeometry(width, height, width < 900 ? 1200 : 1800, { compact: layoutPreference.matches }); }
       catch { setSupported(false); return; }
       dots = geometry.word.map(([x, y]) => ({ x, y, vx: 0, vy: 0 }));
       host.dataset.canvasReady = 'true'; host.dataset.particleCount = String(dots.length);
@@ -142,6 +149,12 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       if (event.pointerType === 'touch' && blend === 0 && insideLettering(point)) { hovered = !hovered; select(); }
       waves.push({ ...point, radius: 0 }); waves = waves.slice(-3); schedule();
     };
+    const cancelTouch = () => { touchStart = null; };
+    const layoutChanged = () => { setCompact(layoutPreference.matches); geometry = null; resize(); };
+    const obscuredChanged = () => { cancelTouch(); leave(); schedule(); };
+    const obstruction = new MutationObserver(obscuredChanged);
+    obstruction.observe(page, { attributes: true, attributeFilter: ['inert'] });
+    layoutPreference.addEventListener('change', layoutChanged);
     const changedPreference = () => { setReduced(staticMode()); hovered = false; waves = []; select(); paint(true); };
     const observer = canObserve ? new IntersectionObserver(entries => {
       visible = entries[0].isIntersecting;
@@ -151,7 +164,7 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
     setReduced(staticMode()); measure(); observer?.observe(host);
     document.fonts?.ready.then(() => { if (!destroyed) scroll(); });
     section.addEventListener('pointermove', move, { passive: true }); section.addEventListener('pointerleave', leave);
-    section.addEventListener('pointerdown', down, { passive: true }); section.addEventListener('pointerup', up, { passive: true });
+    section.addEventListener('pointerdown', down, { passive: true }); section.addEventListener('pointerup', up, { passive: true }); section.addEventListener('pointercancel', cancelTouch);
     window.addEventListener('scroll', scroll, { passive: true }); window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', schedule); preference.addEventListener('change', changedPreference);
     engine.current = {
@@ -162,9 +175,9 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       pause(value) { stopped = value; pointer.x = pointer.y = -1000; waves = []; if (!value) scroll(); schedule(); },
     };
     return () => {
-      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect();
+      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect(); obstruction.disconnect(); layoutPreference.removeEventListener('change', layoutChanged);
       section.removeEventListener('pointermove', move); section.removeEventListener('pointerleave', leave);
-      section.removeEventListener('pointerdown', down); section.removeEventListener('pointerup', up);
+      section.removeEventListener('pointerdown', down); section.removeEventListener('pointerup', up); section.removeEventListener('pointercancel', cancelTouch);
       window.removeEventListener('scroll', scroll); window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', schedule); preference.removeEventListener('change', changedPreference);
       engine.current = null;
@@ -181,10 +194,10 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       {supported && <div className="particle-story-controls" data-particle-clearance>
         <div role="group" aria-label="Particle views">{views.map(({ id, label }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id)}>{label}</button>)}</div>
         <button className="particle-icon-control" aria-label="Transform lettering" title="Transform lettering" aria-pressed={view === 'phrase'} onClick={() => engine.current?.transform()}><WandSparkles size={18} /></button>
-        {reduced ? <span className="particle-motion-note">Motion reduced</span> : <button className="particle-icon-control" aria-label={paused ? 'Play animation' : 'Pause animation'} title={paused ? 'Play animation' : 'Pause animation'} onClick={() => { setPaused(!paused); engine.current?.pause(!paused); }}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
-        {!following && <button className="particle-follow-control" aria-label="Follow scroll" title="Follow scroll" onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}><RefreshCw size={15} /><span>Follow scroll</span></button>}
+        {reduced ? <span className="particle-motion-note">Motion reduced</span> : <button className="particle-icon-control particle-hero-pause" aria-label={paused ? 'Play animation' : 'Pause animation'} title={paused ? 'Play animation' : 'Pause animation'} onClick={() => { setPaused(!paused); engine.current?.pause(!paused); }}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
+        {!following && <button className="particle-follow-control" aria-label={compact ? "Reset view" : "Follow scroll"} title={compact ? "Reset view" : "Follow scroll"} onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}><RefreshCw size={15} /><span>{compact ? "Reset view" : "Follow scroll"}</span></button>}
       </div>}
-      <figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : following ? 'Move over the lettering. On touch screens, tap it. Scroll to connect the dots.' : 'Your selected shape stays active. Follow scroll to see the story again.'}</figcaption>
+      <figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : compact ? 'Tap the lettering or choose a shape.' : following ? 'Move over the lettering. On touch screens, tap it. Scroll to connect the dots.' : 'Your selected shape stays active. Follow scroll to see the story again.'}</figcaption>
     </figure>
     <div className="particle-story-panel landing-hero landing-container">
       <div className="landing-hero-copy" data-particle-clearance>
@@ -199,6 +212,7 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       <span className="particle-scroll-cue" aria-hidden="true" data-particle-clearance><ArrowDown size={16} />KEEP YOUR CURIOSITY MOVING</span>
     </div>
     <div className="particle-story-panel particle-connections-panel landing-container">
+      <div className="particle-mobile-orbit" data-particle-effect="orbit" aria-hidden="true"><span className="landing-particle-static">◌</span></div>
       <div className="particle-story-copy" data-particle-clearance>
         <span className="landing-kicker">ONE IDEA LEADS TO ANOTHER</span>
         <h2 id="particle-story-title">Small ideas.<br />A bigger picture.</h2>

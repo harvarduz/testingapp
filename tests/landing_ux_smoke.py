@@ -98,14 +98,28 @@ with sync_playwright() as p:
         page.goto(URL,wait_until='networkidle')
         stage=page.locator('.particle-story-stage')
         expect(stage).to_have_attribute('data-canvas-ready','true')
-        for progress,view in [(.02,'curio'),(.7,'orbit'),(.95,'orbit'),(.02,'curio')]:
-            page.locator('.landing-particle-story').evaluate('''(node,p)=>{const stage=node.querySelector('.particle-story-stage');const inset=parseFloat(getComputedStyle(stage).top)||0;scrollTo({top:scrollY+node.getBoundingClientRect().top-inset+p*(node.offsetHeight-stage.offsetHeight),behavior:'instant'})}''',progress)
-            page.wait_for_timeout(160)
-            expect(stage).to_have_attribute('data-view',view)
-            box=stage.bounding_box()
-            assert box['y'] >= page.locator('.landing-header').bounding_box()['height']-1 and box['y']+box['height']<=height+1,(width,height,view,box)
+        compact = width < 900 or height <= 540
+        if compact:
+            assert stage.evaluate('node=>getComputedStyle(node).position') == 'relative'
+            art = stage.bounding_box()
+            copy = page.locator('.landing-hero-copy').bounding_box()
+            assert art['y'] + art['height'] <= copy['y']
+            for label in ['Find your first course', 'Explore a subject']:
+                button = page.get_by_role('button', name=label, exact=True)
+                button.scroll_into_view_if_needed()
+                assert button.evaluate('node=>{const r=node.getBoundingClientRect();return node.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))}')
+            page.locator('.particle-mobile-orbit').scroll_into_view_if_needed()
+            expect(page.locator('.particle-mobile-orbit')).to_have_attribute('data-particle-ready','true')
+            assert stage.bounding_box()['y'] + art['height'] < page.locator('.landing-header').bounding_box()['height']
+        else:
+            for progress,view in [(.02,'curio'),(.7,'orbit'),(.95,'orbit'),(.02,'curio')]:
+                page.locator('.landing-particle-story').evaluate('''(node,p)=>{const stage=node.querySelector('.particle-story-stage');const inset=parseFloat(getComputedStyle(stage).top)||0;scrollTo({top:scrollY+node.getBoundingClientRect().top-inset+p*(node.offsetHeight-stage.offsetHeight),behavior:'instant'})}''',progress)
+                page.wait_for_timeout(160)
+                expect(stage).to_have_attribute('data-view',view)
+                box=stage.bounding_box()
+                assert box['y'] >= page.locator('.landing-header').bounding_box()['height']-1 and box['y']+box['height']<=height+1,(width,height,view,box)
         page.screenshot(path=str(OUTPUT/f'landing-ux-particles-{width}-{height}.png'))
-    passed('The full-width particle hero stays visible below the header while lettering becomes a sphere and reverses, including phone landscape')
+    passed('Desktop lettering morphs reversibly; phone/tablet/short screens use separate contained scenes and unobscured primary actions')
     assert not errors, errors
     passed('All regression journeys finish without JavaScript errors')
     browser.close()

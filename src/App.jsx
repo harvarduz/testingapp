@@ -38,7 +38,7 @@ const linkedCourse = () => {
 const ownerKey = 'curio.student.owner';
 const savedOwner = () => { try { return localStorage.getItem(ownerKey); } catch { return null; } };
 const saveOwner = id => { try { if (id) localStorage.setItem(ownerKey, id); else localStorage.removeItem(ownerKey); } catch { /* Local storage errors are shown by the progress effect. */ } };
-const scrollToStart = () => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+const scrollToStart = (behavior = 'smooth') => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : behavior });
 const challengeForDay = (date) => challengeBank[Math.floor(Date.parse(`${date}T00:00:00Z`) / 86400000) % challengeBank.length];
 
 function Modal({ children, onClose, title, wide = false, screenKey }) {
@@ -356,7 +356,7 @@ export default function App() {
   const saveCourse = id => { if (user) setSyncStatus('Saving to your account…'); setProgress(current => toggleSavedCourse(current, id)); };
   const saveNote = (id, index, text) => { if (user) setSyncStatus('Saving to your account…'); setProgress(current => writeLessonNote(current, id, index, text)); };
   const navigate = page => {
-    const applyRoute = () => { setView(page); location.hash = page; setSidebarOpen(false); clearFilters(); setLinkedCourseId(null); setNotifications(false); scrollToStart(); };
+    const applyRoute = () => { setView(page); location.hash = page; setSidebarOpen(false); clearFilters(); setLinkedCourseId(null); setNotifications(false); scrollToStart('instant'); };
     if (page !== 'creators') requestLeaveEditor(applyRoute);
     else applyRoute();
   };

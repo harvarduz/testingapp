@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, BookOpen, Check, ChevronDown,
-  Clock3, Lightbulb, Menu, MoveUpRight, Sparkles, X,
+  Clock3, Lightbulb, Menu, Pause, Play, MoveUpRight, Sparkles, X,
   Atom, Binary, Brain, BriefcaseBusiness, ChartNoAxesCombined, Dna,
   Earth, FlaskConical, Heart, History, Landmark, Languages,
   Palette, PencilRuler, Rocket, Sigma, Wallet, Wrench,
@@ -66,7 +66,14 @@ const questions = [
   },
 ];
 
-function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance }) {
+function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance, particlesPaused, onPauseChange }) {
+  const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const query = matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(query.matches);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const header = useRef(null);
   const menuButton = useRef(null);
@@ -145,7 +152,16 @@ function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance })
               {link.label}<ArrowUpRight size={16} />
             </a>
           ))}
-          <button onClick={() => { setMenuOpen(false); onAppearance(); }}>Appearance<ArrowRight size={16} /></button><button onClick={onEnter}>Go to your learning space<ArrowRight size={16} /></button>
+          {!reduced && <button
+            className="landing-motion-menu-action"
+            aria-label={particlesPaused ? 'Play page animations' : 'Pause page animations'}
+            onClick={() => onPauseChange(!particlesPaused)}
+          >
+            <span>{particlesPaused ? 'Play animations' : 'Pause animations'}</span>
+            {particlesPaused ? <Play size={18} /> : <Pause size={18} />}
+          </button>}
+          <button onClick={() => { setMenuOpen(false); onAppearance(); }}>Appearance<ArrowRight size={16} /></button>
+          <button onClick={onEnter}>Go to your learning space<ArrowRight size={16} /></button>
 
         </nav>
       )}
@@ -300,7 +316,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
     <div className="landing" id="home" ref={root}>
       <div className="landing-reading-progress" aria-hidden="true" />
       <a className="skip-link" href="#landing-main">Skip to content</a>
-      <LandingHeader onAppearance={onAppearance} onEnter={onEnter} hasProgress={hasProgress} accountMenuProps={accountMenuProps} />
+      <LandingHeader particlesPaused={particlesPaused} onPauseChange={setParticlesPaused} onAppearance={onAppearance} onEnter={onEnter} hasProgress={hasProgress} accountMenuProps={accountMenuProps} />
 
       <main className="landing-main" id="landing-main">
         {serviceError && <div className="landing-container landing-service-message" role="alert">{serviceError}<button onClick={onRetry}>Try again</button></div>}

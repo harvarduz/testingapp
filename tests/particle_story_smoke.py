@@ -307,9 +307,9 @@ with sync_playwright() as p:
     settle(phone)
     phone_stage = phone.locator('.particle-story-stage')
     phone_box = phone_stage.bounding_box()
-    phone.touchscreen.tap(phone_box['x'] + phone_box['width'] * .5, phone_box['y'] + phone_box['height'] * .23)
+    phone.touchscreen.tap(phone_box['x'] + phone_box['width'] * .5, phone_box['y'] + phone_box['height'] * .55)
     expect(phone_stage).to_have_attribute('data-view', 'phrase')
-    phone.touchscreen.tap(phone_box['x'] + phone_box['width'] * .5, phone_box['y'] + phone_box['height'] * .23)
+    phone.touchscreen.tap(phone_box['x'] + phone_box['width'] * .5, phone_box['y'] + phone_box['height'] * .55)
     expect(phone_stage).to_have_attribute('data-view', 'curio')
     ratio = phone_stage.locator('canvas').evaluate('node=>node.width/node.clientWidth')
     assert ratio <= 2.01, ratio
