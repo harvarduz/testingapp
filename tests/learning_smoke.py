@@ -213,9 +213,14 @@ with tempfile.TemporaryDirectory(prefix='curio-learning-') as directory:
                 page.keyboard.press('Tab')
                 assert menu.evaluate('(node)=>node.contains(document.activeElement)')
             menu.get_by_role('button',name='Study paths',exact=True).click()
-            expect(page.get_by_role('button',name='Open navigation',exact=True)).to_be_focused()
+            # A navigation choice transfers focus to the destination heading;
+            # cancelling the drawer returns focus to its opener.
+            expect(page.get_by_role('heading',name='Your next step, mapped out.',exact=True)).to_be_focused()
             assert page.evaluate('document.body.style.overflow') != 'hidden'
             expect(page.locator('.active-path')).to_be_visible()
+            page.get_by_role('button',name='Open navigation',exact=True).click()
+            page.keyboard.press('Escape')
+            expect(page.get_by_role('button',name='Open navigation',exact=True)).to_be_focused()
             passed('Paths, practice, and coins fit small screens; a collapsed desktop preference keeps the full mobile drawer usable')
 
             page.set_viewport_size({'width':1366,'height':1000})

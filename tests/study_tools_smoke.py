@@ -166,7 +166,7 @@ with tempfile.TemporaryDirectory(prefix='curio-study-') as directory:
             created=context.request.post(url+'api/creator/courses',data=template)
             assert created.status == 201
             course_id=created.json()['course']['id']
-            assert context.request.post(url+'api/creator/courses/'+course_id+'/publish',data={}).status == 200
+            assert context.request.post(url+'api/creator/courses/'+course_id+'/publish',data={},headers={'If-Match': '"rev-%s"' % created.json()['course']['revision']}).status == 200
             page.goto(url+'#explore',wait_until='networkidle');page.reload(wait_until='networkidle')
             choose_option(page.get_by_role('combobox',name='Filter by level'), 'Advanced')
             expect(page.locator('.course-card')).to_have_count(1)

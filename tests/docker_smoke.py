@@ -44,8 +44,9 @@ def start(with_domain=True):
     raise RuntimeError('Container did not become ready: ' + command('logs', name))
 
 
-def request(base, path, method='GET', data=None, cookie=None, origin=None):
+def request(base, path, method='GET', data=None, cookie=None, origin=None, revision=None):
     headers = {'Content-Type': 'application/json'} if data is not None else {}
+    if revision is not None: headers['If-Match'] = '"rev-%s"' % revision
     if cookie:
         headers['Cookie'] = cookie
     if origin:
@@ -91,9 +92,12 @@ try:
     status, saved, _ = request(base, '/api/creator/courses', 'POST', course, cookie, 'https://curio.example')
     assert status == 201
     course_id = saved['course']['id']
-    status, result, _ = request(base, f'/api/creator/courses/{course_id}/publish', 'POST', {}, cookie, 'https://curio.example')
+    status, result, _ = request(base, f'/api/creator/courses/{course_id}/publish', 'POST', {}, cookie, 'https://curio.example', revision=saved['course']['revision'])
     assert status == 200 and result['fee'] == 0
     passed('The container saves a draft to SQLite and publishes it for a zero fee')
+    backup = json.loads(command('exec', name, 'node', 'server/backup.js', '/data/backups/container-snapshot.sqlite'))
+    assert backup['backup'] == 'verified' and backup['integrity'] == 'ok'
+    passed('The unprivileged production process creates and verifies an online backup on its writable volume')
     status, _, _ = request(base, '/api/progress', 'PUT', {
         'savedCourses': {course_id: {'saved': True, 'updatedAt': 100}},
         'notes': {f'{course_id}:0': {'text': 'A private note in the production volume.', 'updatedAt': 100}},

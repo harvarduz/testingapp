@@ -13,7 +13,7 @@ export async function api(path, options = {}) {
   let result;
   try { result = await response.json(); }
   catch { throw new Error('The course service is unavailable. Please try again shortly.'); }
-  if (!response.ok) throw Object.assign(new Error(result.error || 'Something went wrong. Please try again.'), { status: response.status });
+  if (!response.ok) throw Object.assign(new Error(result.error || 'Something went wrong. Please try again.'), { status: response.status, code: result.code, requestId: result.requestId, retryAfter: Number(response.headers.get('Retry-After')) || null });
   return result;
 }
 

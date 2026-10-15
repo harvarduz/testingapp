@@ -23,6 +23,12 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
   const [issues, setIssues] = useState([]);
   const [dirty, setDirty] = useState(Boolean(initial.imported));
   const [leavePending, setLeavePending] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const [latestPending, setLatestPending] = useState(null);
+  const [loadingLatest, setLoadingLatest] = useState(false);
+  const latestLoading = useRef(false);
+  const conflictCancel = useRef(null);
+  const latestButton = useRef(null);
   const [validationAction, setValidationAction] = useState('publishing');
   const editor = useRef(null);
   const validation = useRef(null);
@@ -43,6 +49,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
   useLayoutEffect(() => { if (issues.length) validation.current?.focus(); }, [issues]);
   useLayoutEffect(() => { if (error) errorMessage.current?.focus(); }, [error]);
   useLayoutEffect(() => { if (leavePending) keepEditingButton.current?.focus(); }, [leavePending]);
+  useLayoutEffect(() => { if (latestPending) { conflictCancel.current?.focus({ preventScroll: true }); conflictCancel.current?.scrollIntoView({ block: 'nearest' }); } }, [latestPending]);
   useEffect(() => { onDirtyChange(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
   const update = values => { setCourse(c => ({ ...c, ...values })); setDirty(true); setMessage(''); setError(''); setIssues([]); };
@@ -62,20 +69,33 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
       setValidationAction(publish ? 'publishing' : 'saving this published course');
       setIssues(missing);
       if (missing.length) return;
-      const result = await api(`/creator/courses${course.id ? '/' + course.id : ''}`, { method: course.id ? 'PUT' : 'POST', body: content });
+      const result = await api(`/creator/courses${course.id ? '/' + course.id : ''}`, { method: course.id ? 'PUT' : 'POST', body: content, headers: course.id ? { 'If-Match': `"rev-${course.revision}"` } : {} });
       let saved = result.course;
       if (saved.everPublished) protectedLessons.current = saved.lessons.length;
       // Retain the id if publishing fails after the draft was saved.
       setCourse(saved); setDirty(false); onSaved();
       if (publish) {
-        await api(`/creator/courses/${saved.id}/publish`, { method: 'POST', body: {} });
-        saved = { ...saved, status: 'published', everPublished: true };
+        const publication = await api(`/creator/courses/${saved.id}/publish`, { method: 'POST', body: {}, headers: { 'If-Match': `"rev-${saved.revision}"` } });
+        saved = { ...saved, status: 'published', everPublished: true, revision: publication.revision };
         protectedLessons.current = saved.lessons.length;
         setCourse(saved); onSaved();
       }
       setMessage(publish ? 'Published. Students can now find your course in Explore courses.' : saved.status === 'published' ? 'Changes saved. Your published course is up to date.' : 'Draft saved. It is only visible in your workspace.');
-    } catch (error) { setError(error.message); }
+    } catch (error) { setError(error.message); if ([412, 428].includes(error.status)) setConflict(true); }
     finally { saving.current = false; setBusy(false); setSaveAction(null); }
+  };
+  const reviewLatest = async () => {
+    if (latestLoading.current || busy) return;
+    latestLoading.current = true; setLoadingLatest(true);
+    try { setLatestPending((await api(`/creator/courses/${course.id}`)).course); }
+    catch (error) { setError(error.message); }
+    finally { latestLoading.current = false; setLoadingLatest(false); }
+  };
+  const useLatest = () => {
+    setCourse(latestPending); protectedLessons.current = latestPending.everPublished ? latestPending.lessons.length : 0;
+    setDirty(false); setError(''); setIssues([]); setConflict(false); setLatestPending(null);
+    setMessage('Latest version loaded. You can continue editing.'); onSaved();
+    requestAnimationFrame(() => titleInput.current?.focus());
   };
   const preview = () => {
     setError(''); setMessage(''); setValidationAction('previewing');
@@ -92,6 +112,11 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
     <div className="editor-heading"><div><span className="eyebrow">SHARE WHAT YOU KNOW</span><h2>{course.id ? 'Edit your course.' : 'Create a course.'}</h2><p>Explain it clearly, show an example, then let your students try.</p></div><button className="button outline" onClick={preview} disabled={busy}><Eye size={17} />Preview lesson</button></div>
     {issues.length > 0 && <div className="publication-issues" role="alert" tabIndex={-1} ref={validation}><strong>A few things to finish before {validationAction}:</strong><ul>{issues.map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
     {error && <p className="form-message error" role="alert" tabIndex={-1} ref={errorMessage}>{error}</p>}
+    {conflict && <section className="editor-conflict" aria-label="Course version conflict">
+      <strong>Your edits are still in this tab.</strong><p>Another version is saved on the server. Download your draft to keep a separate copy before replacing it.</p>
+      <div><button className="button outline" disabled={busy} onClick={() => downloadJson(course, 'my-course-draft.json')}><Download size={16} />Download my draft</button><button ref={latestButton} className="button outline" disabled={busy || loadingLatest} aria-busy={loadingLatest || undefined} onClick={reviewLatest}>{loadingLatest ? <ActionPending>Loading latest version…</ActionPending> : 'Review latest version'}</button></div>
+      {latestPending && <div className="editor-conflict-confirm" role="alert"><p>Replace the unsaved content in this tab with version {latestPending.revision} of “{latestPending.title || 'Untitled course'}”?</p><button ref={conflictCancel} className="button outline" onClick={() => { setLatestPending(null); latestButton.current?.focus(); }}>Keep my edits</button><button className="button primary" onClick={useLatest}>Replace with latest</button></div>}
+    </section>}
     <form aria-busy={busy} onSubmit={e => { e.preventDefault(); save(false); }}>
       <fieldset disabled={busy} className="editor-details">
         <legend>Course details</legend>
@@ -181,12 +206,12 @@ export default function Creator({ user, onSession, onCatalogChange, onPreview, o
     actionLock.current = true;
     setBusy({ id: course.id, action }); setError(''); setNotice('');
     try {
-      await api(`/creator/courses/${course.id}${action === 'delete' ? '' : '/' + action}`, { method: action === 'delete' ? 'DELETE' : 'POST', body: action === 'delete' ? undefined : {} });
+      await api(`/creator/courses/${course.id}${action === 'delete' ? '' : '/' + action}`, { method: action === 'delete' ? 'DELETE' : 'POST', body: action === 'delete' ? undefined : {}, headers: { 'If-Match': `"rev-${course.revision}"` } });
       pendingActionFocus.current = { id: course.id };
       setDeletePending(null);
       await refresh();
       setNotice(action === 'delete' ? 'Draft deleted.' : action === 'unpublish' ? 'Course unpublished. Your draft is private.' : 'Course published. Students can now find it in the catalog.');
-    } catch (error) { setError(error.message); setErrorSource('action'); }
+    } catch (error) { if ([412, 428].includes(error.status)) await refresh(); setError(error.message); setErrorSource('action'); }
     finally { actionLock.current = false; setBusy(null); }
   };
   return <div className="creator-workspace">

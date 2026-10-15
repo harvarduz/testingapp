@@ -1,40 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fixture } from './api_helpers.js';
 import { createApp } from '../server/app.js';
 import { publicUrlFromEnvironment } from '../server/config.js';
 import { courses } from '../src/data.js';
 import { emptyCourse } from '../shared/course.js';
 import { emptyProgress, completeLesson, toggleSavedCourse, writeLessonNote } from '../src/progress.js';
-
-async function fixture(t, databasePath = ':memory:', options = {}) {
-  const app = createApp({ databasePath, ...options });
-  const server = createServer(async (req, res) => {
-    if (!await app.handle(req, res)) { res.writeHead(404); res.end(); }
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${server.address().port}`;
-  let stopped = false;
-  const stop = async () => {
-    if (stopped) return;
-    stopped = true;
-    await new Promise(resolve => server.close(resolve)); app.close();
-  };
-  t.after(stop);
-  const request = async (path, { method = 'GET', data, cookie, origin, raw } = {}) => {
-    const response = await fetch(base + '/api' + path, {
-      method, headers: { ...(data !== undefined || raw !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}) },
-      body: raw ?? (data !== undefined ? JSON.stringify(data) : undefined),
-      ...(raw && typeof raw !== 'string' ? { duplex: 'half' } : {}),
-    });
-    return { status: response.status, data: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0], headers: response.headers };
-  };
-  const register = (email = 'creator@example.test') => request('/auth/register', { method: 'POST', data: { name: 'Test Creator', email, password: 'A unique test password 42!' } });
-  return { request, register, stop };
-}
 
 test('accounts validate input, reject duplicates and wrong passwords, and invalidate logout sessions', async t => {
   const { request, register } = await fixture(t);
@@ -60,7 +34,7 @@ test('drafts remain private, publish for zero fee, appear publicly, and can be u
   const id = created.data.course.id;
   assert.equal((await request('/courses')).data.courses.some(c => c.id === id), false);
   const published = await request(`/creator/courses/${id}/publish`, { method: 'POST', cookie, data: {} });
-  assert.deepEqual(published.data, { status: 'published', fee: 0 });
+  assert.deepEqual(published.data, { status: 'published', fee: 0, revision: 2 });
   const course = (await request('/courses')).data.courses.find(c => c.id === id);
   assert.equal(course.author, 'Test Creator'); assert.equal(course.lessons[0].question, courses[0].lessons[0].question);
   assert.equal((await request(`/creator/courses/${id}/unpublish`, { method: 'POST', cookie, data: {} })).status, 200);

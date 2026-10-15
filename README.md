@@ -90,6 +90,20 @@ Both scenes use native scroll, small SVGs and event-scheduled animation frames w
 - Previously published lessons cannot be deleted. Unpublishing removes a course from discovery while retaining content and completion records; it reappears in My learning if republished.
 - Text is rendered safely as text; uploads cannot supply arbitrary HTML or SVG. Only upload content you own or have permission to share.
 
+Course changes use optimistic concurrency. Creator list/detail responses include `revision`; every save, publish, unpublish or delete must send `If-Match: "rev-N"`. A missing version returns 428, while an outdated version returns 412 without replacing content. The editor preserves unsaved work, can download it, and requires an explicit choice before replacing it with the latest server version. Older open tabs should reload after this deployment. Uploads recheck both session validity and the current course version immediately before writing; progress merges and draft quotas run inside SQLite write transactions.
+
+Authentication limits persist across restarts and return `Retry-After`. Password derivation has a four-request concurrency ceiling; overloaded requests receive a retryable 503. Each account retains at most 20 active sessions. Forwarded IP headers are not trusted by the app; the per-socket-IP limit can be shared behind a proxy, so an appropriate edge limiter is still needed at larger traffic levels. Errors include a request ID and stable code, without logging passwords, cookies or request bodies. The health endpoint reads all four core tables and reports database failure as 503. Static files stream with conditional caching; malformed URLs return 400. Upload deadlines and a bounded shutdown protect the request lifecycle.
+
+The SQLite schema uses versioned, transactional migrations and full WAL synchronization. Existing accounts, sessions, courses and progress migrate in place; this deployment remains one server replica with a persistent volume. Learning sync accepts up to 4 MB, separately from the 1 MB course import limit. Merged private notes/bookmarks retain their existing 500-record limits across devices rather than growing without bound.
+
+Create a consistent online database snapshot while the app is running:
+
+```sh
+npm run db:backup -- /data/backups/curio-2026-10-15.sqlite
+```
+
+The example uses the Railway `/data` volume. Use a new filename and a writable private directory each time. The command never replaces an existing file, publishes only after integrity/foreign-key checks, and sets private file permissions. Restore into a **new, empty data directory**, start an isolated test server with that `CURIO_DATA_DIR`, and verify accounts/courses/progress before changing the production data directory. Keep snapshots outside the public web directory and copy them to separate storage. Backup creation and restoration are tested locally; this command does not configure a schedule, off-site storage or your Railway volume settings.
+
 Email verification, forgotten-password recovery, and content moderation/reporting are not implemented. Before a larger public launch, add those services, edge rate limiting, and scheduled backups. No live checkout is needed under the current free offer.
 
 ## Railway deployment
@@ -109,7 +123,7 @@ The server can start and pass its health check before a domain is generated. In 
 
 ## Validation
 
-`npm test` runs 45 backend/content/progress checks, including exact currency comparisons, appended lesson compatibility, automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 58 backend/content/progress checks, including exact currency comparisons, appended lesson compatibility, automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -143,6 +157,7 @@ python tests/platform_ux_smoke.py
 python tests/landing_motion_smoke.py
 python tests/account_creator_ux_smoke.py
 python tests/learning_ux_smoke.py
+python tests/backend_ux_smoke.py
 python tests/lesson_experiments_smoke.py
 ```
 
@@ -199,6 +214,8 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Shared account controls, forms and API client | `src/AccountMenu.jsx`, `src/account-menu.css`, `src/Account.jsx`, `src/api.js` |
 | Course validation and publication rules | `shared/course.js` |
 | Accounts, sessions, SQLite, ownership | `server/app.js` |
+| Database migrations, write transactions and online backup | `server/database.js`, `server/backup.js` |
+| Request validation, auth load limits and HTTP serving | `server/http.js`, `server/auth.js`, `server/web.js` |
 | Server and persistent-volume startup | `server/index.js`, `server/bootstrap.js` |
 | Original brand and subject artwork, Material artwork tones | `src/Art.jsx`, `src/course-art.css` |
 

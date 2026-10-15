@@ -111,3 +111,11 @@
 }
 .course-editor, .course-editor fieldset, .editor-lesson { min-width: 0; }
 .editor-lesson > summary > span:nth-child(2) { min-width: 0; overflow-wrap: anywhere; }
+
+.editor-conflict { padding: 20px; margin-block: 20px; border: 1px solid var(--md-sys-color-outline); border-radius: 16px; background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); }
+.editor-conflict > p, .editor-conflict-confirm p { margin-block: 10px 16px; line-height: 1.6; }
+.editor-conflict > div { display: flex; flex-wrap: wrap; gap: 12px; }
+.editor-conflict-confirm { border-top: 1px solid var(--md-sys-color-outline-variant); margin-top: 20px; padding-top: 16px; }
+.editor-conflict-confirm p { flex-basis: 100%; }
+.editor-conflict-confirm .button { scroll-margin-block: 140px; }
+@media (max-width: 480px) { .editor-conflict { padding: 16px; }.editor-conflict .button { width: 100%; } }
