@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play, RefreshCw, WandSparkles } from 'lucide-react';
 import { createParticleGeometry } from './particleGeometry.js';
+import { advanceParticle } from './particleMotion.js';
 import './particle-story.css';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const smooth = value => value * value * (3 - 2 * value);
 const views = [{ id: 'curio', label: 'Curio' }, { id: 'orbit', label: 'Connections' }];
 
-export default function ParticleStory({ onExplore }) {
+export default function ParticleStory({ onExplore, paused = false, onPauseChange }) {
   const root = useRef(null), stage = useRef(null), canvas = useRef(null), engine = useRef(null);
   const [view, setView] = useState('curio');
-  const [paused, setPaused] = useState(false);
+  const setPaused = onPauseChange;
   const [following, setFollowing] = useState(true);
   const [supported, setSupported] = useState(true);
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -31,7 +32,7 @@ export default function ParticleStory({ onExplore }) {
     const updateView = next => { if (next !== current) { current = next; setView(next); } };
     const target = index => {
       const letter = (current === 'phrase' ? geometry.phrase : geometry.word)[index];
-      const size = width < 900 ? 1.1 : 1.8;
+      const size = width < 900 ? 1.4 : 2.1;
       if (!blend) return [...letter, size, index % 23 === 0];
       const orbit = geometry.orbit(index, time, pointer);
       return [letter[0] + (orbit[0] - letter[0]) * blend, letter[1] + (orbit[1] - letter[1]) * blend, 1 + (orbit[2] - 1) * blend, size + (orbit[3] - size) * blend, orbit[4]];
@@ -45,22 +46,7 @@ export default function ParticleStory({ onExplore }) {
         const [x, y, opacity, baseSize, accent] = target(index);
         if (!moving) { dot.x = x; dot.y = y; dot.vx = dot.vy = 0; }
         else {
-          dot.vx = (dot.vx + (x - dot.x) * .045 * step) * Math.pow(.72, step);
-          dot.vy = (dot.vy + (y - dot.y) * .045 * step) * Math.pow(.72, step);
-          const dx = dot.x - pointer.x, dy = dot.y - pointer.y, distance = Math.hypot(dx, dy);
-          if (distance > 0 && distance < 120) {
-            const force = (1 - distance / 120) * 3.4 * step;
-            dot.vx += dx / distance * force; dot.vy += dy / distance * force;
-          }
-          for (const wave of waves) {
-            const wx = dot.x - wave.x, wy = dot.y - wave.y, distance = Math.hypot(wx, wy);
-            const edge = Math.abs(distance - wave.radius);
-            if (distance > 0 && edge < 45) {
-              const force = (1 - edge / 45) * 2.2 * (1 - wave.radius / 700) * step;
-              dot.vx += wx / distance * force; dot.vy += wy / distance * force;
-            }
-          }
-          dot.x += dot.vx * step; dot.y += dot.vy * step;
+          advanceParticle(dot, x, y, pointer, waves, step);
           settling ||= Math.abs(x - dot.x) + Math.abs(y - dot.y) > .2 || Math.abs(dot.vx) + Math.abs(dot.vy) > .06;
         }
         const speed = Math.hypot(dot.vx, dot.vy);
@@ -73,7 +59,7 @@ export default function ParticleStory({ onExplore }) {
         }
         context.globalAlpha = opacity * visibility;
         context.fillStyle = speed > 2 || accent ? '#8fb4ff' : '#f5f6fa';
-        const size = baseSize + Math.min(speed * .07, 1.2);
+        const size = baseSize + Math.min(speed / 7, 1) * 2;
         context.fillRect(dot.x - size / 2, dot.y - size / 2, size, size);
       });
       context.globalAlpha = 1;
@@ -82,12 +68,10 @@ export default function ParticleStory({ onExplore }) {
     const tick = stamp => {
       frame = null;
       if (!animated()) return;
-      if (stamp - lastPaint >= 32) {
-        const elapsed = Math.min(stamp - lastPaint, 50);
-        lastPaint = stamp; time += elapsed / 1000;
-        waves = waves.filter(wave => (wave.radius += elapsed * .65) < 700);
-        if (!paint(false, elapsed / 32) && blend === 0 && !waves.length) return;
-      }
+      const elapsed = Math.min(stamp - lastPaint, 50);
+      lastPaint = stamp; time += elapsed / 1000;
+      waves = waves.filter(wave => (wave.radius += elapsed * .96) < Math.max(width, height) * 1.2);
+      if (!paint(false, elapsed / 16.6667) && blend === 0 && !waves.length) return;
       frame = requestAnimationFrame(tick);
     };
     const schedule = () => {
@@ -187,6 +171,7 @@ export default function ParticleStory({ onExplore }) {
   }, []);
 
   useEffect(() => { engine.current?.refresh(); }, [view, following, reduced]);
+  useEffect(() => { engine.current?.pause(paused); }, [paused]);
 
   return <section className="landing-particle-story" data-particle-supported={supported} ref={root} aria-labelledby="landing-title">
     <figure className="particle-story-figure particle-story-stage" ref={stage} data-view={view}>

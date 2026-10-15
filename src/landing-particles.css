@@ -1,0 +1,17 @@
+.landing-particle-effects { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
+.landing-effects-canvas { width: 100%; height: 100%; display: block; }
+.landing .landing-effects-pause { position: absolute; top: 16px; left: 16px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 50%; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); box-shadow: 0 2px 8px #0002; pointer-events: auto; }
+.landing .landing-effects-pause:hover { background: var(--md-sys-color-secondary-container); }
+.landing-learning-particles { position: relative; height: 210px; max-width: 390px; width: 100%; margin-top: 20px; border-radius: 24px; color: var(--md-sys-color-primary); --particle-ink: var(--md-sys-color-primary); --particle-accent: var(--md-sys-color-on-surface); }
+.landing-particle-static { display: grid; place-items: center; height: 100%; font: 400 90px/1 Georgia, serif; opacity: .3; }
+.landing-step-art[data-particle-effect] { --particle-ink: var(--md-sys-color-on-primary-container); --particle-accent: var(--md-sys-color-primary); height: 210px; }
+.landing-step-art.explore[data-particle-effect] { --particle-ink: var(--md-sys-color-on-tertiary-container); --particle-accent: var(--md-sys-color-on-tertiary-container); }
+.landing-step-art.solve[data-particle-effect] { --particle-ink: var(--md-sys-color-on-secondary-container); --particle-accent: var(--md-sys-color-on-secondary-container); }
+.landing-course-art[data-particle-effect] { --particle-ink: var(--md-sys-color-on-primary-container); --particle-accent: var(--md-sys-color-primary); }
+.landing [data-particle-ready='true'] > .landing-particle-static,
+.landing .landing-step-art[data-particle-ready='true'] > *,
+.landing .landing-course-art[data-particle-ready='true'] > svg { visibility: hidden; }
+.landing-creator-particles { height: 200px; width: 100%; max-width: 440px; margin-top: 22px; border-radius: 24px; color: var(--md-sys-color-on-primary-container); --particle-ink: var(--md-sys-color-on-primary-container); --particle-accent: var(--md-sys-color-on-primary-container); }
+.landing-final[data-particle-effect] { --particle-ink: var(--md-sys-color-on-tertiary-container); --particle-accent: var(--md-sys-color-on-tertiary-container); }
+.landing-final[data-particle-ready='true'] > .landing-final-orbit { visibility: hidden; }
+@media (max-width: 600px) { .landing-learning-particles { height: 180px; margin-inline: auto; }.landing-creator-particles { height: 180px; }.landing-step-art[data-particle-effect] { height: 190px; } }

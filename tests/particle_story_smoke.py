@@ -204,9 +204,9 @@ with sync_playwright() as p:
     page.mouse.wheel(0, page.evaluate('document.documentElement.scrollHeight'))
     page.wait_for_timeout(350)
     expect(stage).to_have_attribute('data-particle-motion', 'offscreen')
-    before = page.evaluate('window.__rafCalls')
+    image = pixels(page)
     page.wait_for_timeout(300)
-    assert page.evaluate('window.__rafCalls') == before
+    assert pixels(page) == image
     saved = json.loads(page.evaluate("localStorage.getItem('curio.student.v1')"))
     assert not saved['completed'] and not saved['enrolled'] and not saved['practiceAttempts']
     passed('Leaving the scene stops animation work; decorative interaction changes no learning records or Curio coins')

@@ -12,6 +12,7 @@ import { AppearanceControls } from './Appearance.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import SkillPlayground from './SkillPlayground.jsx';
 import ParticleStory from './ParticleStory.jsx';
+import LandingParticleEffects from './LandingParticleEffects.jsx';
 import './landing.css';
 import { ScrollCatalog, ScrollSkills, useLandingMotion } from './LandingMotion.jsx';
 
@@ -243,7 +244,7 @@ function LessonPreview({ onContinue }) {
 
 function StepIllustration({ type }) {
   return (
-    <div className={`landing-step-art ${type}`} aria-hidden="true">
+    <div className={`landing-step-art ${type}`} data-particle-effect={{ read: 'helix', explore: 'network', solve: 'towers' }[type]} aria-hidden="true">
       {type === 'read' && (
         <div className="landing-notebook">
           <span className="landing-notebook-label">THE IDEA</span>
@@ -276,7 +277,7 @@ function LandingCourse({ course, onOpen }) {
   return (
     <article className="landing-course" data-reveal>
       <button onClick={() => onOpen(course)} aria-label={`Explore ${course.title}`}>
-        <span className={`landing-course-art ${course.color}`}><CourseArt type={course.art} /><span>{course.level}</span></span>
+        <span className={`landing-course-art ${course.color}`} data-particle-effect={{ numbers: 'helix', computing: 'towers', logic: 'network', physics: 'orbit' }[course.id] || 'orbit'}><CourseArt type={course.art} /><span data-particle-label>{course.level}</span></span>
         <span className="landing-course-content">
           <span className={`landing-course-category ${course.color}-text`}>{course.label}</span>
           <span className="landing-course-title">{course.title}</span>
@@ -290,6 +291,7 @@ function LandingCourse({ course, onOpen }) {
 
 export default function Landing({ courses, onExplore, onEnter, onOpenCourse, hasProgress, onCreate, accountMenuProps, serviceError, onRetry, onAppearance }) {
   const root = useRef(null);
+  const [particlesPaused, setParticlesPaused] = useState(false);
   useLandingMotion(root);
   const subjectCount = new Set(courses.map(course => course.category)).size;
   const lessonCount = courses.reduce((count, course) => count + course.lessons.length, 0);
@@ -302,7 +304,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
 
       <main className="landing-main" id="landing-main">
         {serviceError && <div className="landing-container landing-service-message" role="alert">{serviceError}<button onClick={onRetry}>Try again</button></div>}
-        <ParticleStory onExplore={() => onExplore()} />
+        <ParticleStory onExplore={() => onExplore()} paused={particlesPaused} onPauseChange={setParticlesPaused} />
 
         <section className="landing-lesson-section landing-container" aria-labelledby="lesson-preview-title">
           <div className="landing-lesson-intro">
@@ -310,6 +312,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
             <h2 id="lesson-preview-title">Try an idea.<br />See it click.</h2>
             <p>Make a prediction, test it, and see why it works. Here’s a small taste of how you’ll learn on Curio.</p>
             <span className="landing-coin-note">Complete a full lesson. Earn 25 Curio coins.</span>
+            <div className="landing-learning-particles" data-particle-effect="helix" aria-hidden="true"><span className="landing-particle-static">∞</span></div>
           </div>
           <LessonPreview onContinue={() => onOpenCourse(courses[0])} />
         </section>
@@ -358,7 +361,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
 
         <section className="landing-container landing-teach-section" id="teach" aria-labelledby="teach-title">
-          <div className="landing-teach" data-reveal><div className="landing-teach-copy"><span className="landing-offer-tag"><span />LIMITED-TIME CREATOR OFFER</span><h2 id="teach-title">Someone is ready to learn<br />what you know.</h2><p>Turn your knowledge into a course. Write short lessons, add examples and quizzes, or upload a course you’ve already prepared. Your next student could start here.</p><button className="landing-button landing-button-dark" onClick={onCreate}>Create your first course<ArrowRight size={18} /></button><span className="landing-teach-note"><Check size={14} />Free to publish for a limited time. No card needed.</span></div><div className="landing-teach-card"><span className="landing-kicker">A PLACE FOR YOUR IDEAS</span><span className="landing-creator-price">$0<span>course publishing fee</span></span><div><span><Check size={16} /></span><p>Write in the lesson editor</p></div><div><span><Check size={16} /></span><p>Import your own course file</p></div><div><span><Check size={16} /></span><p>Keep drafts private until ready</p></div><div><span><Check size={16} /></span><p>Publish to the shared catalog</p></div><small>Offer available now. Any future fees will be announced before they apply.</small></div></div>
+          <div className="landing-teach" data-reveal><div className="landing-teach-copy"><span className="landing-offer-tag"><span />LIMITED-TIME CREATOR OFFER</span><h2 id="teach-title">Someone is ready to learn<br />what you know.</h2><p>Turn your knowledge into a course. Write short lessons, add examples and quizzes, or upload a course you’ve already prepared. Your next student could start here.</p><button className="landing-button landing-button-dark" onClick={onCreate}>Create your first course<ArrowRight size={18} /></button><span className="landing-teach-note"><Check size={14} />Free to publish for a limited time. No card needed.</span><div className="landing-creator-particles" data-particle-effect="broadcast" aria-hidden="true"><span className="landing-particle-static">◎</span></div></div><div className="landing-teach-card"><span className="landing-kicker">A PLACE FOR YOUR IDEAS</span><span className="landing-creator-price">$0<span>course publishing fee</span></span><div><span><Check size={16} /></span><p>Write in the lesson editor</p></div><div><span><Check size={16} /></span><p>Import your own course file</p></div><div><span><Check size={16} /></span><p>Keep drafts private until ready</p></div><div><span><Check size={16} /></span><p>Publish to the shared catalog</p></div><small>Offer available now. Any future fees will be announced before they apply.</small></div></div>
         </section>
 
         <section className="landing-section landing-container" id="why-curio" aria-labelledby="why-title">
@@ -391,7 +394,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
 
         <section className="landing-container landing-final-section" aria-labelledby="final-title">
-          <div className="landing-final" data-reveal>
+          <div className="landing-final" data-particle-effect="broadcast" data-reveal>
             <span className="landing-final-spark" aria-hidden="true">✦</span>
             <span className="landing-kicker">START LEARNING</span>
             <h2 id="final-title">Choose your<br />first course.</h2>
@@ -401,6 +404,8 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
           </div>
         </section>
       </main>
+
+      <LandingParticleEffects root={root} paused={particlesPaused} onPauseChange={setParticlesPaused} />
 
       <footer className="landing-footer landing-container">
         <div><a className="landing-brand" href="#home" aria-label="Curio home"><BrandMark /><span>curio<span className="landing-brand-dot">.</span></span></a><span>A little more curious.</span></div>

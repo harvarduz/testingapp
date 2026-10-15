@@ -35,7 +35,9 @@ The homepage’s **Make the idea work** section offers three practice models: sh
 
 The homepage opens with a viewport-scale navy particle hero inspired by the requested [SI.gov motion reference](https://www.si.gov/). Large white serif **Curio** lettering transforms into **Stay curious.** on pointer entry or a short touch tap. Moving the pointer displaces the dots; clicking or tapping sends a pulse through them. Scrolling carries the same canvas into **Small ideas. A bigger picture.**, where the lettering becomes an orbital sphere. Real headings and course actions remain readable throughout the transition, and the interactive lesson preview follows the scene.
 
-**Curio**, **Connections**, and the keyboard-accessible **Transform lettering** control select a shape; **Follow scroll** restores the automatic sequence. **Pause animation** freezes the drawing, and **Play animation** resumes it. The caption explains the current mode. Rendering uses a 32 ms paint interval, 1,800 points at widths of 900 px and above or 1,200 below, and pixel density capped at 2. Settled lettering stops requesting frames; offscreen scenes and hidden tabs suspend animation. Reduced motion and missing observer support retain static selectable shapes, and missing Canvas keeps the brand visible. The geometry and animation are original code; no reference assets, animation library, or remote animation dependency are included.
+**Curio**, **Connections**, and the keyboard-accessible **Transform lettering** control select a shape; **Follow scroll** restores the automatic sequence. **Pause animation** freezes the drawing, and **Play animation** resumes it. The caption explains the current mode. Rendering follows the browser’s display cadence with frame-time-normalized spring physics, 1,800 points at widths of 900 px and above or 1,200 below, and pixel density capped at 2. Settled lettering stops requesting frames; offscreen scenes and hidden tabs suspend animation. Reduced motion and missing observer support retain static selectable shapes, and missing Canvas keeps the brand visible. The geometry and animation are original code; no reference assets, animation library, or remote animation dependency are included.
+
+The supplied [SI-site mockup](https://azizbeksafarov.github.io/design/si-site/) also guides motion after the hero. A shared transparent canvas animates a helix beside the lesson preview, a helix/network/towers across the method cards, subject-specific course-cover shapes, and expanding broadcast rings in publishing and the final invitation. The renderer follows each region during scrolling and card reveals, clips ink to its artwork and excludes real labels and actions. Existing illustrations remain available without Canvas. Pause/Play is shared with the hero; reduced motion keeps static shapes. Only visible regions animate, sharing a 1,800-point desktop/1,200-point narrow-screen budget with DPR capped at 2.
 
 **Targeted practice** draws up to five questions from completed lessons. It prioritizes missed questions, then unattempted questions, and finally older correct answers. Results explain each answer and link back to the ideas behind mistakes. Courses without extra questions use their existing quiz. Recent-answer statistics retain the latest 500 practice records; study choices and answers sync with the account.
 
@@ -112,6 +114,7 @@ python tests/accessibility_smoke.py
 python tests/button_smoke.py
 python tests/skill_playground_smoke.py
 python tests/particle_story_smoke.py
+python tests/landing_particles_smoke.py
 python tests/landing_ux_smoke.py
 python tests/interface_audit_smoke.py
 ```
@@ -162,6 +165,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
 | Particle hero, lettering/sphere geometry and motion controls | `src/ParticleStory.jsx`, `src/particleGeometry.js`, `src/particle-story.css` |
+| Page-wide particle effects and shared frame-time physics | `src/LandingParticleEffects.jsx`, `src/particleMotion.js`, `src/landing-particles.css` |
 | Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
 | Homepage practice models and exact pack comparisons | `src/SkillPlayground.jsx`, `src/skill-playground.css`, `src/skillModels.js` |
 | Material tokens, typography, responsive presentation | `src/material.css` |

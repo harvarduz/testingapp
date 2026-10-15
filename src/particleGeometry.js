@@ -107,7 +107,7 @@ export function createParticleGeometry(width, height, count) {
     const nx = clamp(Number(pointer?.nx) || 0, -1, 1);
     const ny = clamp(Number(pointer?.ny) || 0, -1, 1);
     if (index < ringCount) {
-      const angle = index / ringCount * TAU + time * .20;
+      const angle = index / ringCount * TAU + time * .45;
       const x = Math.cos(angle) * radius * 1.38;
       const y = Math.sin(angle) * radius * .30;
       return [centerX + x * Math.cos(ringTilt) - y * Math.sin(ringTilt), centerY + x * Math.sin(ringTilt) + y * Math.cos(ringTilt), .95, 1.85, true];
@@ -115,7 +115,7 @@ export function createParticleGeometry(width, height, count) {
     const offset = index - ringCount + .5;
     const vertical = 1 - 2 * offset / sphereCount;
     const horizontal = Math.sqrt(Math.max(0, 1 - vertical * vertical));
-    const longitude = offset * GOLDEN_ANGLE + time * .18 + nx * .35;
+    const longitude = offset * GOLDEN_ANGLE + time * .42 + nx * .35;
     const x = horizontal * Math.cos(longitude);
     const z = horizontal * Math.sin(longitude);
     const tilt = .24 + ny * .24;
