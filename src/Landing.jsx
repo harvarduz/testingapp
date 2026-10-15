@@ -302,22 +302,17 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
 
       <main className="landing-main" id="landing-main">
         {serviceError && <div className="landing-container landing-service-message" role="alert">{serviceError}<button onClick={onRetry}>Try again</button></div>}
-        <section className="landing-hero landing-container" aria-labelledby="landing-title">
-          <div className="landing-hero-copy">
-            <span className="landing-kicker"><span />GOOD QUESTIONS. REAL UNDERSTANDING.</span>
-            <h1 id="landing-title">Learn it.<br /><span>Make it yours.</span></h1>
-            <p>From math and science to language, design, and everyday money. Learn by working things out, with short lessons and the space to try again.</p>
+        <ParticleStory onExplore={() => onExplore()} />
 
-            <div className="landing-hero-actions">
-              <button className="landing-button landing-button-dark" onClick={() => onExplore()}>Find your first course<ArrowRight size={18} /></button>
-              <a className="landing-try-link" href="#try-a-lesson">Try a little lesson<ArrowUpRight size={17} /></a>
-            </div>
-            <span className="landing-hero-note"><Check size={13} />Free to explore. No account required.</span><span className="landing-coin-note">Complete a lesson. Earn 25 Curio coins.</span>
+        <section className="landing-lesson-section landing-container" aria-labelledby="lesson-preview-title">
+          <div className="landing-lesson-intro">
+            <span className="landing-kicker">A LITTLE LESS WATCHING. A LITTLE MORE DOING.</span>
+            <h2 id="lesson-preview-title">Try an idea.<br />See it click.</h2>
+            <p>Make a prediction, test it, and see why it works. Here’s a small taste of how you’ll learn on Curio.</p>
+            <span className="landing-coin-note">Complete a full lesson. Earn 25 Curio coins.</span>
           </div>
           <LessonPreview onContinue={() => onOpenCourse(courses[0])} />
         </section>
-
-        <ParticleStory onExplore={() => onExplore()} />
 
         <ScrollCatalog courseCount={courses.length} lessonCount={lessonCount} subjectCount={subjectCount} />
 

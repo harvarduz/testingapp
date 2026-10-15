@@ -8,7 +8,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 
 ## Demonstration
 
-1. Show the public page on desktop and mobile. Scroll through the particle scene, select lettering/orbit/book, move the pointer through the dots and pause the orbit. Then scroll through the catalog gauges, stop to show that the numbers freeze, and reverse to restore an earlier frame. Show the visible inventory totals and keyboard-accessible Show all totals action. Continue to the knowledge map, then Make the idea work: shade 6/8, find the 25% discount on $80, and compare two pack prices. Try a mistake, read the explanation and open the related lesson. Previews award no progress.
+1. Show the public page on desktop and mobile. The first viewport has large white serif Curio particles on navy. Hover over the lettering or tap it to reveal Stay curious.; move the pointer through the dots and click or tap for a pulse. Scroll to transform the same canvas into an orbital sphere. Demonstrate Transform lettering with the keyboard, Pause/Play, and Follow scroll after manual selection. Continue to the lesson preview and catalog gauges: stop to show that the numbers freeze, then reverse to restore an earlier frame. Show the inventory totals and keyboard-accessible Show all totals action. Continue to the knowledge map, then Make the idea work: shade 6/8, find the 25% discount on $80, and compare two pack prices. Try a mistake, read the explanation and open the related lesson. Previews award no progress.
 2. Open Thinking in numbers. Adjust the sequence, step through the worked example, answer an inline exercise incorrectly and retry with its explanation. Complete the separate lesson check, refresh My learning, and continue. Show an appended application such as percentage change, then a different subject’s deeper lesson, such as balancing atoms or interpreting a sample.
 3. Save a course for later, open My learning → Saved, write a private lesson note, and copy its course link. Reopen a completed lesson from Practice & review and show that totals do not increase.
 4. Combine subject, level, and duration filters; search for an absent course, clear filters, and browse a non-STEM subject such as Languages or Design.
@@ -29,7 +29,7 @@ Students need a clear starting point, ideas they can apply, and useful feedback.
 | UX/UI, 10 | Material Expressive typography and tonal roles, four palettes, light/dark mode, consistent controls, keyboard focus, responsive creator/student pages, collapsible desktop navigation, mobile bottom navigation, and reduced-motion support | 320/390/768/1366 px tests, light/dark axe-core checks, palette persistence tests, screenshot review |
 | Presentation, 10 | Clear problem, complete student and creator stories, editable source, honest technical explanation | Demonstration above and README editing map |
 | Technology, 20 | React/Vite, Node 24, SQLite, salted scrypt, expiring HttpOnly sessions, same-origin writes, Docker deployment | Backend tests and production container replacement/volume test |
-| Creativity, 10 | Original subject art, interactive fraction/budget/algorithm labs, live homepage lesson, creator lessons connected to actual student learning | Interactive preview and creator-to-student demonstration |
+| Creativity, 10 | Original particle typography and scroll morphing, subject art, interactive fraction/budget/algorithm labs, live homepage lesson, creator lessons connected to actual student learning | Particle interaction, interactive preview and creator-to-student demonstration |
 
 ## Validation and boundaries
 
@@ -39,4 +39,4 @@ The upload format is JSON text lessons and quizzes; video uploads are not implem
 
 ## Manual-edit practice
 
-Change a headline in `src/Landing.jsx`, a palette seed in `src/Appearance.jsx`, presentation in `src/material.css`, a lesson in `src/catalog.js`, or a validation rule in `shared/course.js`. Run affected checks and rebuild. Disclose AI assistance according to the final competition rules and explain your own choices and modifications. Demonstrate only behavior you can reproduce.
+Change a hero headline in `src/ParticleStory.jsx`, another homepage section in `src/Landing.jsx`, a palette seed in `src/Appearance.jsx`, presentation in `src/material.css`, a lesson in `src/catalog.js`, or a validation rule in `shared/course.js`. Run affected checks and rebuild. Disclose AI assistance according to the final competition rules and explain your own choices and modifications. Demonstrate only behavior you can reproduce.

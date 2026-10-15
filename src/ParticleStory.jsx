@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, BookOpen, Orbit, Pause, Play, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play, RefreshCw, WandSparkles } from 'lucide-react';
+import { createParticleGeometry } from './particleGeometry.js';
 import './particle-story.css';
 
-const views = [{ id: 'curio', label: 'Curio', Icon: Sparkles }, { id: 'orbit', label: 'Connections', Icon: Orbit }, { id: 'book', label: 'Discovery', Icon: BookOpen }];
 const clamp = value => Math.max(0, Math.min(1, value));
+const smooth = value => value * value * (3 - 2 * value);
+const views = [{ id: 'curio', label: 'Curio' }, { id: 'orbit', label: 'Connections' }];
 
 export default function ParticleStory({ onExplore }) {
-  const stage = useRef(null);
-  const canvas = useRef(null);
-  const engine = useRef(null);
+  const root = useRef(null), stage = useRef(null), canvas = useRef(null), engine = useRef(null);
   const [view, setView] = useState('curio');
   const [paused, setPaused] = useState(false);
   const [following, setFollowing] = useState(true);
@@ -16,67 +16,64 @@ export default function ParticleStory({ onExplore }) {
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   useEffect(() => {
-    const host = stage.current;
-    const surface = canvas.current;
+    const section = root.current, host = stage.current, surface = canvas.current;
     let context;
     try { context = surface.getContext('2d'); } catch { setSupported(false); return; }
     if (!context) { setSupported(false); return; }
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const canObserve = 'IntersectionObserver' in window;
-    setReduced(preference.matches || !canObserve);
-    let visible = false, stopped = false, destroyed = false, manual = false;
-    let frame = null, resizeFrame = null, width = 1, height = 1, angle = 0, lastPaint = 0, current = 'curio';
-    let dots = [], glyph = [], colours = [];
-    const pointer = { x: -1000, y: -1000 };
+    let visible = !canObserve, stopped = false, destroyed = false, manual = null, hovered = false;
+    let frame = null, resizeFrame = null, lastPaint = 0, time = 0, width = 1, height = 1, blend = 0, progress = 0;
+    let current = 'curio', geometry, dots = [], waves = [], clearance = [], touchStart = null;
+    const pointer = { x: -1000, y: -1000, nx: 0, ny: 0 };
     const staticMode = () => preference.matches || !canObserve;
     const animated = () => !staticMode() && !stopped && visible && !document.hidden;
-    const target = (dot, index) => {
-      if (current === 'curio') return glyph[index % glyph.length];
-      const radius = Math.min(width * .37, height * .36);
-      if (current === 'orbit') {
-        if (index % 5 === 0) {
-          const t = index / dots.length * Math.PI * 10 + angle * .35;
-          const x = Math.cos(t) * radius * 1.4, y = Math.sin(t) * radius * .30;
-          return [width / 2 + x * .94 - y * -.34, height / 2 + x * -.34 + y * .94, .9];
-        }
-        const latitude = Math.acos(1 - 2 * (index + .5) / dots.length);
-        const longitude = index * 2.3999632297 + angle;
-        const z = Math.sin(latitude) * Math.sin(longitude);
-        return [width / 2 + Math.sin(latitude) * Math.cos(longitude) * radius, height / 2 + Math.cos(latitude) * radius * .94 + z * radius * .12, .35 + (z + 1) * .30];
-      }
-      // Six gently curved lines on each page make an open book from points.
-      if (index % 5 === 0) {
-        const edge = Math.floor(index / 5) % 4;
-        const along = Math.floor(index / 20) / Math.max(1, Math.floor(dots.length / 20) - 1);
-        return [width / 2 + [-.375, -.035, .035, .375][edge] * width, height * (.24 + along * .492), .95];
-      }
-      const line = index % 14, side = line < 7 ? -1 : 1;
-      const row = line % 7, position = Math.floor(index / 14) / Math.max(1, Math.floor(dots.length / 14) - 1);
-      const bend = Math.sin(position * Math.PI) * height * .05;
-      return [width / 2 + side * (width * .035 + position * width * .34), height * (.24 + row * .082) - bend, .85];
+    const updateView = next => { if (next !== current) { current = next; setView(next); } };
+    const target = index => {
+      const letter = (current === 'phrase' ? geometry.phrase : geometry.word)[index];
+      const size = width < 900 ? 1.1 : 1.8;
+      if (!blend) return [...letter, size, index % 23 === 0];
+      const orbit = geometry.orbit(index, time, pointer);
+      return [letter[0] + (orbit[0] - letter[0]) * blend, letter[1] + (orbit[1] - letter[1]) * blend, 1 + (orbit[2] - 1) * blend, size + (orbit[3] - size) * blend, orbit[4]];
     };
-    const paint = (snap = false) => {
+    const paint = (snap = false, step = 1) => {
+      if (!geometry) return false;
       context.clearRect(0, 0, width, height);
-      const moving = animated() && !snap;
       let settling = false;
+      const moving = animated() && !snap;
       dots.forEach((dot, index) => {
-        const [x, y, opacity = 1] = target(dot, index);
+        const [x, y, opacity, baseSize, accent] = target(index);
         if (!moving) { dot.x = x; dot.y = y; dot.vx = dot.vy = 0; }
         else {
-          dot.vx = (dot.vx + (x - dot.x) * .032) * .77;
-          dot.vy = (dot.vy + (y - dot.y) * .032) * .77;
-          const dx = dot.x - pointer.x, dy = dot.y - pointer.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance > 0 && distance < 75) {
-            const force = (1 - distance / 75) * 3;
+          dot.vx = (dot.vx + (x - dot.x) * .045 * step) * Math.pow(.72, step);
+          dot.vy = (dot.vy + (y - dot.y) * .045 * step) * Math.pow(.72, step);
+          const dx = dot.x - pointer.x, dy = dot.y - pointer.y, distance = Math.hypot(dx, dy);
+          if (distance > 0 && distance < 120) {
+            const force = (1 - distance / 120) * 3.4 * step;
             dot.vx += dx / distance * force; dot.vy += dy / distance * force;
           }
-          dot.x += dot.vx; dot.y += dot.vy;
-          settling ||= Math.abs(x - dot.x) + Math.abs(y - dot.y) > .15 || Math.abs(dot.vx) + Math.abs(dot.vy) > .05;
+          for (const wave of waves) {
+            const wx = dot.x - wave.x, wy = dot.y - wave.y, distance = Math.hypot(wx, wy);
+            const edge = Math.abs(distance - wave.radius);
+            if (distance > 0 && edge < 45) {
+              const force = (1 - edge / 45) * 2.2 * (1 - wave.radius / 700) * step;
+              dot.vx += wx / distance * force; dot.vy += wy / distance * force;
+            }
+          }
+          dot.x += dot.vx * step; dot.y += dot.vy * step;
+          settling ||= Math.abs(x - dot.x) + Math.abs(y - dot.y) > .2 || Math.abs(dot.vx) + Math.abs(dot.vy) > .06;
         }
-        context.globalAlpha = opacity;
-        context.fillStyle = colours[index % 9 === 0 ? 1 : 0];
-        const size = width < 400 ? 1.8 : 2.1;
+        const speed = Math.hypot(dot.vx, dot.vy);
+        // Keep decorative ink clear of real text during every intermediate
+        // scroll frame, including manual shapes and narrow viewports.
+        let visibility = 1;
+        for (const rect of clearance) {
+          const distance = Math.max(rect.left - dot.x, dot.x - rect.right, rect.top - dot.y, dot.y - rect.bottom);
+          visibility = Math.min(visibility, smooth(clamp(distance / 24)));
+        }
+        context.globalAlpha = opacity * visibility;
+        context.fillStyle = speed > 2 || accent ? '#8fb4ff' : '#f5f6fa';
+        const size = baseSize + Math.min(speed * .07, 1.2);
         context.fillRect(dot.x - size / 2, dot.y - size / 2, size, size);
       });
       context.globalAlpha = 1;
@@ -86,17 +83,36 @@ export default function ParticleStory({ onExplore }) {
       frame = null;
       if (!animated()) return;
       if (stamp - lastPaint >= 32) {
-        angle += Math.min(stamp - lastPaint, 50) * .00012;
-        lastPaint = stamp;
-        const settling = paint();
-        if (current !== 'orbit' && !settling) return;
+        const elapsed = Math.min(stamp - lastPaint, 50);
+        lastPaint = stamp; time += elapsed / 1000;
+        waves = waves.filter(wave => (wave.radius += elapsed * .65) < 700);
+        if (!paint(false, elapsed / 32) && blend === 0 && !waves.length) return;
       }
       frame = requestAnimationFrame(tick);
     };
     const schedule = () => {
       host.dataset.particleMotion = staticMode() ? 'reduced' : stopped ? 'paused' : visible && !document.hidden ? 'active' : 'offscreen';
-      if (animated()) { if (frame === null) { lastPaint = performance.now(); frame = requestAnimationFrame(tick); } }
-      else { cancelAnimationFrame(frame); frame = null; }
+      if (animated()) {
+        if (frame === null) { lastPaint = performance.now(); frame = requestAnimationFrame(tick); }
+      } else { cancelAnimationFrame(frame); frame = null; }
+    };
+    const select = () => {
+      blend = manual ? (manual === 'orbit' ? 1 : 0) : staticMode() ? 0 : smooth(clamp((progress - .10) / .62));
+      updateView(manual || (blend > .36 ? 'orbit' : hovered ? 'phrase' : 'curio'));
+      if (!animated() && !stopped) paint(true);
+      schedule();
+    };
+    const scroll = () => {
+      const bounds = section.getBoundingClientRect();
+      const stageBounds = host.getBoundingClientRect();
+      clearance = [...section.querySelectorAll('[data-particle-clearance]')].map(node => {
+        const rect = node.getBoundingClientRect();
+        return { left: rect.left - stageBounds.left - 8, right: rect.right - stageBounds.left + 8, top: rect.top - stageBounds.top - 8, bottom: rect.bottom - stageBounds.top + 8 };
+      });
+      const header = document.querySelector('.landing-header')?.getBoundingClientRect().bottom || 0;
+      progress = clamp((header - bounds.top) / Math.max(1, section.offsetHeight - host.offsetHeight));
+      section.dataset.scrollProgress = progress.toFixed(4);
+      if (!stopped) select();
     };
     const measure = () => {
       if (destroyed) return;
@@ -105,78 +121,104 @@ export default function ParticleStory({ onExplore }) {
       const ratio = Math.min(devicePixelRatio || 1, 2);
       surface.width = Math.round(width * ratio); surface.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      const style = getComputedStyle(host);
-      colours = [style.getPropertyValue('--md-sys-color-on-primary-container').trim(), style.getPropertyValue('--md-sys-color-primary').trim()];
-      const mask = document.createElement('canvas'); mask.width = Math.max(1, width); mask.height = Math.max(1, height);
-      const ink = mask.getContext('2d');
-      if (!ink) { setSupported(false); return; }
-      ink.font = `600 ${width * .23}px ${style.getPropertyValue('--heading') || 'sans-serif'}`;
-      ink.textAlign = 'center'; ink.textBaseline = 'middle'; ink.fillText('curio.', width / 2, height / 2);
-      const pixels = ink.getImageData(0, 0, mask.width, mask.height).data;
-      const samples = [];
-      for (let y = 0; y < mask.height; y += 3) for (let x = 0; x < mask.width; x += 3) if (pixels[(y * mask.width + x) * 4 + 3] > 128) samples.push([x, y, 1]);
-      if (!samples.length) return;
-      const count = width < 450 ? 480 : 900;
-      glyph = Array.from({ length: count }, (_, index) => samples[Math.floor(index * samples.length / count)]);
-      dots = Array.from({ length: count }, (_, index) => dots[index] || { x: width * ((index * .6180339) % 1), y: height * ((index * .4142135) % 1), vx: 0, vy: 0 });
-      host.dataset.canvasReady = 'true'; host.dataset.particleCount = String(count);
-      paint(true); schedule();
+      try { geometry = createParticleGeometry(width, height, width < 900 ? 1200 : 1800); }
+      catch { setSupported(false); return; }
+      dots = geometry.word.map(([x, y]) => ({ x, y, vx: 0, vy: 0 }));
+      host.dataset.canvasReady = 'true'; host.dataset.particleCount = String(dots.length);
+      scroll(); paint(true); schedule();
     };
     const resize = () => { if (resizeFrame === null) resizeFrame = requestAnimationFrame(measure); };
-    const choose = (next, explicit = false) => {
-      manual ||= explicit;
-      if (explicit) setFollowing(false);
-      if (current === next) return;
-      current = next; setView(next);
-      if (!animated()) paint(true);
-      schedule();
-    };
-    const scroll = () => {
-      if (manual || staticMode() || stopped || !visible) return;
+    const isControl = event => event.target.closest('button, a, input');
+    const position = event => {
       const bounds = host.getBoundingClientRect();
-      const headerBottom = document.querySelector('.landing-header')?.getBoundingClientRect().bottom || 0;
-      // Morph while the whole drawing is visible, rather than waiting until
-      // its upper half has disappeared beneath the sticky header.
-      const travel = Math.max(1, innerHeight - headerBottom - bounds.height);
-      const progress = clamp((innerHeight - bounds.bottom) / travel);
-      choose(progress < .3 ? 'curio' : progress < .65 ? 'orbit' : 'book');
+      return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+    };
+    const insideLettering = ({ x, y }) => {
+      const a = geometry.wordBounds, b = geometry.phraseBounds;
+      return x >= Math.min(a.left, b.left) - 20 && x <= Math.max(a.right, b.right) + 20 && y >= Math.min(a.top, b.top) - 20 && y <= Math.max(a.bottom, b.bottom) + 20;
     };
     const move = event => {
-      if (event.pointerType === 'touch' || !animated()) return;
-      const bounds = host.getBoundingClientRect(); pointer.x = event.clientX - bounds.left; pointer.y = event.clientY - bounds.top;
+      if (event.pointerType === 'touch' || !animated() || !geometry) return;
+      const point = position(event);
+      const inArt = !isControl(event) && point.y >= 0 && point.y < height;
+      pointer.x = inArt ? point.x : -1000; pointer.y = inArt ? point.y : -1000;
+      pointer.nx = inArt ? point.x / width * 2 - 1 : 0; pointer.ny = inArt ? point.y / height * 2 - 1 : 0;
+      const next = inArt && insideLettering(point);
+      if (hovered !== next) { hovered = next; select(); }
       schedule();
     };
-    const leave = () => { pointer.x = pointer.y = -1000; schedule(); };
-    const preferenceChanged = () => { setReduced(staticMode()); leave(); if (staticMode()) paint(true); schedule(); };
-    const appearance = new MutationObserver(resize);
-    // Palette changes update CSS variables even when the display mode is unchanged.
-    appearance.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+    const leave = () => { pointer.x = pointer.y = -1000; pointer.nx = pointer.ny = 0; hovered = false; if (!stopped) select(); };
+    const down = event => { if (!isControl(event)) touchStart = { ...position(event), stamp: performance.now(), id: event.pointerId }; };
+    const up = event => {
+      if (!touchStart || touchStart.id !== event.pointerId || isControl(event) || !geometry) return;
+      const point = position(event), tap = performance.now() - touchStart.stamp < 600 && Math.hypot(point.x - touchStart.x, point.y - touchStart.y) < 12;
+      touchStart = null;
+      if (!tap || !animated()) return;
+      if (event.pointerType === 'touch' && blend === 0 && insideLettering(point)) { hovered = !hovered; select(); }
+      waves.push({ ...point, radius: 0 }); waves = waves.slice(-3); schedule();
+    };
+    const changedPreference = () => { setReduced(staticMode()); hovered = false; waves = []; select(); paint(true); };
     const observer = canObserve ? new IntersectionObserver(entries => {
-      visible = entries[0].isIntersecting; if (!visible) leave(); scroll(); schedule();
+      visible = entries[0].isIntersecting;
+      if (!visible) { pointer.x = pointer.y = -1000; hovered = false; }
+      scroll(); schedule();
     }) : null;
-    measure(); observer?.observe(host);
-    document.fonts?.ready.then(() => { if (!destroyed) measure(); });
-    host.addEventListener('pointermove', move, { passive: true }); host.addEventListener('pointerleave', leave);
+    setReduced(staticMode()); measure(); observer?.observe(host);
+    document.fonts?.ready.then(() => { if (!destroyed) scroll(); });
+    section.addEventListener('pointermove', move, { passive: true }); section.addEventListener('pointerleave', leave);
+    section.addEventListener('pointerdown', down, { passive: true }); section.addEventListener('pointerup', up, { passive: true });
     window.addEventListener('scroll', scroll, { passive: true }); window.addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', schedule); preference.addEventListener('change', preferenceChanged);
+    document.addEventListener('visibilitychange', schedule); preference.addEventListener('change', changedPreference);
     engine.current = {
-      choose,
-      follow() { manual = false; setFollowing(true); scroll(); schedule(); },
-      pause(value) { stopped = value; leave(); if (!value) scroll(); schedule(); },
+      refresh: scroll,
+      choose(next) { manual = next; hovered = false; setFollowing(false); select(); if (stopped) paint(true); },
+      transform() { this.choose(current === 'phrase' ? 'curio' : 'phrase'); },
+      follow() { manual = null; hovered = false; setFollowing(true); scroll(); },
+      pause(value) { stopped = value; pointer.x = pointer.y = -1000; waves = []; if (!value) scroll(); schedule(); },
     };
     return () => {
-      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect(); appearance.disconnect();
-      host.removeEventListener('pointermove', move); host.removeEventListener('pointerleave', leave);
+      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect();
+      section.removeEventListener('pointermove', move); section.removeEventListener('pointerleave', leave);
+      section.removeEventListener('pointerdown', down); section.removeEventListener('pointerup', up);
       window.removeEventListener('scroll', scroll); window.removeEventListener('resize', resize);
-      document.removeEventListener('visibilitychange', schedule); preference.removeEventListener('change', preferenceChanged);
+      document.removeEventListener('visibilitychange', schedule); preference.removeEventListener('change', changedPreference);
       engine.current = null;
     };
   }, []);
 
-  return <section className="landing-particle-story" aria-labelledby="particle-story-title">
-    <div className="landing-container particle-story-layout">
-      <div className="particle-story-copy"><span className="landing-kicker">FOLLOW YOUR CURIOSITY</span><h2 id="particle-story-title">Small ideas.<br />A bigger picture.</h2><p>Start with a question. Follow the connections. See what you can figure out.</p><button className="landing-button landing-button-dark" onClick={onExplore}>Explore a subject<ArrowRight size={17} /></button></div>
-      <figure className="particle-story-figure"><div className="particle-story-stage" ref={stage} data-view={view}><span className="particle-story-fallback" aria-hidden="true">curio.</span><canvas ref={canvas} aria-hidden="true" /></div><figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : following ? 'Scroll to reshape the dots, or choose a view. Move your pointer through them.' : 'Your selected view stays in place. Follow scroll to see the story again.'}</figcaption>{supported && <div className="particle-story-controls"><div role="group" aria-label="Particle views">{views.map(({ id, label, Icon }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id, true)}><Icon size={17} />{label}</button>)}</div>{reduced ? <span className="particle-motion-note">Motion reduced</span> : <><button className="particle-motion-control" onClick={() => { setPaused(value => !value); engine.current?.pause(!paused); }}>{paused ? <Play size={17} /> : <Pause size={17} />}{paused ? 'Play animation' : 'Pause animation'}</button>{!following && <button className="particle-motion-control" onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}>Follow scroll</button>}</>}</div>}</figure>
+  useEffect(() => { engine.current?.refresh(); }, [view, following, reduced]);
+
+  return <section className="landing-particle-story" data-particle-supported={supported} ref={root} aria-labelledby="landing-title">
+    <figure className="particle-story-figure particle-story-stage" ref={stage} data-view={view}>
+      <span className="particle-story-fallback" aria-hidden="true">Curio</span>
+      <canvas ref={canvas} aria-hidden="true" />
+      {supported && <div className="particle-story-controls" data-particle-clearance>
+        <div role="group" aria-label="Particle views">{views.map(({ id, label }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id)}>{label}</button>)}</div>
+        <button className="particle-icon-control" aria-label="Transform lettering" title="Transform lettering" aria-pressed={view === 'phrase'} onClick={() => engine.current?.transform()}><WandSparkles size={18} /></button>
+        {reduced ? <span className="particle-motion-note">Motion reduced</span> : <button className="particle-icon-control" aria-label={paused ? 'Play animation' : 'Pause animation'} title={paused ? 'Play animation' : 'Pause animation'} onClick={() => { setPaused(!paused); engine.current?.pause(!paused); }}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
+        {!following && <button className="particle-follow-control" aria-label="Follow scroll" title="Follow scroll" onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}><RefreshCw size={15} /><span>Follow scroll</span></button>}
+      </div>}
+      <figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : following ? 'Move over the lettering. On touch screens, tap it. Scroll to connect the dots.' : 'Your selected view stays in place. Follow scroll to see the story again.'}</figcaption>
+    </figure>
+    <div className="particle-story-panel landing-hero landing-container">
+      <div className="landing-hero-copy" data-particle-clearance>
+        <h1 id="landing-title">Learn it.<br /><span>Make it yours.</span></h1>
+        <p>Math, science, language, and life. Short, hands-on lessons that turn a good question into real understanding.</p>
+        <div className="landing-hero-actions">
+          <button className="landing-button landing-button-dark" onClick={onExplore}>Find your first course<ArrowRight size={18} /></button>
+          <a className="landing-try-link" href="#try-a-lesson">Try a little lesson<ArrowUpRight size={17} /></a>
+        </div>
+        <span className="landing-hero-note">Free to explore. No account required.</span>
+      </div>
+      <span className="particle-scroll-cue" aria-hidden="true" data-particle-clearance><ArrowDown size={16} />KEEP YOUR CURIOSITY MOVING</span>
+    </div>
+    <div className="particle-story-panel particle-connections-panel landing-container">
+      <div className="particle-story-copy" data-particle-clearance>
+        <span className="landing-kicker">ONE IDEA LEADS TO ANOTHER</span>
+        <h2 id="particle-story-title">Small ideas.<br />A bigger picture.</h2>
+        <p>A fraction becomes a percentage. A percentage helps you compare a price. Build the connections that make knowledge useful.</p>
+        <button className="landing-button landing-button-dark" onClick={onExplore}>Explore a subject<ArrowRight size={18} /></button>
+      </div>
     </div>
   </section>;
 }

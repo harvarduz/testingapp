@@ -1,19 +1,97 @@
-.landing-particle-story { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); margin-block: 12px 32px; }
-.particle-story-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: center; padding-block: 60px; }
-.particle-story-copy { min-width: 0; }.particle-story-copy > .landing-kicker { color: inherit; }
-.particle-story-copy > h2 { font: 400 clamp(38px, 4.5vw, 62px)/1.08 var(--heading); letter-spacing: -1.5px; margin-block: 24px; }
-.particle-story-copy > p { font: 400 18px/29px 'Roboto', sans-serif; max-width: 380px; margin-bottom: 28px; }
-.particle-story-figure { min-width: 0; margin: 0; }.particle-story-stage { width: 100%; aspect-ratio: 1.6; max-height: max(160px, calc(100svh - 176px)); position: relative; }
-.particle-story-stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.particle-story-fallback { position: absolute; inset: 0; display: grid; place-items: center; font: 600 clamp(60px, 11vw, 160px)/1 var(--heading); }
+.landing .landing-particle-story {
+  --particle-header: 84px;
+  --particle-height: calc(100svh - var(--particle-header));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  position: relative;
+  isolation: isolate;
+  background: #101c4b;
+  color: #f5f6fa;
+}
+.landing .particle-story-stage {
+  position: sticky;
+  top: var(--particle-header);
+  width: 100%;
+  height: var(--particle-height);
+  margin: 0;
+  grid-area: 1 / 1 / 3 / 2;
+  align-self: start;
+  z-index: 2;
+  pointer-events: none;
+}
+.particle-story-stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.particle-story-fallback { position: absolute; inset: 5% 0 auto; height: 57%; display: grid; place-items: center; font: 400 clamp(100px, 28vw, 450px)/1 Georgia, 'Times New Roman', serif; }
 .particle-story-stage[data-canvas-ready='true'] .particle-story-fallback { display: none; }
-.particle-story-figure > figcaption { font: 400 13px/21px 'Roboto', sans-serif; text-align: center; margin-top: 12px; }
-.particle-story-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; margin-top: 24px; }
-.particle-story-controls > [role='group'] { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.landing .particle-story-controls button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 11px 16px; border-radius: 28px; border: 1px solid var(--md-sys-color-on-primary-container); background: transparent; color: var(--md-sys-color-on-primary-container); font: 500 14px/22px var(--heading); }
-.landing .particle-story-controls button[aria-pressed='true'] { background: var(--md-sys-color-on-primary-container); color: var(--md-sys-color-primary-container); }
-.landing .particle-story-controls button { transition: box-shadow .18s var(--material-motion), border-radius .2s var(--material-motion); }
-.landing .particle-story-controls > .particle-motion-control { border: 0; }
-.particle-motion-note { font: 400 13px/21px 'Roboto', sans-serif; }
-@media (max-width: 900px) { .particle-story-layout { grid-template-columns: 1fr; gap: 28px; padding-block: 44px; }.particle-story-copy > h2 br { display: none; }.particle-story-copy > h2 { font-size: 40px; line-height: 48px; margin-block: 18px; }.particle-story-copy > p { max-width: 620px; }.particle-story-stage { max-width: 720px; margin-inline: auto; }.particle-story-copy > .landing-button { min-height: 48px; } }
-@media (max-width: 480px) { .particle-story-copy > h2 { font-size: 36px; line-height: 42px; letter-spacing: -1px; }.particle-story-copy > p { font-size: 16px; line-height: 26px; }.particle-story-layout { gap: 12px; }.particle-story-stage { aspect-ratio: 1.4; }.landing .particle-story-controls button { padding-inline: 12px; font-size: 13px; }.particle-story-controls { gap: 8px; }.particle-story-controls > [role='group'] { gap: 6px; } }
+.landing .particle-story-panel { grid-column: 1; position: relative; min-height: var(--particle-height); pointer-events: none; }
+.particle-story-panel button, .particle-story-panel a { pointer-events: auto; }
+.landing .particle-story-panel.landing-hero { grid-row: 1; display: flex; flex-direction: column; gap: 0; justify-content: flex-start; padding-top: calc(var(--particle-height) * .62); padding-bottom: 100px; text-align: center; }
+.landing .particle-story-panel .landing-hero-copy { padding: 0; }
+.landing .particle-story-panel h1 { max-width: none; font: 400 clamp(34px, 3.3vw, 48px)/1.16 var(--heading); letter-spacing: -1.3px; margin: 0 0 16px; color: #f5f6fa; }
+.landing .particle-story-panel h1 br { display: none; }
+.landing .particle-story-panel h1 > span { color: #b8ceff; margin-left: .23em; white-space: normal; }
+.landing .particle-story-panel .landing-hero-copy > p { max-width: 620px; font: 400 18px/1.6 'Roboto', sans-serif; color: #d1daf1; margin: 0 auto; }
+.landing .particle-story-panel .landing-hero-actions { justify-content: center; gap: 24px; margin-top: 22px; }
+.landing .landing-particle-story .landing-button-dark { background: #c2d4ff; border-color: transparent; color: #14234c; min-height: 52px; padding: 14px 24px; box-shadow: none; }
+.landing .landing-particle-story .landing-button-dark:hover { background: #cdddff; color: #14234c; box-shadow: 0 2px 6px #0003; }
+.landing .particle-story-panel .landing-try-link { color: #f5f6fa !important; min-height: 48px; font-size: 15px; }
+.landing .particle-story-panel .landing-hero-note { justify-content: center; margin-top: 16px; font: 400 13px/1.6 'Roboto', sans-serif; color: #c1cbe4; }
+.particle-scroll-cue { display: inline-flex; align-items: center; gap: 10px; font: 500 10px/1.5 var(--heading); letter-spacing: 1.6px; color: #b8ceff; margin-top: 30px; }
+.landing .particle-connections-panel { grid-row: 2; display: flex; align-items: center; padding-block: 80px 100px; }
+.particle-story-copy { max-width: 440px; }
+.landing .particle-story-copy > .landing-kicker { color: #b8ceff; font-size: 11px; }
+.particle-story-copy > h2 { font: 400 clamp(38px, 4.5vw, 64px)/1.08 var(--heading); letter-spacing: -1.7px; margin: 24px 0; color: #f5f6fa; }
+.particle-story-copy > p { font: 400 18px/1.65 'Roboto', sans-serif; color: #d1daf1; margin-bottom: 28px; max-width: 380px; }
+.particle-story-figure > figcaption { position: absolute; bottom: 18px; inset-inline: 24px; font: 400 12px/1.6 'Roboto', sans-serif; color: #b9c8e9; text-align: center; background: #101c4b; padding: 4px 8px; width: fit-content; max-width: calc(100% - 48px); margin-inline: auto; border-radius: 6px; }
+.particle-story-controls { position: absolute; z-index: 2; top: 16px; right: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; max-width: calc(100% - 48px); pointer-events: auto; background: #101c4b; border-radius: 28px; }
+.particle-story-controls > [role='group'] { display: flex; align-items: center; padding: 2px; border: 1px solid #8fb4ff42; border-radius: 28px; }
+.landing .particle-story-controls button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; min-width: 44px; padding: 10px 14px; border-radius: 24px; border: 0; background: #101c4b; color: #d1daf1; font: 500 12px/20px var(--heading); transition: background .18s, color .18s; }
+.landing .particle-story-controls button[aria-pressed='true'] { background: #263b70; color: #fff; }
+.landing .particle-story-controls button:hover { background: #304578; color: #fff; }
+.landing .particle-story-controls .particle-icon-control { padding: 10px; }
+.landing .particle-story-controls button:focus-visible, .landing .landing-particle-story a:focus-visible, .landing .landing-particle-story .landing-button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.particle-motion-note { padding: 8px; font: 400 11px/18px 'Roboto', sans-serif; color: #b9c8e9; }
+.landing .landing-lesson-section { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 64px; padding-block: 100px; }
+.landing-lesson-intro > h2 { font: 400 clamp(36px, 4vw, 56px)/1.1 var(--heading); letter-spacing: -1.6px; margin-block: 24px; }
+.landing-lesson-intro > p { max-width: 390px; color: var(--md-sys-color-on-surface-variant); font: 400 18px/1.65 'Roboto', sans-serif; }
+.landing-lesson-intro > .landing-coin-note { display: inline-block; margin-top: 12px; }
+@media (max-width: 899px) {
+  .landing .particle-story-panel.landing-hero { padding-top: max(240px, calc(var(--particle-height) * .40 + 36px)); padding-bottom: 100px; }
+  .landing .particle-story-panel h1 { font-size: clamp(34px, 5.5vw, 46px); }
+  .landing .particle-connections-panel { align-items: flex-start; justify-content: center; padding-top: calc(var(--particle-height) * .60); text-align: center; }
+  .particle-story-copy { max-width: 540px; }
+  .particle-story-copy > .landing-kicker { justify-content: center; }
+  .particle-story-copy > h2 { font-size: 42px; }
+  .particle-story-copy > p { max-width: 480px; margin-inline: auto; }
+  .particle-story-fallback { height: 36%; font-size: 29vw; }
+  .landing .landing-lesson-section { grid-template-columns: 1fr; gap: 32px; padding-block: 64px; }
+  .landing-lesson-intro { max-width: 620px; }
+  .landing-lesson-intro > p { max-width: 540px; }
+  .landing .landing-lesson-section .landing-preview-scene { width: 100%; max-width: 600px; margin-inline: auto; }
+}
+@media (max-width: 800px) { .landing .landing-particle-story { --particle-header: 76px; } }
+@media (max-width: 480px) {
+  .particle-story-controls { right: 12px; left: 12px; max-width: none; justify-content: center; gap: 4px; top: 12px; }
+  .landing .particle-story-controls button { padding-inline: 10px; }
+  .landing .particle-story-panel h1 br { display: block; }
+  .landing .particle-story-panel h1 > span { margin-left: 0; }
+  .landing .particle-story-panel .landing-hero-copy > p, .particle-story-copy > p { font-size: 16px; line-height: 1.6; }
+  .landing .particle-story-panel .landing-hero-actions { gap: 10px; flex-direction: column; margin-top: 20px; }
+  .landing .particle-story-panel .landing-hero-note { font-size: 12px; margin-top: 12px; }
+  .particle-scroll-cue { margin-top: 24px; font-size: 9px; }
+  .particle-story-copy > h2 { font-size: 38px; margin-block: 20px; }
+  .particle-story-figure > figcaption { font-size: 11px; bottom: 12px; inset-inline: 20px; }
+  .particle-story-copy > .landing-kicker { font-size: 10px; letter-spacing: 1.2px; }
+}
+@media (max-height: 700px) and (min-width: 900px) {
+  .landing .particle-story-panel.landing-hero { padding-top: max(220px, calc(var(--particle-height) * .62 + 36px)); }
+}
+@media (prefers-reduced-motion: reduce) { .landing .particle-story-controls button { transition: none; } }
+
+@media (max-width: 600px) {
+  .particle-follow-control > span, .particle-motion-note { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-height: 700px) {
+  .particle-story-figure > figcaption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+.landing .landing-particle-story[data-particle-supported='false'] .particle-story-stage { position: relative; top: 0; grid-row: 1; }

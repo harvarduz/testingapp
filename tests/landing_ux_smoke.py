@@ -98,14 +98,14 @@ with sync_playwright() as p:
         page.goto(URL,wait_until='networkidle')
         stage=page.locator('.particle-story-stage')
         expect(stage).to_have_attribute('data-canvas-ready','true')
-        for progress,view in [(.1,'curio'),(.45,'orbit'),(.8,'book'),(.1,'curio')]:
-            stage.evaluate('''(node,p)=>{const header=document.querySelector('.landing-header').getBoundingClientRect().bottom;scrollTo({top:scrollY+node.getBoundingClientRect().bottom-innerHeight+p*(innerHeight-header-node.offsetHeight),behavior:'instant'})}''',progress)
+        for progress,view in [(.02,'curio'),(.7,'orbit'),(.95,'orbit'),(.02,'curio')]:
+            page.locator('.landing-particle-story').evaluate('''(node,p)=>{const stage=node.querySelector('.particle-story-stage');const inset=parseFloat(getComputedStyle(stage).top)||0;scrollTo({top:scrollY+node.getBoundingClientRect().top-inset+p*(node.offsetHeight-stage.offsetHeight),behavior:'instant'})}''',progress)
             page.wait_for_timeout(160)
             expect(stage).to_have_attribute('data-view',view)
             box=stage.bounding_box()
             assert box['y'] >= page.locator('.landing-header').bounding_box()['height']-1 and box['y']+box['height']<=height+1,(width,height,view,box)
         page.screenshot(path=str(OUTPUT/f'landing-ux-particles-{width}-{height}.png'))
-    passed('Every automatic particle shape appears with the full canvas visible below the header, including phone landscape; reverse scroll restores it')
+    passed('The full-width particle hero stays visible below the header while lettering becomes a sphere and reverses, including phone landscape')
     assert not errors, errors
     passed('All regression journeys finish without JavaScript errors')
     browser.close()
