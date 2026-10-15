@@ -1,7 +1,11 @@
 # Verified release
 
-The particle hero and page-wide motion revisions were validated on 15 October 2026 with Node.js 24, Chromium and the compiled production frontend. The supplied Bloom Material Expressive reference remains the visual foundation: four tonal palettes, light/dark modes, self-hosted Google Sans Flex/Roboto, a collapsible rail, neutral information surfaces, outlined secondary actions, and filled primary actions. Google blue uses #0b57d0 in light mode and #a8c7fa in dark mode.
+The internal action and control revision was validated on 15 October 2026 with Node.js 24, Chromium and the compiled production frontend. The supplied Bloom Material Expressive reference remains the visual foundation: four tonal palettes, light/dark modes, self-hosted Google Sans Flex/Roboto, a collapsible rail, neutral information surfaces, outlined secondary actions, and filled primary actions. Google blue uses #0b57d0 in light mode and #a8c7fa in dark mode.
 
+
+The internal action audit reproduced enabled press feedback on controls disabled by an ancestor fieldset, accidental modal dismissal when a drag ended on the backdrop, conflicting creator row mutations and undersized course-title/footer actions. It now checks native `:disabled` state, releases feedback when controls become unavailable, requires a deliberate backdrop gesture, serializes creator mutations and rejects stale list loads. Login, save, publish, deletion and logout show named pending states. Draft deletion focuses **Keep** and restores the trigger on cancel; action completion restores useful list focus. Confirmations scroll above fixed mobile navigation. Clipboard requests are guarded, retain focus and select a fallback link; late completion cannot alter another course’s sharing state. Save/Publish actions stack on narrow screens, and pending primary actions keep their readable primary colours.
+
+For this revision, the production build and 162 checks/audits passed: 34 Node checks, 9 Material button checks, 12 account/creator checks/audits, 11 study-tool checks, 19 account/curriculum checks/audits, 11 marketplace checks, 38 selection checks/audits, 14 student browser checks and 14 new action UX checks/audits. The new action suite uses delayed mocked responses for pending/error/duplicate behavior; existing suites exercise actual local accounts, course publication, progress and persistence in temporary databases. Its four light/dark mobile audits cover delete confirmation and pending editor actions. Earlier animation and appearance evidence is retained below, rather than claimed as rerun for this control revision.
 
 The preceding UI/UX audit, validated on 14 October 2026, reproduced and corrected these failures in Chromium, including viewports omitted by earlier checks:
 
@@ -75,7 +79,8 @@ The account/curriculum suite exercises 60 stepped-example/practice flows across 
 | `tests/learning_ux_smoke.py` | 5 | Prompt/retry/result focus at 320/390/1366 px, announced examples/copying, algorithm error recovery, rounded fractions, and honest note sync status |
 | `tests/account_creator_ux_smoke.py` | 12 | Eight behavioral checks for unsaved imports, new lesson/error focus, failed uploads, duplicate requests and published lesson protection; four mobile light/dark form audits |
 | `tests/interface_audit_smoke.py` | 8 | Six behavioral checks for session recovery/stale responses, route/dialog focus, mobile search and drawer Tab order; two queried-catalog light/dark audits |
-| **Retained evidence total** | **559** | **Current and earlier platform checks; this is not a claim that every suite was rerun for this release** |
+| `tests/action_ux_smoke.py` | 14 | Ten behavior checks for inherited disabled controls, held presses, backdrop gestures, delayed clipboard requests, serialized creator operations, delete focus, editor pending/retry, duplicate sign-out and actual touch targets; four mobile light/dark audits |
+| **Retained evidence total** | **573** | **Current and earlier platform checks; this is not a claim that every suite was rerun for this release** |
 
 Build first, then run the interaction suites; each starts an isolated server and removes its temporary accounts and drafts:
 

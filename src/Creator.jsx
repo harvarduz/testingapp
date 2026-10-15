@@ -8,6 +8,7 @@ import { CourseArt } from './Art.jsx';
 import './marketplace.css';
 import LessonExtensionEditor from './LessonExtensionEditor.jsx';
 import SelectField from './SelectField.jsx';
+import ActionPending from './ActionPending.jsx';
 
 function Offer() {
   return <div className="creator-offer"><span className="creator-offer-icon"><Globe size={22} /></span><div><strong>Publish your own courses.</strong><p>Course publishing is free for a limited time. No card needed.</p></div><span className="offer-price">$0<span>publishing fee</span></span></div>;
@@ -16,6 +17,7 @@ function Offer() {
 function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
   const [course, setCourse] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const [saveAction, setSaveAction] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [issues, setIssues] = useState([]);
@@ -53,7 +55,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
   const save = async publish => {
     if (saving.current) return;
     saving.current = true;
-    setError(''); setMessage(''); setBusy(true);
+    setError(''); setMessage(''); setSaveAction(publish ? 'publish' : 'save'); setBusy(true);
     try {
       const content = normalizeCourse({ ...course, minutes: Number(course.minutes) }, categories.slice(1));
       const missing = publish || course.status === 'published' ? publicationIssues(content) : [];
@@ -73,7 +75,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
       }
       setMessage(publish ? 'Published. Students can now find your course in Explore courses.' : saved.status === 'published' ? 'Changes saved. Your published course is up to date.' : 'Draft saved. It is only visible in your workspace.');
     } catch (error) { setError(error.message); }
-    finally { saving.current = false; setBusy(false); }
+    finally { saving.current = false; setBusy(false); setSaveAction(null); }
   };
   const preview = () => {
     setError(''); setMessage(''); setValidationAction('previewing');
@@ -90,7 +92,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
     <div className="editor-heading"><div><span className="eyebrow">SHARE WHAT YOU KNOW</span><h2>{course.id ? 'Edit your course.' : 'Create a course.'}</h2><p>Explain it clearly, show an example, then let your students try.</p></div><button className="button outline" onClick={preview} disabled={busy}><Eye size={17} />Preview lesson</button></div>
     {issues.length > 0 && <div className="publication-issues" role="alert" tabIndex={-1} ref={validation}><strong>A few things to finish before {validationAction}:</strong><ul>{issues.map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
     {error && <p className="form-message error" role="alert" tabIndex={-1} ref={errorMessage}>{error}</p>}
-    <form onSubmit={e => { e.preventDefault(); save(false); }}>
+    <form aria-busy={busy} onSubmit={e => { e.preventDefault(); save(false); }}>
       <fieldset disabled={busy} className="editor-details">
         <legend>Course details</legend>
         <label className="editor-wide">Course title<input ref={titleInput} value={course.title} onChange={e => update({ title: e.target.value })} maxLength={100} placeholder="What will students discover?" /></label>
@@ -120,7 +122,7 @@ function CourseEditor({ initial, onBack, onSaved, onPreview, onDirtyChange }) {
       </details>)}
       <button type="button" className="button outline" disabled={busy || course.lessons.length >= 50} onClick={() => { pendingLessonFocus.current = course.lessons.length; update({ lessons: [...course.lessons, emptyLesson()] }); }}><Plus size={17} />Add a lesson</button>
       {message && <p className="form-message success" role="status">{message}</p>}
-      <div className="editor-actions"><span><Check size={15} />Free publishing · Limited-time offer</span><div><button type="submit" className="button outline" disabled={busy}><Save size={16} />{busy ? 'Saving…' : course.status === 'published' ? 'Save changes' : 'Save draft'}</button><button type="button" className="button primary" disabled={busy} onClick={() => save(true)}><Globe size={16} />{course.status === 'published' ? 'Save & publish' : 'Publish for free'}</button></div></div>
+      <div className="editor-actions"><span><Check size={15} />Free publishing · Limited-time offer</span><div><button type="submit" className="button outline" disabled={busy} aria-busy={busy && saveAction === 'save' || undefined}>{busy && saveAction === 'save' ? <ActionPending>{course.status === 'published' ? 'Saving changes…' : 'Saving draft…'}</ActionPending> : <><Save size={16} />{course.status === 'published' ? 'Save changes' : 'Save draft'}</>}</button><button type="button" className="button primary" disabled={busy} aria-busy={busy && saveAction === 'publish' || undefined} onClick={() => save(true)}>{busy && saveAction === 'publish' ? <ActionPending>Publishing…</ActionPending> : <><Globe size={16} />{course.status === 'published' ? 'Save & publish' : 'Publish for free'}</>}</button></div></div>
     </form>
   </section>;
 }
@@ -133,6 +135,9 @@ export default function Creator({ user, onSession, onCatalogChange, onPreview, o
   const [errorSource, setErrorSource] = useState(null);
   const [busy, setBusy] = useState(null);
   const [deletePending, setDeletePending] = useState(null);
+  const [notice, setNotice] = useState('');
+  const actionLock = useRef(false), loadRevision = useRef(0);
+  const pendingActionFocus = useRef(null), keepDraft = useRef(null), listError = useRef(null);
   const upload = useRef(null);
   const listHeading = useRef(null);
   const restoreListFocus = useRef(false);
@@ -140,15 +145,28 @@ export default function Creator({ user, onSession, onCatalogChange, onPreview, o
   useLayoutEffect(() => {
     if (!editing && restoreListFocus.current) { restoreListFocus.current = false; listHeading.current?.focus(); }
   }, [editing]);
+  useLayoutEffect(() => { if (deletePending) { keepDraft.current?.focus({ preventScroll: true }); keepDraft.current?.scrollIntoView({ block: 'nearest' }); } }, [deletePending]);
+  useLayoutEffect(() => {
+    if (!pendingActionFocus.current || busy || loading || editing) return;
+    const target = pendingActionFocus.current; pendingActionFocus.current = null;
+    if (error) return;
+    const row = [...document.querySelectorAll('[data-creator-course]')].find(node => node.dataset.creatorCourse === target.id);
+    const control = row?.querySelector(target.keep ? '.creator-delete' : 'button:not(:disabled)') || listHeading.current;
+    control?.focus({ preventScroll: true }); control?.scrollIntoView({ block: 'nearest' });
+  }, [deletePending, busy, loading, editing, error]);
+  useLayoutEffect(() => { if (error) listError.current?.focus(); }, [error]);
   const load = async () => {
     if (!user) return;
+    const request = ++loadRevision.current;
     setLoading(true);
-    try { setOwnCourses((await api('/creator/courses')).courses); setError(''); }
-    catch (error) { setError(error.message); setErrorSource('load'); }
-    finally { setLoading(false); }
+    try {
+      const result = await api('/creator/courses');
+      if (request === loadRevision.current) { setOwnCourses(result.courses); setError(''); }
+    } catch (error) { if (request === loadRevision.current) { setError(error.message); setErrorSource('load'); } }
+    finally { if (request === loadRevision.current) setLoading(false); }
   };
-  useEffect(() => { load(); }, [user?.id]); // A new session always reloads the owner's workspace.
-  const refresh = () => { load(); onCatalogChange(); };
+  useEffect(() => { load(); return () => { loadRevision.current += 1; }; }, [user?.id]);
+  const refresh = () => { const loadingCourses = load(); onCatalogChange(); return loadingCourses; };
   const importFile = async event => {
     const file = event.target.files[0]; event.target.value = '';
     if (!file) return;
@@ -159,22 +177,28 @@ export default function Creator({ user, onSession, onCatalogChange, onPreview, o
     } catch (error) { setError(error instanceof SyntaxError ? 'The file is not valid JSON. Download our template to get started.' : error.message); setErrorSource('import'); }
   };
   const changeStatus = async (course, action) => {
-    setBusy(course.id); setError('');
+    if (actionLock.current) return;
+    actionLock.current = true;
+    setBusy({ id: course.id, action }); setError(''); setNotice('');
     try {
       await api(`/creator/courses/${course.id}${action === 'delete' ? '' : '/' + action}`, { method: action === 'delete' ? 'DELETE' : 'POST', body: action === 'delete' ? undefined : {} });
-      setDeletePending(null); refresh();
+      pendingActionFocus.current = { id: course.id };
+      setDeletePending(null);
+      await refresh();
+      setNotice(action === 'delete' ? 'Draft deleted.' : action === 'unpublish' ? 'Course unpublished. Your draft is private.' : 'Course published. Students can now find it in the catalog.');
     } catch (error) { setError(error.message); setErrorSource('action'); }
-    finally { setBusy(null); }
+    finally { actionLock.current = false; setBusy(null); }
   };
   return <div className="creator-workspace">
     <Offer />
     {!user ? <div className="creator-welcome"><div><span className="eyebrow">THE CREATOR WORKSPACE</span><h2>Teach what you know.</h2><p>Build a short course around it. Start with one useful idea, add an example and a quiz, and publish it for other curious minds.</p><ul><li><Check size={16} />Write lessons in the course editor</li><li><Check size={16} />Upload a course as a JSON file</li><li><Check size={16} />Preview, save drafts, and publish</li><li><Check size={16} />Keep ownership of your course content</li></ul><p className="creator-tip">Create an account to keep your drafts private and your published courses attributed to you.</p></div><Account onSession={onSession} /></div>
     : editing ? <CourseEditor key={editing.id || 'new'} initial={editing} onBack={closeEditor} onSaved={refresh} onPreview={onPreview} onDirtyChange={onDirtyChange} />
     : <>
-      <div className="creator-list-heading"><div><h2 ref={listHeading} tabIndex={-1}>Your courses.</h2><p>Private drafts stay here. Published courses appear in the student catalog.</p></div><button className="button primary" onClick={() => setEditing({ ...emptyCourse(), status: 'draft' })}><Plus size={17} />Create a course</button></div>
-      <div className="creator-import"><div><FileUp size={22} /><span><strong>Already have your course written?</strong><small>Upload a JSON file, review it in the editor, then publish. Up to 1 MB.</small></span></div><div><button className="text-button" onClick={() => downloadJson({ ...courses[0], id: undefined, title: 'My first course' }, 'curio-course-template.json')}><Download size={16} />Download template</button><button className="button outline" onClick={() => upload.current.click()}><FileUp size={16} />Upload course</button><input ref={upload} className="sr-only" type="file" accept=".json,application/json" aria-label="Upload course JSON" onChange={importFile} /></div></div>
-      {error && <div className="form-message error" role="alert">{error}{errorSource === 'load' && <button className="text-button" onClick={load}>Try again</button>}{errorSource === 'import' && <button className="text-button" onClick={() => upload.current.click()}>Choose another file</button>}</div>}
-      {loading ? <p role="status" className="creator-loading">Opening your workspace…</p> : !ownCourses.length && !error ? <div className="creator-empty"><span><BookOpen size={33} /></span><h3>Your workspace is ready.</h3><p>Create a course or upload our template. Drafts stay private until you publish them.</p><button className="text-button" onClick={() => setEditing({ ...emptyCourse(), status: 'draft' })}>Start a first draft<ArrowRight size={17} /></button></div> : <div className="creator-course-list">{ownCourses.map(course => <article key={course.id} className="creator-course-row"><div className={`creator-course-cover ${course.color}`}><CourseArt type={course.art} /></div><div className="creator-course-row-copy"><span className={`status-pill ${course.status === 'published' ? 'published' : ''}`}>{course.status === 'published' ? 'Published' : 'Private draft'}</span><h3>{course.title || 'Untitled course'}</h3><p>{course.category} · {course.lessons.length} lessons</p></div><div className="creator-row-actions"><button className="button outline" disabled={busy === course.id} onClick={() => setEditing(course)}>Edit course</button>{course.status === 'published' ? <button className="text-button" disabled={busy === course.id} onClick={() => changeStatus(course, 'unpublish')}>Unpublish</button> : <button className="text-button" disabled={busy === course.id} onClick={() => changeStatus(course, 'publish')}>Publish for free</button>}{!course.everPublished && (deletePending === course.id ? <div className="delete-confirm"><span>Delete draft?</span><button disabled={busy === course.id} onClick={() => changeStatus(course, 'delete')}>Delete</button><button onClick={() => setDeletePending(null)}>Keep</button></div> : <button className="creator-delete" aria-label={`Delete ${course.title || 'untitled course'}`} onClick={() => setDeletePending(course.id)}><Trash2 size={16} /></button>)}</div></article>)}</div>}
+      <div className="creator-list-heading"><div><h2 ref={listHeading} tabIndex={-1}>Your courses.</h2><p>Private drafts stay here. Published courses appear in the student catalog.</p></div><button className="button primary" disabled={Boolean(busy)} onClick={() => setEditing({ ...emptyCourse(), status: 'draft' })}><Plus size={17} />Create a course</button></div>
+      <div className="creator-import"><div><FileUp size={22} /><span><strong>Already have your course written?</strong><small>Upload a JSON file, review it in the editor, then publish. Up to 1 MB.</small></span></div><div><button className="text-button" onClick={() => downloadJson({ ...courses[0], id: undefined, title: 'My first course' }, 'curio-course-template.json')}><Download size={16} />Download template</button><button className="button outline" disabled={Boolean(busy)} onClick={() => upload.current.click()}><FileUp size={16} />Upload course</button><input ref={upload} className="sr-only" type="file" disabled={Boolean(busy)} accept=".json,application/json" aria-label="Upload course JSON" onChange={importFile} /></div></div>
+      {error && <div className="form-message error" role="alert" tabIndex={-1} ref={listError}>{error}{errorSource === 'load' && <button className="text-button" onClick={load}>Try again</button>}{errorSource === 'import' && <button className="text-button" onClick={() => upload.current.click()}>Choose another file</button>}</div>}
+      {notice && !error && <p className="form-message success" role="status">{notice}</p>}
+      {loading ? <p role="status" className="creator-loading">Opening your workspace…</p> : !ownCourses.length && !error ? <div className="creator-empty"><span><BookOpen size={33} /></span><h3>Your workspace is ready.</h3><p>Create a course or upload our template. Drafts stay private until you publish them.</p><button className="text-button" onClick={() => setEditing({ ...emptyCourse(), status: 'draft' })}>Start a first draft<ArrowRight size={17} /></button></div> : <div className="creator-course-list">{ownCourses.map(course => <article key={course.id} className="creator-course-row" data-creator-course={course.id} aria-busy={busy?.id === course.id || undefined}><div className={`creator-course-cover ${course.color}`}><CourseArt type={course.art} /></div><div className="creator-course-row-copy"><span className={`status-pill ${course.status === 'published' ? 'published' : ''}`}>{course.status === 'published' ? 'Published' : 'Private draft'}</span><h3>{course.title || 'Untitled course'}</h3><p>{course.category} · {course.lessons.length} lessons</p></div><div className="creator-row-actions"><button className="button outline" disabled={Boolean(busy)} onClick={() => setEditing(course)}>Edit course</button>{course.status === 'published' ? <button className="text-button" disabled={Boolean(busy)} aria-busy={busy?.id === course.id && busy.action === 'unpublish' || undefined} onClick={() => changeStatus(course, 'unpublish')}>{busy?.id === course.id && busy.action === 'unpublish' ? <ActionPending>Unpublishing…</ActionPending> : 'Unpublish'}</button> : <button className="text-button" disabled={Boolean(busy)} aria-busy={busy?.id === course.id && busy.action === 'publish' || undefined} onClick={() => changeStatus(course, 'publish')}>{busy?.id === course.id && busy.action === 'publish' ? <ActionPending>Publishing…</ActionPending> : 'Publish for free'}</button>}{!course.everPublished && (deletePending === course.id ? <div className="delete-confirm"><span>Delete draft?</span><button disabled={Boolean(busy)} aria-busy={busy?.id === course.id && busy.action === 'delete' || undefined} onClick={() => changeStatus(course, 'delete')}>{busy?.id === course.id && busy.action === 'delete' ? <ActionPending>Deleting…</ActionPending> : 'Delete'}</button><button ref={keepDraft} disabled={Boolean(busy)} onClick={() => { pendingActionFocus.current = { id: course.id, keep: true }; setDeletePending(null); }}>Keep</button></div> : <button className="creator-delete" disabled={Boolean(busy)} aria-label={`Delete ${course.title || 'untitled course'}`} onClick={() => setDeletePending(course.id)}><Trash2 size={16} /></button>)}</div></article>)}</div>}
     </>}
   </div>;
 }

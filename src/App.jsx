@@ -41,6 +41,7 @@ const challengeForDay = (date) => challengeBank[Math.floor(Date.parse(`${date}T0
 
 function Modal({ children, onClose, title, wide = false, screenKey }) {
   const ref = useRef(null);
+  const backdropPress = useRef(null);
   React.useLayoutEffect(() => {
     if (screenKey === undefined) return;
     ref.current.scrollTop = 0;
@@ -65,7 +66,11 @@ function Modal({ children, onClose, title, wide = false, screenKey }) {
     document.addEventListener('keydown', onKey);
     return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', onKey); previous?.focus(); };
   }, [onClose]);
-  return <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}><section ref={ref} tabIndex={-1} className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}><button className="icon-button modal-close" onClick={onClose} aria-label="Close dialog"><X size={20}/></button>{children}</section></div>;
+  return <div className="modal-backdrop"
+    onPointerDown={event => { backdropPress.current = event.target === event.currentTarget && event.button === 0 ? { x: event.clientX, y: event.clientY } : null; }}
+    onPointerMove={event => { const press = backdropPress.current; if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10) backdropPress.current = null; }}
+    onPointerCancel={() => { backdropPress.current = null; }}
+    onClick={event => { const outside = event.target === event.currentTarget && backdropPress.current; backdropPress.current = null; if (outside) onClose(); }}><section ref={ref} tabIndex={-1} className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}><button className="icon-button modal-close" onClick={onClose} aria-label="Close dialog"><X size={20}/></button>{children}</section></div>;
 }
 
 function CourseCard({ course, progress, onOpen, onSave }) {
@@ -130,6 +135,7 @@ export default function App() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const sessionRevision = useRef(0);
   const [signingOut, setSigningOut] = useState(false);
+  const signOutPending = useRef(false);
   const [accountError, setAccountError] = useState('');
   const [syncRetry, setSyncRetry] = useState(0);
   const [view, setView] = useState(() => linkedCourse() ? 'explore' : views.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
@@ -377,6 +383,8 @@ export default function App() {
     if (modalState.current?.type === 'account') close();
   };
   const signOut = async () => {
+    if (signOutPending.current) return;
+    signOutPending.current = true;
     setSigningOut(true); setAccountError('');
     try {
       await api('/progress', { method: 'PUT', body: progress });
@@ -384,7 +392,7 @@ export default function App() {
       sessionRevision.current++;
       setUser(null); setProgress(emptyProgress()); setSyncStatus(''); setSessionError(''); setSessionLoading(false); saveOwner(null);
     } catch (error) { setAccountError(`Could not sign out: ${error.message}`); }
-    finally { setSigningOut(false); }
+    finally { signOutPending.current = false; setSigningOut(false); }
   };
   const openAccount = (mode = 'register') => setModal({ type: 'account', mode });
   const accountMenuProps = {

@@ -9,6 +9,8 @@ export function useMaterialButtons() {
     const waves = new Set();
     const timers = new Set();
 
+    const unavailable = button => !button?.isConnected || button.matches(':disabled') || button.getAttribute('aria-disabled') === 'true' || button.closest('[inert]');
+
     function release(id) {
       const press = presses.get(id);
       if (!press) return;
@@ -28,7 +30,7 @@ export function useMaterialButtons() {
     }
 
     function begin(button, id, point) {
-      if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true' || button.closest('[inert]')) return;
+      if (unavailable(button)) return;
       release(id);
       button.setAttribute('data-material-pressed', '');
       let wave;
@@ -74,6 +76,12 @@ export function useMaterialButtons() {
     };
     const releaseAll = () => { for (const id of presses.keys()) release(id); };
     const visibilityChange = () => { if (document.hidden) releaseAll(); };
+    // A fieldset can disable a descendant without setting button.disabled.
+    // Also release feedback when a pending action removes its own trigger.
+    const controlsChanged = new MutationObserver(() => {
+      for (const [id, press] of presses) if (unavailable(press.button)) release(id);
+    });
+    controlsChanged.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'inert'] });
     const bindings = [
       ['pointerdown', pointerDown], ['pointerup', pointerUp], ['pointercancel', pointerUp],
       ['pointermove', pointerMove], ['pointerout', pointerOut],
@@ -83,6 +91,7 @@ export function useMaterialButtons() {
     document.addEventListener('visibilitychange', visibilityChange);
     window.addEventListener('blur', releaseAll);
     return () => {
+      controlsChanged.disconnect();
       for (const [name, handler] of bindings) document.removeEventListener(name, handler, true);
       document.removeEventListener('visibilitychange', visibilityChange);
       window.removeEventListener('blur', releaseAll);

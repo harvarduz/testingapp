@@ -1,6 +1,7 @@
 import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { api } from './api.js';
+import ActionPending from './ActionPending.jsx';
 
 export default function Account({ onSession, initialMode = 'register' }) {
   const [mode, setMode] = useState(initialMode);
@@ -44,7 +45,7 @@ export default function Account({ onSession, initialMode = 'register' }) {
       <small id={`${id}-password-hint`}>At least 10 characters. Use a password unique to Curio.</small>
       </fieldset>
       {error && <p className="form-message error" role="alert" tabIndex={-1} ref={errorMessage}>{error}</p>}
-      <button className="button primary full-width" disabled={busy}>{busy ? 'Just a moment…' : mode === 'register' ? 'Create free account' : 'Sign in'}<ArrowRight size={17} /></button>
+      <button className="button primary full-width" disabled={busy} aria-busy={busy || undefined}>{busy ? <ActionPending>{mode === 'register' ? 'Creating account…' : 'Signing in…'}</ActionPending> : <>{mode === 'register' ? 'Create free account' : 'Sign in'}<ArrowRight size={17} /></>}</button>
     </form>
     <button className="account-switch" disabled={busy} onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setShowPassword(false); setError(''); }}>{mode === 'register' ? 'Already have an account? Sign in' : 'New here? Create an account'}</button>
     <span className="account-note"><Check size={14} />Learning is free. Publishing is free for a limited time.</span>

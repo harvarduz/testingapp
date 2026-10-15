@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Check, CloudUpload, GraduationCap, LoaderCircle, LogIn, LogOut, Settings2, UserRound, UserRoundPlus } from 'lucide-react';
 import './account-menu.css';
+import ActionPending from './ActionPending.jsx';
 
 export default function AccountMenu({ user, loading, signingOut, error, syncStatus, onOpen, onProfile, onLearning, onCreator, onAccount, onSignOut, onRetrySync }) {
   const [open, setOpen] = useState(false);
@@ -86,7 +87,7 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
         <button disabled={signingOut} onClick={() => choose(onProfile)}><Settings2 size={19} />Learning profile</button>
         <button disabled={signingOut} onClick={() => choose(onCreator)}><GraduationCap size={19} />Creator workspace</button>
         {syncError && <button disabled={signingOut} onClick={onRetrySync}><CloudUpload size={19} />Retry saving progress</button>}
-        {user && <><div className="account-menu-divider" /><button disabled={signingOut} onClick={onSignOut}><LogOut size={19} />{signingOut ? 'Signing out…' : 'Sign out'}</button></>}
+        {user && <><div className="account-menu-divider" /><button disabled={signingOut} aria-busy={signingOut || undefined} onClick={onSignOut}>{signingOut ? <ActionPending>Signing out…</ActionPending> : <><LogOut size={19} />Sign out</>}</button></>}
       </div>
     </div>}
   </div>;

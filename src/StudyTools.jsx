@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Check, Link, NotebookPen } from 'lucide-react';
+import ActionPending from './ActionPending.jsx';
 
 export function CourseShare({ course }) {
   const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false), revision = useRef(0), linkField = useRef(null);
   const link = new URL(location.pathname, location.origin);
   link.hash = `course=${encodeURIComponent(course.id)}`;
+  useLayoutEffect(() => {
+    pending.current = false; setBusy(false); setMessage('');
+    return () => { revision.current += 1; };
+  }, [course.id]);
+  useLayoutEffect(() => { if (message === 'Select the link below to copy it.') { linkField.current?.focus(); linkField.current?.select(); } }, [message]);
   const copy = async () => {
-    try { await navigator.clipboard.writeText(link.href); setMessage('Link copied'); }
-    catch { setMessage('Select the link below to copy it.'); }
+    if (pending.current) return;
+    pending.current = true; setBusy(true); setMessage('');
+    const request = ++revision.current;
+    try { await navigator.clipboard.writeText(link.href); if (request === revision.current) setMessage('Link copied'); }
+    catch { if (request === revision.current) setMessage('Select the link below to copy it.'); }
+    finally { if (request === revision.current) { pending.current = false; setBusy(false); } }
   };
-  return <div className="course-share"><button className="text-button" onClick={copy}><Link size={16} />{message === 'Link copied' ? 'Link copied' : 'Copy course link'}</button><span className="sr-only" role="status">{message}</span>{message && <span className="share-status">{message === 'Link copied' ? <Check size={15} /> : <input aria-label="Course sharing link" readOnly value={link.href} onFocus={event => event.target.select()} />}</span>}</div>;
+  return <div className="course-share"><button type="button" className="text-button" onClick={copy} aria-busy={busy || undefined} aria-disabled={busy || undefined}>{busy ? <ActionPending>Copying link…</ActionPending> : <><Link size={16} />{message === 'Link copied' ? 'Link copied' : 'Copy course link'}</>}</button><span className="sr-only" role="status">{busy ? 'Copying course link.' : message}</span>{message && <span className="share-status">{message === 'Link copied' ? <Check size={15} /> : <input ref={linkField} aria-label="Course sharing link" readOnly value={link.href} onFocus={event => event.target.select()} />}</span>}</div>;
 }
 
 export function LessonNotes({ course, index, progress, onChange, signedIn, syncStatus, storageError }) {

@@ -213,7 +213,7 @@ with tempfile.TemporaryDirectory(prefix='curio-platform-ux-') as directory:
             account.get_by_role('textbox', name='Email address').fill('boris@example.test')
             account.get_by_role('textbox', name='Password', exact=True).fill('A different private password 57!')
             account.get_by_role('button', name='Sign in', exact=True).click()
-            expect(account.get_by_role('button', name='Just a moment…', exact=True)).to_be_disabled()
+            expect(account.get_by_role('button', name='Signing in…', exact=True)).to_be_disabled()
             for _ in range(50):
                 if held_login: break
                 learner.wait_for_timeout(100)

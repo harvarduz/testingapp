@@ -45,6 +45,8 @@ The supplied [SI-site mockup](https://azizbeksafarov.github.io/design/si-site/) 
 
 **Curio coins** reward learning: 25 for each newly completed lesson, 15 for each daily challenge, and 20 for the first successful practice session each day. A session must include a correct answer. Repeating a lesson or same-day session adds no extra coins. Each completed lab also earns 30 coins once. The balance is derived from saved learning records. Coins are motivational points with no cash value, purchases, or withdrawal facility.
 
+Internal actions show named loading states for sign-in, saving, publishing, deleting and logout. Creator list operations serialize while pending and restore focus after refresh; deleting a draft defaults focus to **Keep**, and controls scroll clear of the mobile bottom navigation. Clipboard copying preserves focus, rejects duplicate requests and selects a usable fallback link if permission fails. Dialogs close on an intentional backdrop tap or click; dragging a selection outside the dialog keeps it open. Native disabled fieldsets and controls removed during a press release Material feedback. Course-title and delete controls provide 44 px targets, and editor Save/Publish actions stack on phones.
+
 The closed mobile drawer is excluded from keyboard navigation. Page navigation focuses the destination heading; searching and clearing a query retain the input cursor. Temporary account-loading failures can be retried without reloading; a delayed retry cannot replace a newer authenticated session.
 
 The desktop sidebar can collapse to an icon rail and remembers that browser preference. It scrolls independently on short screens. Mobile uses a full drawer and bottom navigation. Colour, feedback, coin celebrations, and hover effects respect reduced-motion settings.
@@ -112,6 +114,7 @@ python tests/browser_smoke.py
 python tests/landing_smoke.py
 python tests/accessibility_smoke.py
 python tests/button_smoke.py
+python tests/action_ux_smoke.py
 python tests/skill_playground_smoke.py
 python tests/particle_story_smoke.py
 python tests/landing_particles_smoke.py
@@ -164,6 +167,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Change | File |
 |---|---|
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
+| Pending action feedback and native press handling | `src/ActionPending.jsx`, `src/action-pending.css`, `src/MaterialButtons.jsx` |
 | Particle hero, lettering/sphere geometry and motion controls | `src/ParticleStory.jsx`, `src/particleGeometry.js`, `src/particle-story.css` |
 | Page-wide particle effects and shared frame-time physics | `src/LandingParticleEffects.jsx`, `src/particleMotion.js`, `src/landing-particles.css` |
 | Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
