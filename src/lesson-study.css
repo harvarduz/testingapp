@@ -1,0 +1,88 @@
+.lesson-study { margin-block: 32px; padding-block: 28px; border-block: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface); }
+.lesson-study h3 { margin: 8px 0 24px; font: 500 28px/1.2 var(--heading); letter-spacing: -.5px; }
+.lesson-study h4 { font: 500 20px/1.35 var(--heading); margin: 0 0 12px; }
+.lesson-study p { font: 400 16px/1.7 'Roboto', sans-serif; margin: 0 0 16px; }
+.study-reading + .study-reading { margin-top: 24px; }
+.study-reading p { max-width: 68ch; }
+.study-open { margin-top: 8px; }
+.lesson-study .study-session-note, .reasoning-case > small { display: block; color: var(--md-sys-color-on-surface-variant); font: 400 13px/1.5 'Roboto', sans-serif; margin: 12px 0 0; }
+.study-source { display: inline-flex; gap: 8px; align-items: center; min-height: 44px; margin-top: 20px; color: var(--md-sys-color-primary); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+.interactive-experiment { border: 1px solid var(--md-sys-color-outline-variant); border-radius: 24px; padding: 24px; margin-top: 20px; background: var(--md-sys-color-surface-container-low); }
+.interactive-experiment > h4 { font-size: 24px; margin-top: 8px; }
+.experiment-controls { margin-block: 24px; }
+.experiment-controls > label { display: block; margin-block: 22px; }
+.experiment-controls > label > span { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; font: 400 15px/1.5 'Roboto', sans-serif; }
+.experiment-controls label strong { font-weight: 500; color: var(--md-sys-color-primary); text-align: end; font-variant-numeric: tabular-nums; }
+.experiment-controls input[type=range] { display: block; width: 100%; min-height: 44px; margin: 0; accent-color: var(--md-sys-color-primary); cursor: pointer; }
+.experiment-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.experiment-list label, .transfer-checkpoint label { display: block; font-size: 14px; margin-bottom: 8px; }
+.experiment-list input, .checkpoint-answer input { min-width: 0; width: 100%; min-height: 52px; border: 1px solid var(--md-sys-color-outline); border-radius: 12px; padding: 12px 14px; color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface); font: 400 16px/1.4 'Roboto', sans-serif; }
+.experiment-list input[aria-invalid=true], .checkpoint-answer input[aria-invalid=true] { border-color: var(--md-sys-color-error); }
+.experiment-list small, .transfer-checkpoint form small { display: block; color: var(--md-sys-color-on-surface-variant); font: 400 13px/1.5 'Roboto', sans-serif; margin-top: 8px; }
+.experiment-list button { margin-top: 12px; }
+.lesson-study .experiment-error { color: var(--md-sys-color-error); font-size: 14px; margin-block: 12px; }
+.lesson-study .experiment-announcement { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin: 12px 0 0; }
+.experiment-announcement:empty { display: none; }
+.experiment-code { padding: 16px; border-radius: 12px; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); overflow-x: auto; font: 400 14px/1.7 monospace; }
+.experiment-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 16px; margin: 24px 0 16px; }
+.experiment-metrics > div { border-left: 3px solid var(--md-sys-color-primary); padding-left: 12px; }
+.experiment-metrics span { display: block; font-size: 13px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+.experiment-metrics strong { display: block; font: 500 25px/1.25 var(--heading); margin-top: 6px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.experiment-metrics small { font: 400 13px/1.3 'Roboto', sans-serif; }
+.model-chart { margin: 24px 0 12px; min-width: 0; }
+.model-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-axis-title, .chart-tick { fill: var(--md-sys-color-on-surface-variant); font: 400 12px 'Roboto', sans-serif; }
+.chart-axis-title { font-weight: 500; }
+.chart-grid { stroke: var(--md-sys-color-outline-variant); stroke-dasharray: 3 4; }
+.chart-zero { stroke: var(--md-sys-color-outline); }
+.chart-series path { stroke-width: 2.5; stroke: var(--md-sys-color-primary); }
+.chart-series circle, .chart-bar { fill: var(--md-sys-color-primary); }
+.chart-series-1 path { stroke: var(--md-sys-color-on-surface); stroke-dasharray: 7 5; }
+.chart-bar-1 { fill: var(--md-sys-color-surface-container-low); stroke: var(--md-sys-color-on-surface); stroke-width: 2; }
+.chart-series-1 circle { fill: var(--md-sys-color-on-surface); }
+.chart-marker { fill: var(--md-sys-color-surface-container-low); stroke: var(--md-sys-color-on-surface); stroke-width: 3; }
+.chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 24px; font-size: 13px; }
+.chart-legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.legend-line { display: inline-block; width: 24px; border-top: 3px solid var(--md-sys-color-primary); }
+.chart-legend-bars .legend-line { height: 12px; width: 16px; border: 0; background: var(--md-sys-color-primary); }
+.chart-legend-bars .legend-line-1 { border: 2px solid var(--md-sys-color-on-surface); background: transparent; }
+.legend-line-1 { border-color: var(--md-sys-color-on-surface); border-top-style: dashed; }
+.chart-marker-note { text-align: center; font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+.experiment-data, .study-solution { border: 1px solid var(--md-sys-color-outline-variant); border-radius: 12px; margin-block: 16px; }
+.experiment-data summary, .study-solution summary { min-height: 48px; padding: 14px; cursor: pointer; color: var(--md-sys-color-primary); font: 500 14px/1.5 'Roboto', sans-serif; }
+.experiment-table-wrap { overflow-x: auto; margin: 0 12px 12px; }
+.experiment-table-wrap table { width: 100%; border-collapse: collapse; font: 400 14px/1.5 'Roboto', sans-serif; font-variant-numeric: tabular-nums; }
+.experiment-table-wrap caption { text-align: left; padding: 8px 4px 12px; color: var(--md-sys-color-on-surface-variant); font-size: 12px; }
+.experiment-table-wrap th { font-weight: 500; text-align: left; }
+.experiment-table-wrap td, .experiment-table-wrap th { border-bottom: 1px solid var(--md-sys-color-outline-variant); padding: 10px 8px; }
+.experiment-table-wrap tbody tr:last-child td { border: 0; }
+.lesson-study .experiment-notice { padding: 16px; border-left: 3px solid var(--md-sys-color-primary); margin-block: 24px; background: var(--md-sys-color-surface-container); }
+.study-formula { min-width: 0; margin: 24px 0 16px; }
+.study-formula > div { padding: 14px 4px; overflow-x: auto; font-size: 1.05rem; }
+.study-formula figcaption { font: 400 13px/1.6 'Roboto', sans-serif; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; }
+.lesson-study .experiment-limit { color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
+.transfer-checkpoint { border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 24px; margin-top: 24px; }
+.transfer-checkpoint h4 { margin-top: 8px; }
+.checkpoint-answer { display: flex; flex-wrap: wrap; gap: 12px; }
+.checkpoint-answer input { flex: 1 1 100px; width: 100px; }
+.checkpoint-hint { min-height: 44px; margin-top: 12px; }
+.lesson-study .checkpoint-hint-text { font-size: 14px; padding: 12px 0; }
+.study-feedback { border-left: 3px solid var(--md-sys-color-primary); padding: 12px 16px; margin-block: 16px; background: var(--md-sys-color-surface-container-high); }
+.study-feedback p { margin: 8px 0 0; }
+.study-solution p { padding: 0 14px 14px; margin: 0; }
+.reasoning-case { border: 1px solid var(--md-sys-color-outline-variant); padding: 24px; border-radius: 20px; margin-top: 24px; background: var(--md-sys-color-surface-container-low); }
+.reasoning-options { display: grid; gap: 10px; margin: 20px 0; }
+.reasoning-options button { min-height: 56px; border: 1px solid var(--md-sys-color-outline); border-radius: 14px; text-align: left; padding: 14px 16px; font: 400 15px/1.6 'Roboto', sans-serif; color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface); cursor: pointer; }
+.reasoning-options button[aria-pressed=true] { border: 2px solid var(--md-sys-color-primary); padding: 13px 15px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.study-load-error { padding: 16px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 12px; margin-block: 16px; }
+.lesson-study :where(button, input, summary, a, [tabindex]):focus-visible { outline: 3px solid var(--md-sys-color-primary); outline-offset: 3px; }
+@media (hover: hover) { .reasoning-options button:hover { background: var(--md-sys-color-surface-container-high); }.reasoning-options button[aria-pressed=true]:hover { background: var(--md-sys-color-secondary-container); } }
+@media (max-width: 480px) {
+  .lesson-study h3 { font-size: 25px; }
+  .interactive-experiment, .reasoning-case { padding: 18px 12px; border-radius: 18px; }
+  .interactive-experiment > h4 { font-size: 22px; }
+  .experiment-controls > label > span { font-size: 14px; }
+  .experiment-buttons .button { flex: 1 1 auto; }
+  .checkpoint-answer .button { width: 100%; }
+  .study-formula > div { font-size: .95rem; }
+}

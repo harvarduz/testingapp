@@ -10,7 +10,9 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             { name: 'material-colors', test: /node_modules\/@material\/material-color-utilities\// },
-            { name: 'ui-vendor', test: /node_modules\/(?!@material\/)/ },
+            { name: 'lesson-math', test: /node_modules\/katex\// },
+            { name: 'lesson-charts', test: /node_modules\/(?:d3-[^/]+|internmap)\// },
+            { name: 'ui-vendor', test: /node_modules\/(?!@material\/|katex\/|d3-[^/]+\/|internmap\/)/ },
           ],
         },
       },

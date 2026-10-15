@@ -16,6 +16,10 @@
   "dependencies": {
     "@material/material-color-utilities": "0.4.0",
     "@radix-ui/react-select": "2.2.6",
+    "d3-array": "3.2.4",
+    "d3-scale": "4.0.2",
+    "d3-shape": "3.2.0",
+    "katex": "0.19.0",
     "lucide-react": "1.55.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

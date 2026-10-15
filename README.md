@@ -31,6 +31,10 @@ Open **Study paths** to choose a sequence with a practical outcome. Your plan re
 
 All 121 starter lessons include learning goals, a stepped worked example, a common mistake, and at least two additional questions. Every course has six or more lessons, including three application lessons. Use Previous/Next step to work through an example, then answer the in-lesson exercises and read the reasoning after checking. Wrong answers allow another try. Opening a lesson, its check, or the idea again returns the dialog to its top and focuses it, so a long lesson starts with its heading. The separate lesson check records completion; inline exercises record practice history without awarding premature completion or session coins. New lessons are appended, so earlier completion indices keep their meaning. Creators can add the same fields in the lesson editor or JSON upload: up to five goals, eight worked steps, and five extra questions per lesson. Older course files remain supported.
 
+**Deeper understanding** adds subject-specific reading to the final application lesson in all 20 courses. In total, 34 existing lessons carry a curated supplement: 26 include one of 14 interactive models and eight include a reasoning case with choice-specific feedback. Models cover successive percentages, loop state, motion, pressure, statistics, volume, mass concentration, balanced reactions, light delay, break-even, cash-flow timing, compound growth, fixed-term offer costs and absolute/relative risk. Exact lesson titles bind these supplements to starter courses; creator courses and previews do not inherit them.
+
+Open **Interactive experiment** inside a lesson to change parameters, compare a labelled chart with its data table, read a formula and its plain-language meaning, and solve a different numeric case with hints and a worked solution. D3 provides scales, line geometry and statistical summaries; KaTeX provides self-hosted notation and MathML. Both libraries load only when an experiment opens. Assumptions and units are stated per model. Input lists are bounded and validated; no learner code is evaluated. Explorations reset on close, do not award coins or completion, and are separate from saved practice history. Use existing private lesson notes to retain your reasoning. Existing 121 lesson positions and 278 practice-question IDs remain unchanged.
+
 The homepage’s **Make the idea work** section offers three practice models: shade a target fraction, find a discount and compare editable pack prices. Calculations update as you interact; checking gives a specific explanation, and each model opens its related lesson. Blank or invalid prices/quantities get field-level recovery instructions. Unit prices are compared exactly before the displayed amounts are rounded. These local previews award no completion or coins. Catalog gauges show their actual inventory totals throughout scrolling, with **Show all totals** for immediate access.
 
 The homepage opens with a viewport-scale navy particle hero inspired by the requested [SI.gov motion reference](https://www.si.gov/). Large white serif **Curio** lettering transforms into **Stay curious.** on pointer entry or a short touch tap. Moving the pointer displaces the dots; clicking or tapping sends a pulse through them. Scrolling carries the same canvas into **Small ideas. A bigger picture.**, where the lettering becomes an orbital sphere. Real headings and course actions remain readable throughout the transition, and the interactive lesson preview follows the scene.
@@ -105,7 +109,7 @@ The server can start and pass its health check before a domain is generated. In 
 
 ## Validation
 
-`npm test` runs 34 backend/content/progress checks, including exact currency comparisons, appended lesson compatibility, automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
+`npm test` runs 45 backend/content/progress checks, including exact currency comparisons, appended lesson compatibility, automatic Railway domains, startup before domain generation, ownership, private drafts, publication, input/file validation, cross-origin requests, concurrent progress merges, and server restart persistence.
 
 Browser suites require Python Playwright and Chromium. Start the application for these suites:
 
@@ -139,6 +143,7 @@ python tests/platform_ux_smoke.py
 python tests/landing_motion_smoke.py
 python tests/account_creator_ux_smoke.py
 python tests/learning_ux_smoke.py
+python tests/lesson_experiments_smoke.py
 ```
 
 The marketplace suite tests imports, drafts, previews without progress credit, publication, account progress, and creator layouts. The study-tools suite checks bookmarks, private notes, deletion after stale-device updates, clipboard fallback, direct links to newly published courses, combined filters, review without duplicate credit, password visibility, and mobile keyboard navigation. The learning suite covers collapsible navigation, worked lessons, path continuation, new practice questions, mistake recommendations, Curio coin limits, editor-created practice, and cross-device persistence. The lab suite checks equivalent fractions, savings constraints, locked predictions, both algorithm modes, one-time rewards, related lessons, and cross-device progress. Layout checks cover 320/390/768/1366 px widths and short desktop/mobile heights.
@@ -186,6 +191,8 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Study paths, targeted practice, and Curio coins | `src/LearningExperience.jsx`, `src/learning.js` |
 | Interactive fraction, budget, and algorithm labs | `src/LearningLab.jsx`, `src/labs.js` |
 | Worked lesson content and additional questions | `src/lessonEnrichment.js`, `src/curriculum.js`, `src/applicationLessons.js` |
+| Curated deeper reading, model definitions and reasoning cases | `src/lessonStudies.js`, `src/LessonStudy.jsx` |
+| On-demand D3/KaTeX experiments and numeric transfer checks | `src/InteractiveExperiment.jsx`, `src/experimentModels.js`, `src/lesson-study.css` |
 | Stepped examples and inline exercises | `src/LearningExperience.jsx`, `src/lesson-workshop.css` |
 | Creator learning goals and practice editor | `src/LessonExtensionEditor.jsx` |
 | Creator editor and JSON import | `src/Creator.jsx`, `src/marketplace.css` |

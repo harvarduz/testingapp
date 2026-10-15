@@ -6,3 +6,6 @@
   --art-soft: color-mix(in srgb, var(--art-ink) 32%, var(--art-paper));
   --art-wash: color-mix(in srgb, var(--art-ink) 12%, var(--art-paper));
 }
+
+/* Course covers also fit the 296px dialog used on narrow phones. */
+.course-detail-cover .course-art { max-width: 100%; }
