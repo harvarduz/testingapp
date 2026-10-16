@@ -88,19 +88,36 @@ function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance, p
       } else if (header.current?.contains(event.target)) return;
       setMenuOpen(false);
     };
-    const desktop = matchMedia('(min-width: 1001px)');
-    const resize = () => { if (desktop.matches) setMenuOpen(false); };
     document.addEventListener('keydown', dismiss);
     document.addEventListener('pointerdown', dismiss);
     document.addEventListener('focusin', dismiss);
-    desktop.addEventListener('change', resize);
     return () => {
       document.removeEventListener('keydown', dismiss);
       document.removeEventListener('pointerdown', dismiss);
       document.removeEventListener('focusin', dismiss);
-      desktop.removeEventListener('change', resize);
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    const desktop = matchMedia('(min-width: 1001px)');
+    const resize = () => {
+      const focused = document.activeElement;
+      if (!desktop.matches) {
+        if (focused?.closest('.landing-desktop-nav, .landing-header-motion')) menuButton.current?.focus({ preventScroll: true });
+        return;
+      }
+      const restore = focused === menuButton.current || focused?.closest('.landing-mobile-nav');
+      const href = focused?.getAttribute('href');
+      setMenuOpen(false);
+      if (restore) {
+        const matchingLink = [...header.current.querySelectorAll('.landing-desktop-nav a')]
+          .find(link => link.getAttribute('href') === href);
+        (matchingLink || header.current.querySelector('.landing-brand'))?.focus({ preventScroll: true });
+      }
+    };
+    desktop.addEventListener('change', resize);
+    return () => desktop.removeEventListener('change', resize);
+  }, []);
 
   const visitSection = event => {
     const destination = document.getElementById(event.currentTarget.hash.slice(1));

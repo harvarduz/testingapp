@@ -10,6 +10,7 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
   const root = useRef(null);
   const trigger = useRef(null);
   const panel = useRef(null);
+  const focusEdge = useRef('first');
   const syncError = Boolean(user && syncStatus && !syncStatus.startsWith('Saved') && !syncStatus.startsWith('Saving'));
   const initials = user?.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
 
@@ -23,9 +24,10 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
 
   useLayoutEffect(() => {
     if (!open || position.top === undefined) return;
-    const first = panel.current.querySelector('button:not(:disabled)');
-    first?.focus({ preventScroll: true });
-    first?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    const controls = [...panel.current.querySelectorAll('button:not(:disabled)')];
+    const action = focusEdge.current === 'last' ? controls.at(-1) : controls[0];
+    action?.focus({ preventScroll: true });
+    action?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   }, [open, position]);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
   }, [user?.id]);
 
   const choose = action => { setOpen(false); trigger.current.focus({ preventScroll: true }); action(); };
-  const toggle = () => { if (!open) onOpen?.(); setOpen(value => !value); };
+  const toggle = () => { focusEdge.current = 'first'; if (!open) onOpen?.(); setOpen(value => !value); };
   const keyboard = event => {
     const controls = [...panel.current.querySelectorAll('button:not(:disabled)')];
     const index = controls.indexOf(document.activeElement);
@@ -83,7 +85,7 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
   };
 
   return <div className="account-menu" ref={root}>
-    <button className={`account-trigger ${user ? 'has-account' : ''}`} ref={trigger} aria-label="Open account menu" aria-expanded={open} aria-controls={open ? id : undefined} aria-busy={loading || signingOut} disabled={loading} title={loading ? 'Loading account' : user ? `${user.name} · Account` : 'Account'} onClick={toggle} onKeyDown={event => { if (!open && ['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); onOpen?.(); setOpen(true); } }}>
+    <button className={`account-trigger ${user ? 'has-account' : ''}`} ref={trigger} aria-label="Open account menu" aria-expanded={open} aria-controls={open ? id : undefined} aria-busy={loading || signingOut} disabled={loading} title={loading ? 'Loading account' : user ? `${user.name} · Account` : 'Account'} onClick={toggle} onKeyDown={event => { if (!open && ['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); focusEdge.current = event.key === 'ArrowUp' ? 'last' : 'first'; onOpen?.(); setOpen(true); } }}>
       {loading || signingOut ? <LoaderCircle size={20} className="account-spinner" /> : user ? initials : <UserRound size={22} />}
       {(syncError || error) && <span className="account-attention" aria-hidden="true" />}
     </button>

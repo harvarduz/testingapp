@@ -336,10 +336,12 @@ export default function App() {
     };
     const routeChange = () => setNotifications(false);
     document.addEventListener('pointerdown', outside);
+    document.addEventListener('focusin', outside);
     document.addEventListener('keydown', keyboard);
     window.addEventListener('hashchange', routeChange);
     return () => {
       document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('focusin', outside);
       document.removeEventListener('keydown', keyboard);
       window.removeEventListener('hashchange', routeChange);
     };
