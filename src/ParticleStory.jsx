@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play, RefreshCw, WandSparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, RefreshCw, WandSparkles } from 'lucide-react';
 import { createParticleGeometry } from './particleGeometry.js';
 import { advanceParticle } from './particleMotion.js';
 import './particle-story.css';
@@ -9,11 +9,10 @@ const smooth = value => value * value * (3 - 2 * value);
 const compactQuery = '(max-width: 899px), (max-height: 540px)';
 const views = [{ id: 'curio', label: 'Curio' }, { id: 'orbit', label: 'Connections' }];
 
-export default function ParticleStory({ onExplore, paused = false, onPauseChange }) {
+export default function ParticleStory({ onExplore, paused = false }) {
   const root = useRef(null), stage = useRef(null), canvas = useRef(null), engine = useRef(null);
   const [compact, setCompact] = useState(() => matchMedia(compactQuery).matches);
   const [view, setView] = useState('curio');
-  const setPaused = onPauseChange;
   const [following, setFollowing] = useState(true);
   const [supported, setSupported] = useState(true);
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -171,7 +170,7 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       refresh: scroll,
       choose(next) { manual = next; hovered = false; setFollowing(false); select(); if (stopped) paint(true); },
       transform() { this.choose(current === 'phrase' ? 'curio' : 'phrase'); },
-      follow() { manual = null; hovered = false; setFollowing(true); scroll(); },
+      follow() { manual = null; hovered = false; setFollowing(true); scroll(); select(); if (stopped) paint(true); },
       pause(value) { stopped = value; pointer.x = pointer.y = -1000; waves = []; if (!value) scroll(); schedule(); },
     };
     return () => {
@@ -194,8 +193,8 @@ export default function ParticleStory({ onExplore, paused = false, onPauseChange
       {supported && <div className="particle-story-controls" data-particle-clearance>
         <div role="group" aria-label="Particle views">{views.map(({ id, label }) => <button key={id} aria-pressed={view === id} onClick={() => engine.current?.choose(id)}>{label}</button>)}</div>
         <button className="particle-icon-control" aria-label="Transform lettering" title="Transform lettering" aria-pressed={view === 'phrase'} onClick={() => engine.current?.transform()}><WandSparkles size={18} /></button>
-        {reduced ? <span className="particle-motion-note">Motion reduced</span> : <button className="particle-icon-control particle-hero-pause" aria-label={paused ? 'Play animation' : 'Pause animation'} title={paused ? 'Play animation' : 'Pause animation'} onClick={() => { setPaused(!paused); engine.current?.pause(!paused); }}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>}
-        {!following && <button className="particle-follow-control" aria-label={compact ? "Reset view" : "Follow scroll"} title={compact ? "Reset view" : "Follow scroll"} onClick={() => { setPaused(false); engine.current?.pause(false); engine.current?.follow(); }}><RefreshCw size={15} /><span>{compact ? "Reset view" : "Follow scroll"}</span></button>}
+        {reduced && <span className="particle-motion-note">Motion reduced</span>}
+        {!following && <button className="particle-follow-control" aria-label={compact ? "Reset view" : "Follow scroll"} title={compact ? "Reset view" : "Follow scroll"} onClick={() => engine.current?.follow()}><RefreshCw size={15} /><span>{compact ? "Reset view" : "Follow scroll"}</span></button>}
       </div>}
       <figcaption>{!supported ? 'A little curiosity can open a bigger picture.' : reduced ? 'Choose a view to explore the shapes. Motion is reduced.' : paused ? 'Animation paused. You can still choose a view.' : compact ? 'Tap the lettering or choose a shape.' : following ? 'Move over the lettering. On touch screens, tap it. Scroll to connect the dots.' : 'Your selected shape stays active. Follow scroll to see the story again.'}</figcaption>
     </figure>

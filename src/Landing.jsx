@@ -125,7 +125,14 @@ function LandingHeader({ onEnter, hasProgress, accountMenuProps, onAppearance, p
           {navigation.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}
         </nav>
 
-        <div className="landing-header-actions"><AppearanceControls onOpen={onAppearance} />
+        <div className="landing-header-actions">
+          {!reduced && <button
+            className="icon-button landing-header-motion"
+            aria-label={particlesPaused ? 'Play page animations' : 'Pause page animations'}
+            title={particlesPaused ? 'Play animations' : 'Pause animations'}
+            onClick={() => onPauseChange(!particlesPaused)}
+          >{particlesPaused ? <Play size={18} /> : <Pause size={18} />}</button>}
+          <AppearanceControls onOpen={onAppearance} />
 
           <button className="landing-enter" onClick={onEnter}>
             {hasProgress ? 'My learning' : 'Learning space'}
@@ -320,7 +327,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
 
       <main className="landing-main" id="landing-main">
         {serviceError && <div className="landing-container landing-service-message" role="alert">{serviceError}<button onClick={onRetry}>Try again</button></div>}
-        <ParticleStory onExplore={() => onExplore()} paused={particlesPaused} onPauseChange={setParticlesPaused} />
+        <ParticleStory onExplore={() => onExplore()} paused={particlesPaused} />
 
         <section className="landing-lesson-section landing-container" aria-labelledby="lesson-preview-title">
           <div className="landing-lesson-intro">
@@ -421,7 +428,7 @@ export default function Landing({ courses, onExplore, onEnter, onOpenCourse, has
         </section>
       </main>
 
-      <LandingParticleEffects root={root} paused={particlesPaused} onPauseChange={setParticlesPaused} />
+      <LandingParticleEffects root={root} paused={particlesPaused} />
 
       <footer className="landing-footer landing-container">
         <div><a className="landing-brand" href="#home" aria-label="Curio home"><BrandMark /><span>curio<span className="landing-brand-dot">.</span></span></a><span>A little more curious.</span></div>

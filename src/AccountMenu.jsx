@@ -17,10 +17,16 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
     if (!open) return;
     const bounds = trigger.current.getBoundingClientRect();
     const width = Math.min(320, window.innerWidth - 24);
-    const top = bounds.bottom + 8;
-    setPosition({ top, left: Math.max(12, Math.min(bounds.right - width, window.innerWidth - width - 12)), width, maxHeight: Math.max(120, window.innerHeight - top - 12) });
-    panel.current.querySelector('button:not(:disabled)')?.focus({ preventScroll: true });
+    const top = Math.min(bounds.bottom + 8, Math.max(12, window.innerHeight - 132));
+    setPosition({ top, left: Math.max(12, Math.min(bounds.right - width, window.innerWidth - width - 12)), width, maxHeight: Math.max(0, window.innerHeight - top - 12) });
   }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open || position.top === undefined) return;
+    const first = panel.current.querySelector('button:not(:disabled)');
+    first?.focus({ preventScroll: true });
+    first?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+  }, [open, position]);
 
   useEffect(() => {
     if (!open) return;
@@ -69,7 +75,11 @@ export default function AccountMenu({ user, loading, signingOut, error, syncStat
     else if (event.key === 'ArrowUp') next = (index - 1 + controls.length) % controls.length;
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = controls.length - 1;
-    if (next !== undefined) { event.preventDefault(); controls[next]?.focus({ preventScroll: true }); }
+    if (next !== undefined) {
+      event.preventDefault();
+      controls[next]?.focus({ preventScroll: true });
+      controls[next]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    }
   };
 
   return <div className="account-menu" ref={root}>

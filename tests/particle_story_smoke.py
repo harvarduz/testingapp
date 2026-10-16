@@ -115,7 +115,7 @@ with sync_playwright() as p:
     page.screenshot(path=str(OUTPUT / 'particles-reference-hero.png'))
     passed('The first screen is a full-width navy particle hero with large, predominantly white lettering, rather than a small lower-page illustration')
 
-    page.get_by_role('button', name='Pause animation', exact=True).click()
+    page.get_by_role('button', name='Pause page animations', exact=True).click()
     choices.get_by_role('button', name='Connections', exact=True).click()
     centered = ink_bounds(page)
     assert abs(centered['left'] + centered['width'] / 2 - .5) < .025, centered
@@ -131,6 +131,8 @@ with sync_playwright() as p:
     scroll_to(page, 0)
     choices.get_by_role('button', name='Curio', exact=True).click()
     page.get_by_role('button', name='Follow scroll', exact=True).click()
+    expect(stage).to_have_attribute('data-particle-motion', 'paused')
+    page.get_by_role('button', name='Play page animations', exact=True).click()
     page.wait_for_timeout(100)
     passed('Connections is centered above the first-screen heading and moves right only beside the second-panel text')
 
@@ -193,7 +195,7 @@ with sync_playwright() as p:
     a = pixels(page)
     page.wait_for_timeout(180)
     assert pixels(page) != a
-    page.get_by_role('button', name='Pause animation', exact=True).click()
+    page.get_by_role('button', name='Pause page animations', exact=True).click()
     page.wait_for_timeout(200)
     expect(stage).to_have_attribute('data-particle-motion', 'paused')
     before = page.evaluate('window.__rafCalls')
@@ -203,9 +205,9 @@ with sync_playwright() as p:
     choices.get_by_role('button', name='Curio', exact=True).click()
     expect(stage).to_have_attribute('data-view', 'curio')
     assert pixels(page) != a
-    expect(page.get_by_role('button', name='Play animation', exact=True)).to_be_visible()
+    expect(page.get_by_role('button', name='Play page animations', exact=True)).to_be_visible()
     choices.get_by_role('button', name='Connections', exact=True).click()
-    page.get_by_role('button', name='Play animation', exact=True).click()
+    page.get_by_role('button', name='Play page animations', exact=True).click()
     page.wait_for_timeout(150)
     a = pixels(page)
     page.wait_for_timeout(180)
@@ -234,7 +236,7 @@ with sync_playwright() as p:
         page.evaluate('(mode)=>localStorage.setItem("curio.appearance.v1",JSON.stringify({version:2,seed:"#1a73e8",mode}))', mode)
         page.reload(wait_until='networkidle')
         settle(page)
-        page.get_by_role('button', name='Pause animation', exact=True).click()
+        page.get_by_role('button', name='Pause page animations', exact=True).click()
         for width in [320, 390, 1366]:
             page.set_viewport_size({'width': width, 'height': 900})
             page.wait_for_timeout(200)
@@ -265,7 +267,7 @@ with sync_playwright() as p:
     page.emulate_media(reduced_motion='reduce')
     expect(page.get_by_text('Motion reduced', exact=True)).to_be_visible()
     expect(page.locator('.particle-story-figure figcaption')).to_contain_text('Motion is reduced')
-    expect(page.get_by_role('button', name='Play animation', exact=True)).to_have_count(0)
+    expect(page.get_by_role('button', name='Play page animations', exact=True)).to_have_count(0)
     choices.get_by_role('button', name='Curio', exact=True).click()
     settle(page)
     expect(stage).to_have_attribute('data-particle-motion', 'reduced')

@@ -25,3 +25,6 @@
 @keyframes account-spin { to { transform: rotate(360deg); } }
 @media (max-width: 480px) { .landing-header .landing-enter { display: none; } }
 @media (prefers-reduced-motion: reduce) { .account-spinner { animation: none; } }
+/* The fixed account menu belongs to the sticky top bar. Raise that whole
+   stacking context above the bottom tabs, while keeping it below the drawer. */
+@media (max-width: 780px) { .topbar:has(.account-popover) { z-index: 36; } }

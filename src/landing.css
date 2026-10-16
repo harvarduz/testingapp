@@ -496,3 +496,7 @@
 @media (max-width: 800px) {
   .landing .landing-mobile-nav { max-height: calc(100vh - 76px); max-height: calc(100dvh - 76px); }
 }
+
+/* Motion is a page setting, anchored with the other header controls. */
+.landing .landing-header-motion { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; color: var(--md-sys-color-on-surface-variant); }
+@media (max-width: 1000px) { .landing .landing-header-motion { display: none; } }

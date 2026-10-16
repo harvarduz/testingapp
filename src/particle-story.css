@@ -109,14 +109,7 @@
   .particle-story-copy > p { margin-inline: auto; }
   .particle-story-copy > .landing-kicker { justify-content: center; }
   .particle-story-controls { top: 12px; inset-inline: 12px; max-width: none; justify-content: center; }
-  .landing .particle-story-controls .particle-hero-pause, .landing .landing-effects-pause { display: none; }
   .landing .landing-header { backdrop-filter: none; }
   .particle-story-figure > figcaption { position: absolute; bottom: 0; inset-inline: 12px; width: auto; height: auto; max-width: none; clip-path: none; overflow: visible; font-size: 11px; padding: 0; }
   .particle-story-fallback { inset: 76px 0 30px; height: auto; font-size: min(25vw, 150px); }
-}
-
-/* Short desktop windows use the compact scene, but retain the visible pause
-   control because their header has no mobile navigation menu. */
-@media (min-width: 1001px) and (max-height: 540px) {
-  .landing .particle-story-controls .particle-hero-pause { display: inline-flex; }
 }

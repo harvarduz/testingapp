@@ -59,7 +59,7 @@ with sync_playwright() as p:
  page.wait_for_timeout(100)
  before=canvas.get_attribute('data-paint-count');a=image(page);page.wait_for_timeout(250)
  assert image(page)==a and canvas.get_attribute('data-paint-count')==before
- expect(page.get_by_role('button',name='Play animation',exact=True)).to_have_count(1)
+ expect(page.get_by_role('button',name='Play page animations',exact=True)).to_have_count(1)
  page.get_by_role('button',name='Play page animations',exact=True).click();page.wait_for_timeout(120);assert image(page)!=a
  passed('A shared Pause/Play state controls hero and later sections, freezes exact pixels and resumes animation')
 
