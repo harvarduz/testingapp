@@ -85,7 +85,7 @@ with sync_playwright() as p:
         dialog = page.get_by_role('dialog',name='Your Curio account')
         expect(dialog).to_be_visible()
         expect(stage).to_have_attribute('data-particle-motion','obscured')
-        canvas = page.locator('.landing-effects-canvas')
+        canvas = page.locator('.landing-particle-effects')
         expect(canvas).to_have_attribute('data-motion','obscured')
         page.wait_for_timeout(150)
         before = stage.locator('canvas').evaluate('n=>n.toDataURL()')

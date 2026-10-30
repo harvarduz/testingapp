@@ -28,8 +28,8 @@ export default function ParticleStory({ onExplore, paused = false }) {
     const obscured = () => page.hasAttribute('inert');
     const canObserve = 'IntersectionObserver' in window;
     let visible = !canObserve, stopped = false, destroyed = false, manual = null, hovered = false;
-    let frame = null, resizeFrame = null, lastPaint = 0, time = 0, width = 1, height = 1, blend = 0, progress = 0, composition = 0;
-    let current = 'curio', geometry, dots = [], waves = [], clearance = [], touchStart = null;
+    let frame = null, resizeFrame = null, scrollFrame = null, lastPaint = 0, time = 0, width = 1, height = 1, blend = 0, progress = 0, composition = 0;
+    let current = 'curio', geometry, pendingMeasure = false, measuredCompact, dots = [], waves = [], clearance = [], touchStart = null;
     const pointer = { x: -1000, y: -1000, nx: 0, ny: 0 };
     const staticMode = () => preference.matches || !canObserve;
     const animated = () => !staticMode() && !stopped && visible && !document.hidden && !obscured();
@@ -87,7 +87,7 @@ export default function ParticleStory({ onExplore, paused = false }) {
     const select = () => {
       blend = manual ? (manual === 'orbit' ? 1 : 0) : staticMode() || layoutPreference.matches ? 0 : smooth(clamp((progress - .10) / .62));
       updateView(manual || (blend > .36 ? 'orbit' : hovered ? 'phrase' : 'curio'));
-      if (!animated() && !stopped) paint(true);
+      if (!animated() && !stopped && visible) paint(true);
       schedule();
     };
     const scroll = () => {
@@ -103,12 +103,18 @@ export default function ParticleStory({ onExplore, paused = false }) {
       section.dataset.scrollProgress = progress.toFixed(4);
       if (!stopped) select();
     };
+    const onScroll = () => {
+      if (layoutPreference.matches || !visible || scrollFrame !== null) return;
+      scrollFrame = requestAnimationFrame(() => { scrollFrame = null; scroll(); });
+    };
     const measure = () => {
       if (destroyed) return;
       resizeFrame = null;
+      if (geometry && !visible) { pendingMeasure = true; return; }
+      pendingMeasure = false;
       const nextWidth = host.clientWidth, nextHeight = host.clientHeight;
-      if (geometry && width === nextWidth && height === nextHeight) { scroll(); return; }
-      width = nextWidth; height = nextHeight;
+      if (geometry && width === nextWidth && height === nextHeight && measuredCompact === layoutPreference.matches) { if (!layoutPreference.matches) scroll(); return; }
+      width = nextWidth; height = nextHeight; measuredCompact = layoutPreference.matches;
       const ratio = Math.min(devicePixelRatio || 1, 2);
       surface.width = Math.round(width * ratio); surface.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -138,18 +144,18 @@ export default function ParticleStory({ onExplore, paused = false }) {
       if (hovered !== next) { hovered = next; select(); }
       schedule();
     };
-    const leave = () => { pointer.x = pointer.y = -1000; pointer.nx = pointer.ny = 0; hovered = false; if (!stopped) select(); };
+    const leave = event => { if (event?.pointerType === 'touch') return; pointer.x = pointer.y = -1000; pointer.nx = pointer.ny = 0; hovered = false; if (!stopped) select(); };
     const down = event => { if (!isControl(event)) touchStart = { ...position(event), stamp: performance.now(), id: event.pointerId }; };
     const up = event => {
       if (!touchStart || touchStart.id !== event.pointerId || isControl(event) || !geometry) return;
       const point = position(event), tap = performance.now() - touchStart.stamp < 600 && Math.hypot(point.x - touchStart.x, point.y - touchStart.y) < 12;
       touchStart = null;
       if (!tap || !animated()) return;
-      if (event.pointerType === 'touch' && blend === 0 && insideLettering(point)) { hovered = !hovered; select(); }
+      if (event.pointerType === 'touch' && blend === 0 && insideLettering(point)) { manual = current === 'phrase' ? 'curio' : 'phrase'; hovered = false; setFollowing(false); select(); }
       waves.push({ ...point, radius: 0 }); waves = waves.slice(-3); schedule();
     };
     const cancelTouch = () => { touchStart = null; };
-    const layoutChanged = () => { setCompact(layoutPreference.matches); geometry = null; resize(); };
+    const layoutChanged = () => { setCompact(layoutPreference.matches); resize(); };
     const obscuredChanged = () => { cancelTouch(); leave(); schedule(); };
     const obstruction = new MutationObserver(obscuredChanged);
     obstruction.observe(page, { attributes: true, attributeFilter: ['inert'] });
@@ -158,13 +164,14 @@ export default function ParticleStory({ onExplore, paused = false }) {
     const observer = canObserve ? new IntersectionObserver(entries => {
       visible = entries[0].isIntersecting;
       if (!visible) { pointer.x = pointer.y = -1000; hovered = false; }
-      scroll(); schedule();
+      if (visible && pendingMeasure) measure(); else scroll();
+      schedule();
     }) : null;
     setReduced(staticMode()); measure(); observer?.observe(host);
     document.fonts?.ready.then(() => { if (!destroyed) scroll(); });
     section.addEventListener('pointermove', move, { passive: true }); section.addEventListener('pointerleave', leave);
     section.addEventListener('pointerdown', down, { passive: true }); section.addEventListener('pointerup', up, { passive: true }); section.addEventListener('pointercancel', cancelTouch);
-    window.addEventListener('scroll', scroll, { passive: true }); window.addEventListener('resize', resize);
+    window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', schedule); preference.addEventListener('change', changedPreference);
     engine.current = {
       refresh: scroll,
@@ -174,10 +181,10 @@ export default function ParticleStory({ onExplore, paused = false }) {
       pause(value) { stopped = value; pointer.x = pointer.y = -1000; waves = []; if (!value) scroll(); schedule(); },
     };
     return () => {
-      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer?.disconnect(); obstruction.disconnect(); layoutPreference.removeEventListener('change', layoutChanged);
+      destroyed = true; cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(scrollFrame); observer?.disconnect(); obstruction.disconnect(); layoutPreference.removeEventListener('change', layoutChanged);
       section.removeEventListener('pointermove', move); section.removeEventListener('pointerleave', leave);
       section.removeEventListener('pointerdown', down); section.removeEventListener('pointerup', up); section.removeEventListener('pointercancel', cancelTouch);
-      window.removeEventListener('scroll', scroll); window.removeEventListener('resize', resize);
+      window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', schedule); preference.removeEventListener('change', changedPreference);
       engine.current = null;
     };

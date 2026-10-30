@@ -60,65 +60,62 @@ export function useLandingMotion(root) {
 // transition can keep a number moving after the reader stops scrolling.
 const ease = progress => progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
 const compactQuery = '(max-height: 460px), (max-width: 800px) and (max-height: 640px)';
-const needsStaticScene = (query = compactQuery) => matchMedia('(prefers-reduced-motion: reduce)').matches
-  || matchMedia(query).matches || !('IntersectionObserver' in window);
+const phoneQuery = '(max-width: 899px)';
+const sceneMode = query => matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)
+  ? 'static' : matchMedia(query).matches || matchMedia(phoneQuery).matches ? 'flow' : 'pinned';
 
-function useScrollScene(scene, stage, render, query = compactQuery) {
-  const [still, setStill] = useState(() => needsStaticScene(query));
+function useScrollScene(scene, stage, render, query = compactQuery, flowTarget = stage) {
+  const [mode, setMode] = useState(() => sceneMode(query));
   useEffect(() => {
-    const preference = matchMedia('(prefers-reduced-motion: reduce)');
-    const compact = matchMedia(query);
-    const changed = () => setStill(needsStaticScene(query));
-    preference.addEventListener('change', changed);
-    compact.addEventListener('change', changed);
-    return () => { preference.removeEventListener('change', changed); compact.removeEventListener('change', changed); };
+    const queries = [matchMedia('(prefers-reduced-motion: reduce)'), matchMedia(query), matchMedia(phoneQuery)];
+    const changed = () => setMode(sceneMode(query));
+    queries.forEach(media => media.addEventListener('change', changed));
+    return () => queries.forEach(media => media.removeEventListener('change', changed));
   }, [query]);
   useEffect(() => {
-    if (still) { render(1); return; }
-    let frame;
-    let active = false;
-    let previous = -1;
+    if (mode === 'static') { render(1); return; }
+    let frame = null, active = false, previous = -1;
     const update = () => {
       frame = null;
       if (document.hidden) return;
-      const bounds = scene.current.getBoundingClientRect();
-      const top = parseFloat(getComputedStyle(stage.current).top) || 0;
-      const distance = Math.max(1, bounds.height - stage.current.offsetHeight);
-      const progress = clamp((top - bounds.top) / distance);
+      let progress;
+      if (mode === 'flow') {
+        const bounds = flowTarget.current.getBoundingClientRect();
+        progress = clamp((innerHeight * .85 - bounds.top) / Math.max(1, Math.min(bounds.height, innerHeight * .65)));
+      } else {
+        const bounds = scene.current.getBoundingClientRect();
+        const top = parseFloat(getComputedStyle(stage.current).top) || 0;
+        progress = clamp((top - bounds.top) / Math.max(1, bounds.height - stage.current.offsetHeight));
+      }
       if (Math.abs(progress - previous) < .0001) return;
-      previous = progress;
-      render(progress);
+      previous = progress; render(progress);
     };
-    const schedule = () => { if (active && !frame && !document.hidden) frame = requestAnimationFrame(update); };
+    const schedule = () => { if (active && frame === null && !document.hidden) frame = requestAnimationFrame(update); };
     const observer = new IntersectionObserver(entries => {
       active = entries[0].isIntersecting;
       if (active) schedule();
-      else {
-        cancelAnimationFrame(frame); frame = null;
-        // Settle a scene left by a fast scroll or an anchor jump.
-        update();
-      }
+      else { cancelAnimationFrame(frame); frame = null; update(); }
     }, { rootMargin: '10% 0px 10% 0px' });
     update(); observer.observe(scene.current);
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, { passive: true }); window.addEventListener('resize', schedule);
     document.addEventListener('visibilitychange', schedule);
     return () => {
       observer.disconnect(); cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule);
       document.removeEventListener('visibilitychange', schedule);
     };
-  }, [scene, stage, render, still]);
-  return still;
+  }, [scene, stage, flowTarget, render, mode]);
+  return mode;
 }
 
 export function ScrollCatalog({ courseCount, lessonCount, subjectCount }) {
   const scene = useRef(null);
   const stage = useRef(null);
   const metrics = useRef([]);
+  const modeRef = useRef('pinned'), revealAll = useRef(false);
   const totals = useMemo(() => [courseCount, lessonCount, subjectCount], [courseCount, lessonCount, subjectCount]);
   const render = useCallback(progress => {
+    if (modeRef.current === 'flow' && revealAll.current) progress = 1;
     metrics.current.forEach((metric, index) => {
       if (!metric) return;
       const local = ease(clamp((progress - index * .06) / (1 - index * .06)));
@@ -130,15 +127,18 @@ export function ScrollCatalog({ courseCount, lessonCount, subjectCount }) {
       metric.knob.setAttribute('cy', String(60 + 52 * Math.sin(angle)));
     });
   }, [totals]);
-  const still = useScrollScene(scene, stage, render);
+  const mode = useScrollScene(scene, stage, render);
+  modeRef.current = mode;
+  const still = mode === 'static';
   const showTotals = () => {
     if (still) return;
+    if (mode === 'flow') { revealAll.current = true; render(1); return; }
     const bounds = scene.current.getBoundingClientRect();
     const top = parseFloat(getComputedStyle(stage.current).top) || 0;
     window.scrollTo({ top: scrollY + bounds.top - top + bounds.height - stage.current.offsetHeight, behavior: 'instant' });
     render(1);
   };
-  return <section className={`landing-catalog-scene ${still ? 'is-static' : ''}`} ref={scene} aria-label="The Curio course library">
+  return <section className={`landing-catalog-scene ${mode === 'pinned' ? '' : `is-${mode}`}`} data-scroll-mode={mode} ref={scene} aria-label="The Curio course library">
     <div className="landing-facts-wrap landing-catalog-stage" ref={stage}>
       <div className="landing-container landing-facts">
         <p>Big subjects.<br /><strong>A manageable place to start.</strong><span className="landing-catalog-cue"><ArrowDown size={16} />{still ? 'Explore at your own pace' : 'Scroll to explore the numbers'}</span></p>
@@ -177,6 +177,7 @@ export function ScrollSkills({ onOpenLesson }) {
   const map = useRef(null);
   const [active, setActive] = useState(0);
   const lastActive = useRef(-1);
+  const modeRef = useRef('pinned'), manualChoice = useRef(false);
   const render = useCallback(progress => {
     const element = map.current;
     if (!element) return;
@@ -191,19 +192,21 @@ export function ScrollSkills({ onOpenLesson }) {
     const number = element.querySelector('[data-skill-count]');
     if (number.textContent !== String(connected)) number.textContent = String(connected);
     const next = Math.min(2, Math.floor(progress * 3));
-    if (next !== lastActive.current) { lastActive.current = next; setActive(next); }
+    if (!(modeRef.current === 'flow' && manualChoice.current) && next !== lastActive.current) { lastActive.current = next; setActive(next); }
   }, []);
-  const still = useScrollScene(scene, stage, render, '(max-height: 700px), (max-width: 800px) and (max-height: 820px), (max-width: 350px) and (max-height: 920px)');
+  const mode = useScrollScene(scene, stage, render, '(max-height: 700px), (max-width: 800px) and (max-height: 820px), (max-width: 350px) and (max-height: 920px)', map);
+  const still = mode === 'static';
+  modeRef.current = mode;
   const choose = index => {
-    lastActive.current = index; setActive(index);
-    if (still) return;
+    lastActive.current = index; setActive(index); manualChoice.current = mode === 'flow';
+    if (mode !== 'pinned') return;
     const bounds = scene.current.getBoundingClientRect();
     const top = parseFloat(getComputedStyle(stage.current).top) || 0;
     const distance = bounds.height - stage.current.offsetHeight;
     window.scrollTo({ top: scrollY + bounds.top - top + distance * [.30, .63, 1][index], behavior: 'instant' });
   };
   const current = skills[active];
-  return <section className={`landing-section landing-container landing-skills-scene ${still ? 'is-static' : ''}`} ref={scene} aria-labelledby="landing-skills-title">
+  return <section className={`landing-section landing-container landing-skills-scene ${mode === 'pinned' ? '' : `is-${mode}`}`} data-scroll-mode={mode} ref={scene} aria-labelledby="landing-skills-title">
     <div className="landing-skills-stage" ref={stage}>
       <div className="landing-skills-copy">
         <span className="landing-kicker">BUILD KNOWLEDGE. MAKE CONNECTIONS.</span>

@@ -26,8 +26,8 @@
 .landing .landing-catalog-continue { display: inline-flex; align-self: center; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 0; background: transparent; border-radius: 24px; font: 500 14px/20px var(--heading); color: var(--md-sys-color-primary); }
 .landing-catalog-continue:hover { background: var(--md-sys-color-surface-container-high); }
 .landing-catalog-continue:focus-visible { outline: 3px solid var(--md-sys-color-primary); outline-offset: 3px; }
-.landing-catalog-scene.is-static { height: auto; min-height: 0; }
-.landing .landing-catalog-scene.is-static .landing-catalog-stage { position: static; height: auto; min-height: 0; padding-block: 48px; gap: 24px; }
+.landing-catalog-scene:is(.is-static, .is-flow) { height: auto; min-height: 0; }
+.landing .landing-catalog-scene:is(.is-static, .is-flow) .landing-catalog-stage { position: static; height: auto; min-height: 0; padding-block: 48px; gap: 24px; }
 .landing .landing-skills-scene { height: 230svh; min-height: 1500px; padding-block: 0; }
 .landing-skills-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: clamp(32px, 4vw, 64px); position: sticky; top: 96px; height: calc(100svh - 116px); }
 .landing-skills-copy { min-width: 0; }
@@ -54,8 +54,8 @@
 .landing-skill-node > strong { display: block; margin-top: 4px; font: 500 22px/28px var(--heading); color: var(--md-sys-color-primary); }
 .landing-skill-node > p { margin-top: 6px; font: 400 13px/20px 'Roboto', sans-serif; color: var(--md-sys-color-on-surface-variant); }
 .landing-skill-map > figcaption { position: absolute; top: calc(100% + 18px); left: 0; width: 100%; text-align: center; font: 400 13px/20px 'Roboto', sans-serif; color: var(--md-sys-color-on-surface-variant); }
-.landing .landing-skills-scene.is-static { height: auto; min-height: 0; padding-block: 64px; }
-.landing-skills-scene.is-static .landing-skills-stage { height: auto; position: static; }
+.landing .landing-skills-scene:is(.is-static, .is-flow) { height: auto; min-height: 0; padding-block: 64px; }
+.landing-skills-scene:is(.is-static, .is-flow) .landing-skills-stage { height: auto; position: static; }
 @media (max-width: 800px) {
   .landing-catalog-scene { height: 165svh; min-height: 700px; }
   .landing .landing-catalog-stage { top: 88px; height: calc(100svh - 108px); gap: 28px; }
@@ -99,4 +99,11 @@
   .landing-catalog-scene { height: auto; min-height: 0; }
   .landing .landing-catalog-stage { position: static; height: auto; min-height: 0; }
   .landing-reading-progress { display: none; }
+}
+
+@media (max-width: 899px), (max-height: 540px) {
+  /* Keep text readable as it arrives; short positional transitions do not
+     leave a phone's scrolling content waiting for a long opacity fade. */
+  .landing [data-reveal] { transition: transform 280ms cubic-bezier(.2, .8, .2, 1); transition-delay: 0ms; }
+  .landing[data-motion='enabled'] [data-reveal]:not([data-revealed]):not(:focus-within) { opacity: 1; transform: translateY(8px); }
 }

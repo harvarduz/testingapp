@@ -50,10 +50,10 @@ with sync_playwright() as p:
             page.get_by_role('button',name='Open website navigation',exact=True).click()
         pause = page.get_by_role('button',name='Pause page animations',exact=True)
         expect(pause).to_have_count(1); pause.click()
-        expect(page.locator('.landing-effects-canvas')).to_have_attribute('data-motion','paused')
+        expect(page.locator('.landing-particle-effects')).to_have_attribute('data-motion','paused')
         play = page.get_by_role('button',name='Play page animations',exact=True)
         expect(play).to_have_count(1); play.click()
-        expect(page.locator('.landing-effects-canvas')).to_have_attribute('data-motion','active')
+        expect(page.locator('.landing-particle-effects')).to_have_attribute('data-motion','active')
         if width<=1000: page.get_by_role('button',name='Close website navigation',exact=True).click()
         else:
             assert pause.evaluate('n=>{const r=n.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))}')
@@ -105,7 +105,7 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
     page.emulate_media(reduced_motion='reduce')
     expect(page.get_by_role('button',name='Pause page animations',exact=True)).to_have_count(0)
-    expect(page.locator('.landing-effects-canvas')).to_have_attribute('data-motion','reduced')
+    expect(page.locator('.landing-particle-effects')).to_have_attribute('data-motion','reduced')
     passed('Dark method cards/account menus pass accessibility; reduced motion needs no redundant pause controls')
     assert not errors,errors
     browser.close()

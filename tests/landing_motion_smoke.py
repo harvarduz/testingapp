@@ -33,6 +33,7 @@ def audit(page, name):
 def scene_position(page, selector, progress):
     return page.locator(selector).evaluate("""(node,progress)=>{
         const stage=node.firstElementChild;
+        if(node.dataset.scrollMode==='flow'){const target=node.querySelector('.landing-skill-map')||stage;const r=target.getBoundingClientRect();return scrollY+r.top-innerHeight*.85+Math.min(r.height,innerHeight*.65)*progress;}
         return scrollY+node.getBoundingClientRect().top-parseFloat(getComputedStyle(stage).top)
             +(node.offsetHeight-stage.offsetHeight)*progress;
     }""",progress)
@@ -54,6 +55,10 @@ def catalog_snapshot(page):
 def assert_pinned_fits(page, selector):
     assert not page.evaluate('document.documentElement.scrollWidth > innerWidth')
     box=page.locator(selector).bounding_box()
+    if page.locator(selector).evaluate('node=>node.parentElement.dataset.scrollMode')=='flow':
+        assert page.locator(selector).evaluate('node=>getComputedStyle(node).position')=='static'
+        assert box['x']>=0 and box['x']+box['width']<=page.viewport_size['width']
+        return
     assert box['y']>=70 and box['y']+box['height']<=page.viewport_size['height']-8,box
     if selector=='.landing-skills-stage':
         title=page.locator('#landing-skills-title').bounding_box()
@@ -188,7 +193,7 @@ with tempfile.TemporaryDirectory(prefix='curio-landing-motion-') as directory:
             for width,height in [(320,844),(390,740),(768,600),(1366,400)]:
                 phone.set_viewport_size({'width':width,'height':height})
                 phone.get_by_role('group',name='Explore connected skills').get_by_role('button',name='Unit prices',exact=True).tap()
-                expect(phone.locator('.landing-skills-scene')).to_have_class('landing-section landing-container landing-skills-scene is-static')
+                expect(phone.locator('.landing-skills-scene')).to_have_attribute('data-scroll-mode','flow')
                 assert not phone.evaluate('document.documentElement.scrollWidth > innerWidth')
                 phone.locator('.landing-skill-map > figcaption').scroll_into_view_if_needed();expect(phone.locator('.landing-skill-map > figcaption')).to_be_in_viewport()
             passed('Real touch swipes update scroll counters; touch skill selection and compact/narrow layouts keep content reachable')

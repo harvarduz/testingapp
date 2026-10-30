@@ -20,6 +20,8 @@ def passed(message):
 
 
 def audit(page, name):
+    page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+    page.wait_for_function('document.getAnimations().every(animation=>animation.playState!=="running"||animation.effect.getComputedTiming().iterations===Infinity)')
     page.add_script_tag(path=str(ROOT / 'node_modules/axe-core/axe.min.js'))
     violations = page.evaluate("async()=> (await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}})).violations")
     audits.append({'screen': name, 'violations': violations})

@@ -73,11 +73,13 @@ Hover uses a consistent state layer; selected chips, quiz choices, course titles
 
 Curio keeps the Bloom appearance and uses [SAT Stars](https://satstars.uz/) as a reference for **scroll reactions**. The reference was inspected from TLS-verified assets in Chromium: at a fixed scroll position its score/gauge stop, and returning to an earlier position restores the same frame.
 
-The existing catalog statistics now use that behavior. Native scrolling directly sets the course, lesson and subject numbers, circular fills and pointer positions. Scrolling back reverses them; stopping freezes them. Final totals come from the actual catalog. Screen readers always receive those complete totals, and the number widths stay reserved. The section pins briefly while scrolling and has a normal link to continue to How it works.
+The existing catalog statistics now use that behavior. Native scrolling directly sets the course, lesson and subject numbers, circular fills and pointer positions. Scrolling back reverses them; stopping freezes them. Final totals come from the actual catalog. Screen readers always receive those complete totals, and the number widths stay reserved. On desktop the section pins briefly. Phones and short windows use normal document flow: counters follow their entry into view without a tall pinned spacer. A normal link continues to How it works.
 
 The new knowledge block connects fractions, percentages and unit prices through accurate examples. Scroll draws each connection, updates the illustrated idea count and highlights the related explanation. Keyboard/touch buttons can also select a skill. Each action opens the corresponding real lesson in Thinking in numbers. The map is an example learning path; scrolling does not complete lessons or award coins.
 
-Both scenes use native scroll, small SVGs and event-scheduled animation frames without an animation library or remote motion assets. Only visible scenes animate; a scene leaving view settles to its endpoint. There is no idle JavaScript animation loop. Reduced motion, very short screens and missing IntersectionObserver show finished statistics and connections without a pinned spacer. Compact knowledge maps retain manual skill selection and real lesson entry. Preferences can change while the page is open. Existing entrances preserve layout and reveal immediately on keyboard focus. The separate particle hero rotates its sphere only while visible and unpaused.
+Both scenes use native scroll, small SVGs and event-scheduled animation frames without an animation library or remote motion assets. Only visible scenes animate; a scene leaving view settles to its endpoint. There is no idle JavaScript animation loop. Reduced motion and missing IntersectionObserver show finished statistics and connections. Compact knowledge maps animate while entering view and retain an explicitly selected skill; Show all totals keeps the complete inventory visible. Preferences can change while the page is open. Existing entrances preserve layout and reveal immediately on keyboard focus. The separate particle hero rotates its sphere only while visible and unpaused. Its compact touch lettering toggles persistently between Curio and Stay curious, including after a manual view choice. Offscreen scroll/resize events do not repaint the hero.
+
+Other decorative fields use local canvases inside their artwork, with one animation scheduler for visible scenes. The browser moves them with native scrolling; rendering does not measure page layout every frame or clear a screen-sized overlay. Prepared geometry retains all five forms and stable particle identities as cards enter/leave view. Palette/size/label changes refresh bounds separately, and hidden pages, dialogs, global pause and reduced motion suspend continuous work. Canvas failure preserves the original illustrations. Mobile reveals keep text opaque and use a short positional transition.
 
 ## Data and account behavior
 
@@ -136,6 +138,7 @@ python tests/action_ux_smoke.py
 python tests/skill_playground_smoke.py
 python tests/particle_story_smoke.py
 python tests/landing_particles_smoke.py
+python tests/mobile_motion_smoke.py
 python tests/landing_ux_smoke.py
 python tests/interface_audit_smoke.py
 ```
@@ -189,7 +192,7 @@ Screenshots and current accessibility results are written to ignored `test-resul
 | Homepage, subject browsing, creator offer | `src/Landing.jsx` |
 | Pending action feedback and native press handling | `src/ActionPending.jsx`, `src/action-pending.css`, `src/MaterialButtons.jsx` |
 | Particle hero, lettering/sphere geometry and motion controls | `src/ParticleStory.jsx`, `src/particleGeometry.js`, `src/particle-story.css` |
-| Page-wide particle effects and shared frame-time physics | `src/LandingParticleEffects.jsx`, `src/particleMotion.js`, `src/landing-particles.css` |
+| Local particle canvases, prepared fields and shared visible-scene scheduling | `src/LandingParticleEffects.jsx`, `src/particleFields.js`, `src/particleMotion.js`, `src/landing-particles.css` |
 | Reversible catalog gauges, entrances and the knowledge map | `src/LandingMotion.jsx`, `src/landing-motion.css` |
 | Homepage practice models and exact pack comparisons | `src/SkillPlayground.jsx`, `src/skill-playground.css`, `src/skillModels.js` |
 | Material tokens, typography, responsive presentation | `src/material.css` |

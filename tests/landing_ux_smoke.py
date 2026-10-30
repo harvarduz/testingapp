@@ -79,7 +79,7 @@ with sync_playwright() as p:
             a,b=previous.bounding_box(),current.bounding_box()
             assert a['y']+a['height']+2 <= b['y'], (width,height,a,b)
         assert page.locator('.landing-skills-copy').bounding_box()['width'] >= 270
-        if 'is-static' not in scene.get_attribute('class'):
+        if scene.get_attribute('data-scroll-mode') == 'pinned':
             for progress in [.1,.5,.9]:
                 scene.evaluate('''(node,p)=>{const stage=node.firstElementChild;scrollTo({top:scrollY+node.getBoundingClientRect().top-parseFloat(getComputedStyle(stage).top)+(node.offsetHeight-stage.offsetHeight)*p,behavior:'instant'})}''',progress)
                 page.wait_for_timeout(120)
@@ -89,7 +89,7 @@ with sync_playwright() as p:
                 count=page.locator('.landing-skill-node[data-connected="true"]').count()
                 expect(page.locator('[data-skill-count]')).to_have_text(str(count))
         if width==320:
-            expect(page.locator('.landing-catalog-scene')).to_have_class('landing-catalog-scene is-static')
+            expect(page.locator('.landing-catalog-scene')).to_have_attribute('data-scroll-mode','flow')
         page.screenshot(path=str(OUTPUT/f'landing-ux-skills-{width}-{height}.png'))
     passed('Knowledge cards do not overlap at narrow/tablet widths; sticky text and calls to action fit, short catalogs unpin, and connected counts match the diagram')
 
